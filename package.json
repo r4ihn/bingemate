@@ -4,6 +4,7 @@
   "private": true,
   "description": "BingeMate monorepo — React SPA + Express API + PostgreSQL/Prisma + MongoDB. INF2003 Group 29.",
   "license": "MIT",
+  "type": "module",
   "workspaces": [
     "apps/*",
     "packages/*"

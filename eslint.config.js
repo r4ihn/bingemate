@@ -29,6 +29,10 @@ export default [
     },
     rules: {
       ...tseslint.configs.recommended.rules,
+      // TypeScript already checks undefined identifiers, and these core rules
+      // misfire on TS code (Node/DOM globals, `const X` + `type X` pairs).
+      'no-undef': 'off',
+      'no-redeclare': 'off',
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],
       '@typescript-eslint/consistent-type-imports': 'warn',
     },
