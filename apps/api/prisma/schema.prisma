@@ -1,0 +1,150 @@
+// BingeMate relational schema (PostgreSQL).
+// MongoDB holds review bodies, comments and trending cards — see src/mongo/models.
+// Cross-store link: reviews.id === the Mongo ReviewBody _id.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CREATOR
+  CONSUMER
+}
+
+enum MediaType {
+  MOVIE
+  BOOK
+  TV_SHOW
+}
+
+enum TitleStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ListStatus {
+  COMPLETED
+  IN_PROGRESS
+  PLAN_TO
+}
+
+enum PersonRole {
+  AUTHOR
+  DIRECTOR
+  ACTOR
+  SHOWRUNNER
+}
+
+model User {
+  id           String        @id @default(cuid())
+  email        String        @unique
+  passwordHash String
+  role         Role          @default(CONSUMER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  createdTitles Title[]       @relation("CreatedTitles")
+  reviews       Review[]
+  listEntries   ListEntry[]
+}
+
+model Title {
+  id              String        @id @default(cuid())
+  name            String
+  mediaType       MediaType
+  status          TitleStatus   @default(PENDING)
+  rejectionReason String?
+  releaseYear     Int?
+  posterUrl       String?
+  avgRating       Float         @default(0)
+  reviewCount     Int           @default(0)
+
+  createdById String?
+  createdBy   User?   @relation("CreatedTitles", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  genres      TitleGenre[]
+  people      TitlePerson[]
+  reviews     Review[]
+  listEntries ListEntry[]
+
+  @@index([mediaType])
+  @@index([name])
+  @@index([status])
+  @@index([avgRating])
+}
+
+model Genre {
+  id     String       @id @default(cuid())
+  name   String       @unique
+  titles TitleGenre[]
+}
+
+model TitleGenre {
+  titleId String
+  genreId String
+  title   Title  @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  genre   Genre  @relation(fields: [genreId], references: [id], onDelete: Cascade)
+
+  @@id([titleId, genreId])
+  @@index([genreId])
+}
+
+model Person {
+  id     String        @id @default(cuid())
+  name   String
+  titles TitlePerson[]
+
+  @@index([name])
+}
+
+model TitlePerson {
+  titleId  String
+  personId String
+  role     PersonRole
+  title    Title      @relation(fields: [titleId], references: [id], onDelete: Cascade)
+  person   Person     @relation(fields: [personId], references: [id], onDelete: Cascade)
+
+  @@id([titleId, personId, role])
+  @@index([personId])
+}
+
+model ListEntry {
+  id        String     @id @default(cuid())
+  userId    String
+  titleId   String
+  status    ListStatus
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title Title @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, titleId])
+  @@index([userId])
+}
+
+// Review HEADER row only. Body + comments live in MongoDB keyed by this id.
+model Review {
+  id        String   @id @default(cuid())
+  userId    String
+  titleId   String
+  rating    Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title Title @relation(fields: [titleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, titleId])
+  @@index([titleId])
+}
