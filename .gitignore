@@ -47,3 +47,7 @@ benchmarks/results/*
 Thumbs.db
 .idea/
 *.swp
+
+# AI help
+.kiro/
+.claude/
