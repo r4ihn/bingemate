@@ -32,6 +32,16 @@ pnpm-debug.log*
 coverage/
 .nyc_output/
 
+# Datasets (keep .gitkeep, ignore contents)
+data/raw/*
+data/processed/*
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# Benchmark output
+benchmarks/results/*
+!benchmarks/results/.gitkeep
+
 # Editor / OS
 .DS_Store
 Thumbs.db
