@@ -1,0 +1,17 @@
+import { Router } from 'express';
+
+/**
+ * Mounts all module routers under /api.
+ * Feature modules (auth, titles, reviews, …) register here as they land —
+ * see ARCHITECTURE.md and TASKS.md sections 3–7.
+ */
+export const router: Router = Router();
+
+router.get('/', (_req, res) => {
+  res.json({ service: 'bingemate-api', version: '0.1.0' });
+});
+
+// router.use('/auth', authRouter);
+// router.use('/titles', titlesRouter);
+// router.use('/reviews', reviewsRouter);
+// ...
