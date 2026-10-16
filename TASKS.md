@@ -22,12 +22,12 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 
 ## 1. Project setup (Week 6)
 
-- [ ] Create the monorepo scaffold (`apps/web`, `apps/api`, `packages/shared`). See `ARCHITECTURE.md`. *(RA)*
-- [ ] `docker-compose.yml` for PostgreSQL + MongoDB so everyone runs identical local DBs *(RA)*
-- [ ] Shared `tsconfig.base.json`, ESLint, Prettier *(RA)*
-- [ ] `.env.example` for `apps/api` and `apps/web`; add `.env` and `data/raw/` to `.gitignore` *(RA)*
-- [ ] CI (GitHub Actions or similar): lint, typecheck and test on every PR *(RA)*
-- [ ] Branch protection on `main`: require a PR and passing CI, 0 approvals, no direct pushes *(RA)*
+- [x] Create the monorepo scaffold (`apps/web`, `apps/api`, `packages/shared`). See `ARCHITECTURE.md`. *(RA)*
+- [x] `docker-compose.yml` for PostgreSQL + MongoDB so everyone runs identical local DBs *(RA)*
+- [x] Shared `tsconfig.base.json`, ESLint, Prettier *(RA)*
+- [x] `.env.example` for `apps/api` and `apps/web`; add `.env` and `data/raw/` to `.gitignore` *(RA)*
+- [x] CI (GitHub Actions or similar): lint, typecheck and test on every PR *(RA)*
+- [x] Branch protection on `main`: require a PR and passing CI, 0 approvals, no direct pushes *(RA)*
 - [ ] Dev seed uses a dataset subset (e.g. 10–20k films); full load only for benchmarks *(JW)*
 - [ ] Move the existing prototype code (Titles/Users CRUD, browse page) into the new structure *(JW, WH)*
 
@@ -66,13 +66,13 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Title approval queue: `GET /admin/titles?status=PENDING`, `PATCH /admin/titles/:id/status` (APPROVED / REJECTED, optional rejection reason)
 - [ ] Admin pages in the frontend *(with WH)*
 
-## 5. MongoDB: reviews, comments, trending (HS, Week 9–10)
+## 5. MongoDB: reviews, comments, trending (HS lead; SJ co-owns trending)
 
 - [ ] Mongoose connection module
 - [ ] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with discriminators per media type (movie: runtime, book: chapters, TV: season/episodes). No rating here; the rating lives in PostgreSQL
 - [ ] Cross-store write order: insert the PostgreSQL row (transaction) → insert the Mongo body; if the Mongo write fails, delete the PostgreSQL row (compensating delete). Same idea for delete
 - [ ] Comment threads, one reply level: embedded in the review vs. a separate `comments` collection with `reviewId` + `parentId` (watch the 16 MB document limit on popular reviews)
-- [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job
+- [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job *(HS, SJ support — SJ owns the trending queries in §6)*
 - [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`
 - [ ] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets
 - [ ] Review endpoints: list by title, create, update, delete
@@ -89,30 +89,31 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Pagination everywhere (no unbounded queries)
 - [ ] `GET /creator/stats`: avg rating, review count and list adds per title the creator owns
 
-## 7. Personal lists (⚠ not assigned in the report; suggest JW backend + WH UI)
+## 7. Personal lists (JW backend + WH UI; RA support on the transaction) — now assigned
 
-- [ ] Status per entry: `COMPLETED`, `IN_PROGRESS`, `PLAN_TO`, filterable by media type
-- [ ] `GET/POST/PATCH/DELETE /me/lists`
-- [ ] Wrap list updates in a transaction (the report promises ACID for list updates)
+- [ ] Status per entry: `COMPLETED`, `IN_PROGRESS`, `PLAN_TO`, filterable by media type *(JW)*
+- [ ] `GET/POST/PATCH/DELETE /me/lists` *(JW)*
+- [ ] Wrap list updates in a transaction (the report promises ACID for list updates) *(JW, RA support — overlaps auth/ownership checks)*
+- [ ] My Lists UI page *(WH — see §8)*
 
-## 8. Frontend (WH)
+## 8. Frontend (WH lead; SJ co-owns the data-heavy pages — rebalanced from solo)
 
 - [x] Browse and search page connected to the backend
-- [ ] Router, layout, typed API client, `AuthContext`, protected routes
-- [ ] Login and register pages
-- [ ] Home page with trending cards
-- [ ] Browse page filters (type, genre, rating) and pagination
-- [ ] Title detail page: info, reviews, comment threads
-- [ ] Write/edit/delete review form (media-specific fields)
-- [ ] My Lists page
-- [ ] Role-based controls (hide or disable actions the role cannot perform; the backend still enforces them)
-- [ ] Creator upload flow: create, edit and delete own titles; "My submissions" list showing PENDING / APPROVED / REJECTED + rejection reason; warn that editing an approved title re-submits it *(Week 11; backend owner needed, suggest JW)*
-- [ ] Creator stats page; pinned official-reply UI on own titles; Creator badge on reviews/comments
-- [ ] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login
-- [ ] Admin dashboard: users/roles, title approval queue, review/comment moderation *(Week 11, with RA)*
-- [ ] Loading, empty and error states; keyboard/a11y pass
+- [ ] Router, layout, typed API client, `AuthContext`, protected routes *(WH)*
+- [ ] Login and register pages *(WH)*
+- [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*
+- [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*
+- [ ] Title detail page: info, reviews, comment threads *(WH)*
+- [ ] Write/edit/delete review form (media-specific fields) *(WH)*
+- [ ] My Lists page *(WH)*
+- [ ] Role-based controls (hide or disable actions the role cannot perform; the backend still enforces them) *(WH)*
+- [ ] Creator upload flow: create, edit and delete own titles; "My submissions" list showing PENDING / APPROVED / REJECTED + rejection reason; warn that editing an approved title re-submits it *(WH UI + JW backend — Week 11; JW now owns the backend)*
+- [ ] Creator stats page; pinned official-reply UI on own titles; Creator badge on reviews/comments *(WH)*
+- [ ] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login *(WH)*
+- [ ] Admin dashboard: users/roles, title approval queue, review/comment moderation *(WH UI + RA endpoints — Week 11)*
+- [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*
 
-## 9. Performance & SQL vs NoSQL comparison (SJ, Week 12)
+## 9. Performance & SQL vs NoSQL comparison (SJ lead; HS co-owns the Mongo side, Week 12)
 
 - [ ] Define scenarios: fetch reviews for a title, top-N trending, insert a review, nested comment read, filtered browse
 - [ ] Benchmark scripts that run the same workload against PostgreSQL and MongoDB
