@@ -11,16 +11,21 @@ import { StateMessage } from '../StateMessage.js';
 import { Badge } from '../ui/Badge.js';
 import { CommentThread } from './CommentThread.js';
 
-function describeFields(fields: ReviewFields): string {
+function describeFields(fields: ReviewFields | undefined): string {
+  if (!fields) return '';
   if ('runtimeMinutes' in fields) return `Watched ${fields.runtimeMinutes} min`;
   if ('chapters' in fields) return `Read ${fields.chapters} chapters`;
-  return `Season ${fields.season}, ${fields.episodes} episodes`;
+  if ('season' in fields && 'episodes' in fields) {
+    return `Season ${fields.season}, ${fields.episodes} episodes`;
+  }
+  return '';
 }
 
 function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => void }) {
   const { user } = useAuth();
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const detail = describeFields(review.fields);
 
   async function confirmDelete() {
     setDeleteError(null);
@@ -47,7 +52,7 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
         </time>
       </header>
       <p className="mt-3">{review.body}</p>
-      <p className="mt-2 text-[0.8rem] text-muted">{describeFields(review.fields)}</p>
+      {detail && <p className="mt-2 text-[0.8rem] text-muted">{detail}</p>}
       {deleteError && (
         <p role="alert" className="mt-2 text-[0.8rem] text-danger">
           {deleteError}

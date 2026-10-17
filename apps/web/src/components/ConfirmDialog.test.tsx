@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -47,5 +48,44 @@ describe('ConfirmDialog', () => {
     await user.click(confirm);
     expect(onConfirm).toHaveBeenCalledOnce();
     expect(confirm).toBeDisabled();
+  });
+});
+
+function Harness() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}>
+        Open
+      </button>
+      <ConfirmDialog
+        open={open}
+        title="Sure?"
+        body="Really."
+        confirmLabel="Yes"
+        onConfirm={() => setOpen(false)}
+        onCancel={() => setOpen(false)}
+      />
+    </>
+  );
+}
+
+describe('ConfirmDialog focus return', () => {
+  it('returns focus to the control that opened it after Cancel', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const opener = screen.getByRole('button', { name: 'Open' });
+    await user.click(opener);
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(opener).toHaveFocus();
+  });
+
+  it('returns focus to the opener after Escape', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    const opener = screen.getByRole('button', { name: 'Open' });
+    await user.click(opener);
+    await user.keyboard('{Escape}');
+    expect(opener).toHaveFocus();
   });
 });

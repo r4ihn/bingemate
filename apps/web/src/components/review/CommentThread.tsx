@@ -35,7 +35,13 @@ function CommentForm({
       await onPost(body.trim());
       setBody('');
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not post. Try again.');
+      setError(
+        err instanceof ApiError && err.status === 401
+          ? 'Your session has expired. Log in again to post.'
+          : err instanceof ApiError
+            ? err.message
+            : 'Could not post. Try again.',
+      );
     } finally {
       setPending(false);
     }
@@ -85,7 +91,8 @@ function CommentView({ comment, onDelete }: { comment: Comment; onDelete?: () =>
 
 /** One level of replies: top-level comments can be replied to, replies cannot (TASKS.md section 0). */
 export function CommentThread({ reviewId }: { reviewId: string }) {
-  const { user } = useAuth();
+  const { user, sessionExpired } = useAuth();
+  const canPost = user !== null || sessionExpired; // keep drafts if a 401 clears the session
   const { state, reload } = useAsync(() => commentsApi.list(reviewId), [reviewId]);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Comment | null>(null);
@@ -153,7 +160,7 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
                 </li>
               ))}
             </ul>
-            {user &&
+            {canPost &&
               (replyingTo === c.id ? (
                 <CommentForm label="Write a reply" submitLabel="Post reply" onPost={post(c.id)} />
               ) : (
@@ -168,7 +175,9 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
           </li>
         ))}
       </ul>
-      {user && <CommentForm label="Add a comment" submitLabel="Post comment" onPost={post(null)} />}
+      {canPost && (
+        <CommentForm label="Add a comment" submitLabel="Post comment" onPost={post(null)} />
+      )}
       <ConfirmDialog
         open={deleting !== null}
         title="Delete comment?"

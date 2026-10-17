@@ -128,7 +128,7 @@ describe('UsersTable', () => {
     vi.spyOn(adminApi, 'setRole').mockRejectedValue(new ApiError(500, 'boom'));
     const u = renderAdmin('/admin/users');
     const select = await screen.findByLabelText('Role for user3@mock.dev');
-    await u.selectOptions(select, Role.ADMIN);
+    await u.selectOptions(select, Role.CREATOR);
     expect(await screen.findByRole('alert')).toHaveTextContent(/Could not/);
     expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.CONSUMER);
   });
@@ -161,5 +161,59 @@ describe('Moderation', () => {
     db.reviews = [];
     renderAdmin('/admin/moderation');
     expect(await screen.findByText('No reviews to moderate')).toBeInTheDocument();
+  });
+});
+
+describe('Admin regressions from the final review', () => {
+  it('promoting to Admin asks first; Cancel keeps the old role and sends nothing', async () => {
+    const setRole = vi.spyOn(adminApi, 'setRole');
+    const u = renderAdmin('/admin/users');
+    const select = await screen.findByLabelText('Role for user3@mock.dev');
+    await u.selectOptions(select, Role.ADMIN);
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByRole('heading', { name: /admin/i })).toBeInTheDocument();
+    await u.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(setRole).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.CONSUMER);
+  });
+
+  it('confirming promotion to Admin saves it', async () => {
+    const u = renderAdmin('/admin/users');
+    await u.selectOptions(await screen.findByLabelText('Role for user3@mock.dev'), Role.ADMIN);
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Make admin' }));
+    await vi.waitFor(() => expect(db.users.find((x) => x.id === 'user-3')?.role).toBe(Role.ADMIN));
+  });
+
+  it('an earlier failed role change does not undo a later successful one', async () => {
+    let rejectFirst!: (e: unknown) => void;
+    vi.spyOn(adminApi, 'setRole').mockImplementationOnce(
+      () => new Promise((_, reject) => (rejectFirst = reject)),
+    ); // later calls use the real mock implementation
+    const u = renderAdmin('/admin/users');
+    const select = await screen.findByLabelText('Role for user3@mock.dev');
+    await u.selectOptions(select, Role.CREATOR); // request A, still pending
+    await u.selectOptions(select, Role.ADMIN); // request B
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Make admin' }));
+    await vi.waitFor(() => expect(db.users.find((x) => x.id === 'user-3')?.role).toBe(Role.ADMIN));
+
+    rejectFirst(new ApiError(500, 'boom'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Could not/);
+    expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.ADMIN);
+  });
+
+  it('deleting the last reviews on page 2 steps back to page 1, not an empty state', async () => {
+    const u = renderAdmin('/admin/moderation');
+    await screen.findAllByRole('button', { name: /^Delete/ });
+    await u.click(screen.getByRole('button', { name: 'Next' }));
+    for (let i = 1; i <= 3; i++) {
+      const btn = (await screen.findAllByRole('button', { name: /^Delete/ }))[0] as HTMLElement;
+      await u.click(btn);
+      await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+      await vi.waitFor(() => expect(db.reviews.length).toBe(13 - i));
+    }
+    await vi.waitFor(() =>
+      expect(screen.getAllByRole('button', { name: /^Delete/ })).toHaveLength(10),
+    );
+    expect(screen.queryByText('No reviews to moderate')).not.toBeInTheDocument();
   });
 });

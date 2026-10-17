@@ -36,3 +36,27 @@ describe('Field', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid email');
   });
 });
+
+describe('Field accessibility', () => {
+  it('marks the control invalid and describes it by the error text', () => {
+    render(
+      <Field label="Email" error="Enter a valid email">
+        <input />
+      </Field>,
+    );
+    const input = screen.getByLabelText('Email');
+    expect(input).toHaveAttribute('aria-invalid', 'true');
+    const alert = screen.getByRole('alert');
+    expect(input.getAttribute('aria-describedby')).toBe(alert.id);
+  });
+
+  it('adds no aria attributes when there is no error', () => {
+    render(
+      <Field label="Email">
+        <input />
+      </Field>,
+    );
+    expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByLabelText('Email')).not.toHaveAttribute('aria-describedby');
+  });
+});

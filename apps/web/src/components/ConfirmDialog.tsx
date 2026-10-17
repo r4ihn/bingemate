@@ -23,13 +23,22 @@ function Modal({
   const ref = useRef<HTMLDialogElement>(null);
   const [busy, setBusy] = useState(false);
 
-  // showModal() traps focus; start on Cancel (first button) so Enter/Space never confirms by accident
+  // showModal() traps focus; start on Cancel (first button) so Enter/Space never confirms by accident.
+  // On close, hand focus back to whatever opened the dialog so keyboard users keep their place.
   useEffect(() => {
     const el = ref.current;
-    if (!el || el.open) return;
-    if (typeof el.showModal === 'function') el.showModal();
-    else el.setAttribute('open', '');
+    if (!el) return;
+    const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (!el.open) {
+      if (typeof el.showModal === 'function') el.showModal();
+      else el.setAttribute('open', '');
+    }
     el.querySelector('button')?.focus();
+    return () => {
+      if (typeof el.close === 'function') el.close();
+      else el.removeAttribute('open');
+      opener?.focus();
+    };
   }, []);
 
   function confirm() {

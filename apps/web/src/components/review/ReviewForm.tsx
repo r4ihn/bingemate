@@ -1,11 +1,10 @@
 import { useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Role } from '@bingemate/shared';
 import type { TitleSummary } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
 import { reviewsApi } from '../../api/reviews.js';
-import { RoleGate } from '../../auth/RoleGate.js';
+import { useAuth } from '../../auth/AuthContext.js';
 import type { Review, ReviewFields } from '../../types/review.js';
 import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
@@ -143,9 +142,12 @@ export function ReviewForm({
   title: TitleSummary;
   onSubmitted: (r: Review) => void;
 }) {
-  return (
-    <RoleGate roles={[Role.CONSUMER, Role.CREATOR, Role.ADMIN]} fallback={<LoginPrompt />}>
-      <Form title={title} onSubmitted={onSubmitted} />
-    </RoleGate>
+  const { user, sessionExpired } = useAuth();
+  // A 401 clears the session mid-post. Keep the form (and the draft) on screen so the user sees the
+  // "session expired" message instead of the form vanishing.
+  return user || sessionExpired ? (
+    <Form title={title} onSubmitted={onSubmitted} />
+  ) : (
+    <LoginPrompt />
   );
 }

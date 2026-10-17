@@ -1,5 +1,6 @@
 import { Breadcrumb } from './Breadcrumb.js';
 import { Pill } from './Pill.js';
+import { formatRating } from '../format.js';
 import type { TitleDetail } from '../types/title.js';
 
 const SILHOUETTES = [
@@ -21,6 +22,7 @@ export function TitleHero({
   scrollHint?: { label: string; href: string };
 }) {
   const h = title.hue ?? 25;
+  const countries = title.countries ?? []; // UI-only field: real data may omit it
   const background = [
     `radial-gradient(ellipse 60% 55% at 50% 38%, hsl(${h} 100% 56%) 0%, hsl(${h} 92% 44%) 38%, transparent 70%)`,
     `radial-gradient(ellipse 120% 80% at 50% 0%, hsl(${h} 90% 28%) 0%, transparent 70%)`,
@@ -59,7 +61,7 @@ export function TitleHero({
         <div className="mt-[18px]">
           <Pill filled>
             <strong className="font-bold tracking-tight">BingeMate</strong>{' '}
-            {title.avgRating.toFixed(1)}
+            {formatRating(title.avgRating)}
           </Pill>
         </div>
       </div>
@@ -75,10 +77,10 @@ export function TitleHero({
       </button>
 
       <dl className="absolute bottom-28 left-8 z-10 grid gap-2.5 text-[0.8rem]">
-        {title.countries.length > 0 && (
+        {countries.length > 0 && (
           <div className="flex items-center gap-2.5">
             <dt className="min-w-[52px]">Country:</dt>
-            {title.countries.map((c) => (
+            {countries.map((c) => (
               <dd key={c}>
                 <Pill>{c}</Pill>
               </dd>

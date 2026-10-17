@@ -120,3 +120,33 @@ describe('MyLists', () => {
     );
   });
 });
+
+describe('MyLists regressions from the final review', () => {
+  it('removing the last entry on page 2 steps back to page 1, not an empty state', async () => {
+    db.lists = db.titles.slice(0, 13).map((title, i) => ({
+      id: `l-${i + 1}`,
+      titleId: title.id,
+      status: ListStatus.COMPLETED,
+      title,
+    }));
+    const u = setup();
+    await screen.findAllByRole('combobox');
+    await u.click(screen.getByRole('button', { name: 'Next' }));
+    await vi.waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(1));
+    await u.click(screen.getAllByRole('button', { name: /^Remove/ })[0] as HTMLElement);
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    await vi.waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(12));
+    expect(screen.queryByText(/Nothing in/)).not.toBeInTheDocument();
+  });
+
+  it('clicking the already-active tab does not bring a moved entry back', async () => {
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await vi.waitFor(() =>
+      expect(db.lists.find((e) => e.id === 'l-1')?.status).toBe(ListStatus.IN_PROGRESS),
+    );
+    await u.click(screen.getByRole('button', { name: 'Completed' }));
+    expect(screen.queryByLabelText('Status for Last Light')).not.toBeInTheDocument();
+  });
+});

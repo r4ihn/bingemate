@@ -22,7 +22,18 @@ export function Moderation() {
     setError(null);
     try {
       await adminApi.removeReview(review.id);
-      setRemoved((r) => new Set(r).add(review.id));
+      const left =
+        state.status === 'ready'
+          ? state.data.data.filter((r) => r.id !== review.id && !removed.has(r.id)).length
+          : 1;
+      if (left > 0) {
+        setRemoved((r) => new Set(r).add(review.id));
+      } else {
+        // That was the last review on this page: go back a page (or refetch) instead of an empty state
+        setRemoved(new Set());
+        if (page > 1) setPage(page - 1);
+        else reload();
+      }
     } catch {
       setError(`Could not delete ${review.author.name}’s review. Try again.`);
     } finally {

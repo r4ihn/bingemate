@@ -1,5 +1,14 @@
-/** Mock mode is the default until each endpoint owner confirms their response shape. */
-export const useMock = import.meta.env.VITE_USE_MOCKS !== 'false';
+/**
+ * Mocks default ON in dev and test builds and OFF in production builds, so fake data cannot ship by
+ * accident. Set VITE_USE_MOCKS=true|false to override either way.
+ */
+export function resolveUseMock(flag: string | undefined, dev: boolean): boolean {
+  if (flag === 'true') return true;
+  if (flag === 'false') return false;
+  return dev;
+}
+
+export const useMock = resolveUseMock(import.meta.env.VITE_USE_MOCKS, import.meta.env.DEV);
 
 const LATENCY_MS = import.meta.env.MODE === 'test' ? 0 : 200;
 

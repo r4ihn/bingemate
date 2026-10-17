@@ -4,6 +4,7 @@ import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
 import type { AuthUser } from '@bingemate/shared';
 import { useAuth } from '../auth/AuthContext.js';
+import { ErrorBoundary } from '../components/ErrorBoundary.js';
 
 const textLink = ({ isActive }: { isActive: boolean }) =>
   `rounded-lg px-3 py-2.5 text-[0.8rem] transition-colors hover:bg-white/10 hover:text-white ${
@@ -136,7 +137,9 @@ export function MainLayout() {
         tabIndex={-1}
         className={fullBleed ? undefined : 'mx-auto max-w-[1100px] px-8 pt-32 pb-16'}
       >
-        <Outlet />
+        <ErrorBoundary resetKey={pathname}>
+          <Outlet />
+        </ErrorBoundary>
       </main>
     </>
   );

@@ -10,6 +10,8 @@ type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 interface AuthContextValue {
   user: AuthUser | null;
   status: AuthStatus;
+  /** True after a 401 cleared the session mid-use; lets forms keep drafts and show a login prompt. */
+  sessionExpired: boolean;
   signIn: (user: AuthUser) => void;
   signOut: () => Promise<void>;
 }
@@ -29,6 +31,7 @@ export function AuthTestProvider({
   const value: AuthContextValue = {
     user,
     status: user ? 'authenticated' : 'anonymous',
+    sessionExpired: false,
     signIn,
     signOut: () => Promise.resolve(),
   };
@@ -45,6 +48,7 @@ function mockUser(): AuthUser | null {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
+  const [sessionExpired, setSessionExpired] = useState(false);
 
   // Restore the session on page load (TASKS.md section 3: GET /auth/me)
   useEffect(() => {
@@ -68,6 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUnauthorizedHandler(() => {
       setUser(null);
       setStatus('anonymous');
+      setSessionExpired(true);
     });
     return () => setUnauthorizedHandler(null);
   }, []);
@@ -75,15 +80,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = useCallback((next: AuthUser) => {
     setUser(next);
     setStatus('authenticated');
+    setSessionExpired(false);
   }, []);
 
   const signOut = useCallback(async () => {
     await authApi.logout().catch(() => undefined);
     setUser(null);
     setStatus('anonymous');
+    setSessionExpired(false);
   }, []);
 
-  const value = useMemo(() => ({ user, status, signIn, signOut }), [user, status, signIn, signOut]);
+  const value = useMemo(
+    () => ({ user, status, sessionExpired, signIn, signOut }),
+    [user, status, sessionExpired, signIn, signOut],
+  );
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 

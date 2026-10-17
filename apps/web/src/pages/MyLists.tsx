@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ListStatus, MediaType } from '@bingemate/shared';
 import { listsApi } from '../api/lists.js';
 import { ConfirmDialog } from '../components/ConfirmDialog.js';
@@ -29,6 +29,7 @@ export function MyLists() {
   const [page, setPage] = useState(1);
   // Entries removed or moved on screen before the server confirms; cleared whenever the view changes
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
+  const hiddenRef = useRef<ReadonlySet<string>>(hidden);
   const [error, setError] = useState<string | null>(null);
   const [removing, setRemoving] = useState<ListItem | null>(null);
   const { state, reload } = useAsync(
@@ -36,18 +37,31 @@ export function MyLists() {
     [status, mediaType, page],
   );
 
+  const syncHidden = (next: ReadonlySet<string>) => {
+    hiddenRef.current = next;
+    setHidden(next);
+  };
   const resetView = () => {
     setPage(1);
-    setHidden(new Set());
+    syncHidden(new Set());
     setError(null);
   };
-  const hide = (id: string) => setHidden((h) => new Set(h).add(id));
-  const unhide = (id: string) =>
-    setHidden((h) => {
-      const next = new Set(h);
-      next.delete(id);
-      return next;
-    });
+  const hide = (id: string) => syncHidden(new Set(hiddenRef.current).add(id));
+  const unhide = (id: string) => {
+    const next = new Set(hiddenRef.current);
+    next.delete(id);
+    syncHidden(next);
+  };
+
+  /** After the server confirms a change that leaves this page empty: previous page, or refetch. */
+  function settle() {
+    if (state.status !== 'ready') return;
+    const left = state.data.data.filter((e) => !hiddenRef.current.has(e.id)).length;
+    if (left > 0) return;
+    syncHidden(new Set());
+    if (page > 1) setPage(page - 1);
+    else reload();
+  }
 
   async function move(entry: ListItem, next: ListStatus) {
     if (next === entry.status) return;
@@ -55,6 +69,7 @@ export function MyLists() {
     hide(entry.id); // optimistic
     try {
       await listsApi.setStatus(entry.id, next);
+      settle();
     } catch {
       unhide(entry.id); // roll back
       setError(`Could not move “${entry.title.name}”. Try again.`);
@@ -67,6 +82,7 @@ export function MyLists() {
     try {
       await listsApi.remove(entry.id);
       hide(entry.id);
+      settle();
     } catch {
       setError(`Could not remove “${entry.title.name}”. Try again.`);
     } finally {
@@ -87,6 +103,7 @@ export function MyLists() {
               key={t.status}
               active={status === t.status}
               onClick={() => {
+                if (t.status === status) return; // re-clicking the active tab must not resurrect hidden entries
                 setStatus(t.status);
                 resetView();
               }}
@@ -101,6 +118,7 @@ export function MyLists() {
               key={m.label}
               active={mediaType === m.value}
               onClick={() => {
+                if (m.value === mediaType) return;
                 setMediaType(m.value);
                 resetView();
               }}
@@ -171,7 +189,7 @@ export function MyLists() {
                   total={state.data.total}
                   onChange={(p) => {
                     setPage(p);
-                    setHidden(new Set());
+                    syncHidden(new Set());
                   }}
                 />
               </>

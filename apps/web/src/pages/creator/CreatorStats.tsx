@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { creatorApi } from '../../api/creator.js';
 import { StateMessage } from '../../components/StateMessage.js';
 import { Table, Td } from '../../components/ui/Table.js';
+import { formatRating } from '../../format.js';
 import { useAsync } from '../../hooks/useAsync.js';
 
 export function CreatorStats() {
@@ -36,7 +37,7 @@ export function CreatorStats() {
               {state.data.map((s) => (
                 <tr key={s.titleId}>
                   <Td>{s.name}</Td>
-                  <Td>{s.avgRating.toFixed(1)}</Td>
+                  <Td>{formatRating(s.avgRating)}</Td>
                   <Td>{s.reviewCount}</Td>
                   <Td>{s.listAdds}</Td>
                 </tr>
