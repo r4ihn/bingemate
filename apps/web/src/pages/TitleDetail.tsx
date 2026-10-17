@@ -1,8 +1,53 @@
+import type { ReactNode } from 'react';
+import { useParams } from 'react-router-dom';
+import { titlesApi } from '../api/titles.js';
+import { ApiError } from '../api/client.js';
+import { StateMessage } from '../components/StateMessage.js';
+import { TitleHero } from '../components/TitleHero.js';
+import { ReviewList } from '../components/review/ReviewList.js';
+import { useAsync } from '../hooks/useAsync.js';
+import { NotFound } from './NotFound.js';
+
+// The layout lets this page run full-bleed, so non-hero states need their own padding
+function Shell({ children }: { children: ReactNode }) {
+  return <div className="mx-auto max-w-[1100px] px-8 pt-32 pb-16">{children}</div>;
+}
+
 export function TitleDetail() {
+  const { id = '' } = useParams();
+  const { state, reload } = useAsync(() => titlesApi.get(id), [id]);
+
+  if (state.status === 'loading') {
+    return (
+      <Shell>
+        <StateMessage kind="loading" />
+      </Shell>
+    );
+  }
+  if (state.status === 'error') {
+    return (
+      <Shell>
+        {state.error instanceof ApiError && state.error.status === 404 ? (
+          <NotFound />
+        ) : (
+          <StateMessage kind="error" detail="This title could not be loaded." onRetry={reload} />
+        )}
+      </Shell>
+    );
+  }
+
+  const title = state.data;
   return (
-    <section>
-      <h1 className="text-4xl font-semibold tracking-tight">Title</h1>
-      <p className="mt-2 text-muted">Title info, reviews and comment threads (WH).</p>
-    </section>
+    <>
+      <TitleHero
+        title={title}
+        breadcrumb={['Main', 'Films', title.name]}
+        scrollHint={{ label: 'Scroll for reviews ↓', href: '#reviews' }}
+      />
+      <section id="reviews" className="mx-auto max-w-[1100px] px-8 py-16">
+        <h2 className="mb-6 text-2xl font-semibold tracking-tight">Reviews</h2>
+        <ReviewList titleId={title.id} />
+      </section>
+    </>
   );
 }

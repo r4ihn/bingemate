@@ -25,14 +25,3 @@ export const mockTitles: MockTitle[] = [
   avgRating: avgRating as number,
   reviewCount: 120 + i * 37,
 }));
-
-export const featuredTitle = {
-  name: 'Last Light: Part Two',
-  synopsis:
-    'Placeholder synopsis. A fugitive pilot joins the desert nomads on a campaign against the order that erased her home, and must choose between her future and the world she is trying to save.',
-  rating: 9.6,
-  countries: ['Usa', 'Canada'],
-  studio: 'North Star Pictures',
-  runtime: '2h 46min',
-  person: 'Ines Calloway',
-};

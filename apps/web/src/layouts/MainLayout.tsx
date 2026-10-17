@@ -32,7 +32,7 @@ function IconLink({ to, label, d }: { to: string; label: string; d: ReactNode })
 export function MainLayout() {
   const { user, status, signOut } = useAuth();
   const { pathname } = useLocation();
-  const fullBleed = pathname === '/';
+  const fullBleed = pathname === '/' || pathname.startsWith('/titles/');
 
   return (
     <>
