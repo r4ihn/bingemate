@@ -14,7 +14,24 @@ interface AuthContextValue {
   signOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+export const AuthContext = createContext<AuthContextValue | null>(null);
+
+/** Test helper: provides a fixed auth state and never calls /auth/me. */
+export function AuthTestProvider({
+  user,
+  children,
+}: {
+  user: AuthUser | null;
+  children: ReactNode;
+}) {
+  const value: AuthContextValue = {
+    user,
+    status: user ? 'authenticated' : 'anonymous',
+    signIn: () => undefined,
+    signOut: () => Promise.resolve(),
+  };
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+}
 
 /** Dev-only: set VITE_MOCK_ROLE=ADMIN|CREATOR|CONSUMER to skip the backend while building UI. */
 function mockUser(): AuthUser | null {
