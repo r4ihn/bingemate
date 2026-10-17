@@ -1,10 +1,22 @@
+import { Link } from 'react-router-dom';
+import { authApi } from '../api/auth.js';
+import { AuthForm } from './AuthForm.js';
+
 export function Login() {
   return (
-    <section>
-      <h1 className="text-4xl font-semibold tracking-tight">Log in</h1>
-      <p className="mt-2 text-muted">
-        Form lands in Phase 2, after RA's /auth endpoints. Use signIn() from useAuth().
-      </p>
-    </section>
+    <AuthForm
+      title="Log in"
+      submitLabel="Log in"
+      strict={false}
+      submit={(email, password) => authApi.login({ email, password })}
+      footer={
+        <>
+          New here?{' '}
+          <Link to="/register" className="text-white underline">
+            Create an account
+          </Link>
+        </>
+      }
+    />
   );
 }

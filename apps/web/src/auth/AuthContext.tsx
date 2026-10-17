@@ -19,15 +19,17 @@ export const AuthContext = createContext<AuthContextValue | null>(null);
 /** Test helper: provides a fixed auth state and never calls /auth/me. */
 export function AuthTestProvider({
   user,
+  signIn = () => undefined,
   children,
 }: {
   user: AuthUser | null;
+  signIn?: (user: AuthUser) => void;
   children: ReactNode;
 }) {
   const value: AuthContextValue = {
     user,
     status: user ? 'authenticated' : 'anonymous',
-    signIn: () => undefined,
+    signIn,
     signOut: () => Promise.resolve(),
   };
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
