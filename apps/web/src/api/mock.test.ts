@@ -115,3 +115,39 @@ describe('titlesApi and adminApi', () => {
     expect(db.users.find((u) => u.id === target.id)?.role).toBe(Role.CREATOR);
   });
 });
+
+describe('titlesApi.search', () => {
+  it('matches the name case-insensitively and returns only APPROVED titles', async () => {
+    const page = await titlesApi.search({ q: 'SALT' });
+    expect(page.items.map((t) => t.name)).toContain('Salt Archive');
+    expect(page.items.every((t) => t.status === TitleStatus.APPROVED)).toBe(true);
+    db.titles.push({
+      ...db.titles[0]!,
+      id: 'p',
+      name: 'Salt Pending',
+      status: TitleStatus.PENDING,
+    });
+    const again = await titlesApi.search({ q: 'salt' });
+    expect(again.items.map((t) => t.name)).not.toContain('Salt Pending');
+  });
+
+  it('narrows by media type', async () => {
+    const page = await titlesApi.search({ type: MediaType.BOOK });
+    expect(page.total).toBeGreaterThan(0);
+    expect(page.items.every((t) => t.mediaType === MediaType.BOOK)).toBe(true);
+  });
+
+  it('paginates and reports the full total', async () => {
+    const all = await titlesApi.search({});
+    const first = await titlesApi.search({ page: 1, pageSize: 5 });
+    const second = await titlesApi.search({ page: 2, pageSize: 5 });
+    expect(first.items).toHaveLength(5);
+    expect(first.total).toBe(all.total);
+    expect(second.items[0]?.id).not.toBe(first.items[0]?.id);
+  });
+
+  it('treats a blank query as no filter', async () => {
+    const all = await titlesApi.search({});
+    expect((await titlesApi.search({ q: '   ' })).total).toBe(all.total);
+  });
+});

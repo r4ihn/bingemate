@@ -5,6 +5,7 @@ import { Role } from '@bingemate/shared';
 import type { AuthUser } from '@bingemate/shared';
 import { useAuth } from '../auth/AuthContext.js';
 import { ErrorBoundary } from '../components/ErrorBoundary.js';
+import { NavSearch } from '../components/NavSearch.js';
 
 const textLink = ({ isActive }: { isActive: boolean }) =>
   `rounded-lg px-3 py-2.5 text-[0.8rem] transition-colors hover:bg-white/10 hover:text-white ${
@@ -100,13 +101,7 @@ export function MainLayout() {
 
         <div className="flex gap-1.5">
           <IconLink to="/me/lists" label="Save" d={<Icon d="M6 2h12v20l-6-4-6 4z" />} />
-          <IconLink
-            to="/browse"
-            label="Search"
-            d={
-              <Icon d="M10 2a8 8 0 105 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z" />
-            }
-          />
+          <NavSearch />
           {status === 'loading' ? null : user ? (
             <button type="button" className={iconBtn} onClick={() => void signOut()}>
               <Icon d={PERSON} />

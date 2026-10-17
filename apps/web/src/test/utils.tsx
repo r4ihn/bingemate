@@ -18,11 +18,10 @@ export function renderWithProviders(
   const user = opts.role
     ? { id: 'test-user', email: `${opts.role.toLowerCase()}@test.dev`, role: opts.role }
     : null;
+  const { pathname, search } = new URL(opts.route ?? '/', 'http://localhost');
   return render(
     <AuthTestProvider user={user} signIn={opts.signIn}>
-      <MemoryRouter initialEntries={[{ pathname: opts.route ?? '/', state: opts.state }]}>
-        {ui}
-      </MemoryRouter>
+      <MemoryRouter initialEntries={[{ pathname, search, state: opts.state }]}>{ui}</MemoryRouter>
     </AuthTestProvider>,
   );
 }
