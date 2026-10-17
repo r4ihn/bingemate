@@ -93,6 +93,21 @@ describe('titlesApi and adminApi', () => {
     expect(db.titles.find((t) => t.id === first!.id)?.rejectionReason).toBe('Poster missing');
   });
 
+  it('adminApi.reviews pages newest first with title names', async () => {
+    const p1 = await adminApi.reviews(1);
+    expect(p1.data).toHaveLength(p1.pageSize);
+    expect(p1.total).toBe(db.reviews.length);
+    expect(p1.data[0]?.titleName).toBe(db.titles.find((t) => t.id === p1.data[0]?.titleId)?.name);
+    expect(p1.data[0]!.createdAt >= p1.data[1]!.createdAt).toBe(true);
+  });
+
+  it('adminApi.removeReview also removes the review comments', async () => {
+    expect(db.comments.some((c) => c.reviewId === 'r-mock-1-0')).toBe(true);
+    await adminApi.removeReview('r-mock-1-0');
+    expect(db.reviews.some((r) => r.id === 'r-mock-1-0')).toBe(false);
+    expect(db.comments.some((c) => c.reviewId === 'r-mock-1-0')).toBe(false);
+  });
+
   it('adminApi.setRole changes a user role', async () => {
     const page = await adminApi.users(1);
     const target = page.data.find((u) => u.role === Role.CONSUMER)!;

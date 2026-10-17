@@ -158,7 +158,7 @@ export function MyLists() {
                             onClick={() => setRemoving(entry)}
                             className="cursor-pointer text-left text-[0.8rem] text-muted underline"
                           >
-                            Remove<span className="sr-only"> {entry.title.name}</span>
+                            Remove <span className="sr-only">{entry.title.name}</span>
                           </button>
                         </div>
                       </PosterCard>

@@ -1,7 +1,7 @@
 import { TitleStatus } from '@bingemate/shared';
 import type { Paginated, Role } from '@bingemate/shared';
 import { db } from '../mocks/db.js';
-import type { AdminUser } from '../types/admin.js';
+import type { AdminUser, ModerationReview } from '../types/admin.js';
 import type { TitleDetail } from '../types/title.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
@@ -43,6 +43,24 @@ export const adminApi = {
     if (!title) throw new ApiError(404, 'Title not found');
     title.status = status;
     title.rejectionReason = status === TitleStatus.REJECTED ? reason : undefined;
+  },
+
+  /** Newest first, with the title name so moderators can see what was reviewed. */
+  async reviews(page: number): Promise<Paginated<ModerationReview>> {
+    if (!useMock) notWired('admin moderation (RA)');
+    await delay();
+    const all = [...db.reviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const start = (page - 1) * PAGE_SIZE;
+    const data = all.slice(start, start + PAGE_SIZE).map((r) => ({
+      id: r.id,
+      titleId: r.titleId,
+      titleName: db.titles.find((t) => t.id === r.titleId)?.name ?? 'Unknown title',
+      author: { id: r.author.id, name: r.author.name },
+      rating: r.rating,
+      body: r.body,
+      createdAt: r.createdAt,
+    }));
+    return clone({ data, page, pageSize: PAGE_SIZE, total: all.length });
   },
 
   async removeReview(id: string): Promise<void> {

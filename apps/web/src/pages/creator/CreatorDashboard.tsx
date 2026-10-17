@@ -57,7 +57,7 @@ export function CreatorDashboard() {
                   <Td className="text-muted">{rejectionReason ?? '—'}</Td>
                   <Td>
                     <Link to={`/creator/${title.id}/edit`} className="underline">
-                      Edit<span className="sr-only"> {title.name}</span>
+                      Edit <span className="sr-only">{title.name}</span>
                     </Link>
                   </Td>
                 </tr>

@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
 import { AuthProvider } from './auth/AuthContext.js';
 import { ProtectedRoute } from './auth/ProtectedRoute.js';
@@ -15,6 +15,9 @@ import { CreatorDashboard } from './pages/creator/CreatorDashboard.js';
 import { CreatorStats } from './pages/creator/CreatorStats.js';
 import { SubmissionForm } from './pages/creator/SubmissionForm.js';
 import { AdminDashboard } from './pages/admin/AdminDashboard.js';
+import { ApprovalQueue } from './pages/admin/ApprovalQueue.js';
+import { Moderation } from './pages/admin/Moderation.js';
+import { UsersTable } from './pages/admin/UsersTable.js';
 
 export function App() {
   return (
@@ -41,7 +44,12 @@ export function App() {
               </Route>
             </Route>
             <Route element={<ProtectedRoute roles={[Role.ADMIN]} />}>
-              <Route path="admin/*" element={<AdminDashboard />} />
+              <Route path="admin" element={<AdminDashboard />}>
+                <Route index element={<Navigate to="queue" replace />} />
+                <Route path="queue" element={<ApprovalQueue />} />
+                <Route path="users" element={<UsersTable />} />
+                <Route path="moderation" element={<Moderation />} />
+              </Route>
             </Route>
 
             <Route path="*" element={<NotFound />} />

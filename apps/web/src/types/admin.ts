@@ -5,3 +5,13 @@ export interface AdminUser {
   email: string;
   role: Role;
 }
+
+export interface ModerationReview {
+  id: string;
+  titleId: string;
+  titleName: string;
+  author: { id: string; name: string };
+  rating: number;
+  body: string;
+  createdAt: string;
+}
