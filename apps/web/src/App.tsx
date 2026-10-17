@@ -12,6 +12,8 @@ import { MyLists } from './pages/MyLists.js';
 import { Forbidden } from './pages/Forbidden.js';
 import { NotFound } from './pages/NotFound.js';
 import { CreatorDashboard } from './pages/creator/CreatorDashboard.js';
+import { CreatorStats } from './pages/creator/CreatorStats.js';
+import { SubmissionForm } from './pages/creator/SubmissionForm.js';
 import { AdminDashboard } from './pages/admin/AdminDashboard.js';
 
 export function App() {
@@ -31,7 +33,12 @@ export function App() {
               <Route path="me/lists" element={<MyLists />} />
             </Route>
             <Route element={<ProtectedRoute roles={[Role.CREATOR, Role.ADMIN]} />}>
-              <Route path="creator/*" element={<CreatorDashboard />} />
+              <Route path="creator">
+                <Route index element={<CreatorDashboard />} />
+                <Route path="new" element={<SubmissionForm />} />
+                <Route path=":id/edit" element={<SubmissionForm />} />
+                <Route path="stats" element={<CreatorStats />} />
+              </Route>
             </Route>
             <Route element={<ProtectedRoute roles={[Role.ADMIN]} />}>
               <Route path="admin/*" element={<AdminDashboard />} />
