@@ -4,8 +4,10 @@ import { Role } from '@bingemate/shared';
 import { commentsApi } from '../../api/reviews.js';
 import { ApiError } from '../../api/client.js';
 import { useAuth } from '../../auth/AuthContext.js';
+import { canDelete } from '../../auth/permissions.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import type { Comment } from '../../types/review.js';
+import { ConfirmDialog } from '../ConfirmDialog.js';
 import { Badge } from '../ui/Badge.js';
 import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
@@ -58,7 +60,7 @@ function CommentForm({
   );
 }
 
-function CommentView({ comment }: { comment: Comment }) {
+function CommentView({ comment, onDelete }: { comment: Comment; onDelete?: () => void }) {
   return (
     <div className="grid gap-1">
       <p className="flex flex-wrap items-center gap-2 text-[0.85rem]">
@@ -67,6 +69,16 @@ function CommentView({ comment }: { comment: Comment }) {
         {comment.isOfficial && <Badge tone="neutral">Official reply</Badge>}
       </p>
       <p>{comment.body}</p>
+      {onDelete && (
+        <button
+          type="button"
+          onClick={onDelete}
+          aria-label={`Delete comment by ${comment.author.name}`}
+          className="justify-self-start text-[0.8rem] text-muted underline"
+        >
+          Delete
+        </button>
+      )}
     </div>
   );
 }
@@ -76,6 +88,8 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
   const { user } = useAuth();
   const { state, reload } = useAsync(() => commentsApi.list(reviewId), [reviewId]);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<Comment | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (state.status === 'loading')
     return <p className="text-[0.8rem] text-muted">Loading comments…</p>;
@@ -98,6 +112,23 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
       .filter((c) => c.parentId === id)
       .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial) || byTime(a, b));
 
+  const deleteHandler = (c: Comment) =>
+    canDelete(user, c.author.id) ? () => setDeleting(c) : undefined;
+
+  async function confirmDelete() {
+    if (!deleting) return;
+    const target = deleting;
+    setDeleteError(null);
+    try {
+      await commentsApi.remove(target.id);
+      reload();
+    } catch {
+      setDeleteError('Could not delete the comment. Try again.');
+    } finally {
+      setDeleting(null);
+    }
+  }
+
   const post = (parentId: string | null) => async (body: string) => {
     await commentsApi.reply(reviewId, parentId, body);
     setReplyingTo(null);
@@ -106,14 +137,19 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
 
   return (
     <div className="mt-4 border-t border-line pt-4">
+      {deleteError && (
+        <p role="alert" className="mb-3 text-[0.8rem] text-danger">
+          {deleteError}
+        </p>
+      )}
       <ul className="grid gap-4">
         {tops.map((c) => (
           <li key={c.id}>
-            <CommentView comment={c} />
+            <CommentView comment={c} onDelete={deleteHandler(c)} />
             <ul className="mt-3 ml-6 grid gap-3 border-l border-line pl-4">
               {repliesOf(c.id).map((r) => (
                 <li key={r.id}>
-                  <CommentView comment={r} />
+                  <CommentView comment={r} onDelete={deleteHandler(r)} />
                 </li>
               ))}
             </ul>
@@ -133,6 +169,15 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
         ))}
       </ul>
       {user && <CommentForm label="Add a comment" submitLabel="Post comment" onPost={post(null)} />}
+      <ConfirmDialog
+        open={deleting !== null}
+        title="Delete comment?"
+        body="This comment will be deleted, along with any replies to it."
+        confirmLabel="Delete"
+        tone="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setDeleting(null)}
+      />
     </div>
   );
 }

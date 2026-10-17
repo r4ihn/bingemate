@@ -1,8 +1,11 @@
 import { useState } from 'react';
 import { Role } from '@bingemate/shared';
+import { useAuth } from '../../auth/AuthContext.js';
+import { canDelete } from '../../auth/permissions.js';
 import { reviewsApi } from '../../api/reviews.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import type { Review, ReviewFields } from '../../types/review.js';
+import { ConfirmDialog } from '../ConfirmDialog.js';
 import { Pagination } from '../Pagination.js';
 import { StateMessage } from '../StateMessage.js';
 import { Badge } from '../ui/Badge.js';
@@ -14,7 +17,23 @@ function describeFields(fields: ReviewFields): string {
   return `Season ${fields.season}, ${fields.episodes} episodes`;
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => void }) {
+  const { user } = useAuth();
+  const [confirming, setConfirming] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  async function confirmDelete() {
+    setDeleteError(null);
+    try {
+      await reviewsApi.remove(review.id);
+      onDeleted();
+    } catch {
+      setDeleteError('Could not delete the review. Try again.');
+    } finally {
+      setConfirming(false);
+    }
+  }
+
   return (
     <article className="rounded-2xl border border-line bg-surface p-6">
       <header className="flex flex-wrap items-center gap-3">
@@ -29,7 +48,31 @@ function ReviewCard({ review }: { review: Review }) {
       </header>
       <p className="mt-3">{review.body}</p>
       <p className="mt-2 text-[0.8rem] text-muted">{describeFields(review.fields)}</p>
+      {deleteError && (
+        <p role="alert" className="mt-2 text-[0.8rem] text-danger">
+          {deleteError}
+        </p>
+      )}
+      {canDelete(user, review.author.id) && (
+        <button
+          type="button"
+          onClick={() => setConfirming(true)}
+          aria-label={`Delete review by ${review.author.name}`}
+          className="mt-2 text-[0.8rem] text-muted underline"
+        >
+          Delete
+        </button>
+      )}
       <CommentThread reviewId={review.id} />
+      <ConfirmDialog
+        open={confirming}
+        title="Delete review?"
+        body="This review and its comments will be deleted."
+        confirmLabel="Delete"
+        tone="danger"
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirming(false)}
+      />
     </article>
   );
 }
@@ -57,7 +100,10 @@ export function ReviewList({ titleId }: { titleId: string }) {
       <ul className="grid gap-6">
         {data.map((r) => (
           <li key={r.id}>
-            <ReviewCard review={r} />
+            <ReviewCard
+              review={r}
+              onDeleted={() => (data.length === 1 && page > 1 ? setPage(page - 1) : reload())}
+            />
           </li>
         ))}
       </ul>
