@@ -38,6 +38,12 @@ describe('reviewsApi', () => {
     ).rejects.toMatchObject({ status: 400 });
   });
 
+  it('create rejects a second review by the same user on the same title (409)', async () => {
+    const input = { rating: 7, body: 'ok', fields: { runtimeMinutes: 100 } };
+    await reviewsApi.create('mock-20', input);
+    await expect(reviewsApi.create('mock-20', input)).rejects.toMatchObject({ status: 409 });
+  });
+
   it('listByTitle returns an empty page for a title with no reviews', async () => {
     const page = await reviewsApi.listByTitle('mock-20', 1);
     expect(page.data).toEqual([]);

@@ -116,6 +116,18 @@ describe('TitleDetail', () => {
     await waitFor(() => expect(screen.getByText('My new comment')).toBeInTheDocument());
   });
 
+  it('posting a review replaces the empty state with the new review', async () => {
+    renderTitle('mock-20', Role.CONSUMER);
+    await screen.findByText('No reviews yet');
+    const u = userEvent.setup();
+    await u.type(screen.getByLabelText(/^Rating/), '9');
+    await u.type(screen.getByLabelText('Your review'), 'A fresh take');
+    await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
+    await u.click(screen.getByRole('button', { name: 'Post review' }));
+    expect(await screen.findByText('A fresh take')).toBeInTheDocument();
+    expect(screen.queryByText('No reviews yet')).not.toBeInTheDocument();
+  });
+
   it('hides comment forms from anonymous visitors', async () => {
     renderTitle('mock-1');
     await screen.findByText('Great pacing in the second half.');

@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { useParams } from 'react-router-dom';
 import { titlesApi } from '../api/titles.js';
 import { ApiError } from '../api/client.js';
 import { StateMessage } from '../components/StateMessage.js';
 import { TitleHero } from '../components/TitleHero.js';
+import { ReviewForm } from '../components/review/ReviewForm.js';
 import { ReviewList } from '../components/review/ReviewList.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { NotFound } from './NotFound.js';
@@ -16,6 +18,8 @@ function Shell({ children }: { children: ReactNode }) {
 export function TitleDetail() {
   const { id = '' } = useParams();
   const { state, reload } = useAsync(() => titlesApi.get(id), [id]);
+  // Bumping this remounts ReviewList so a new review shows up (and the list returns to page 1)
+  const [reviewsVersion, setReviewsVersion] = useState(0);
 
   if (state.status === 'loading') {
     return (
@@ -46,7 +50,10 @@ export function TitleDetail() {
       />
       <section id="reviews" className="mx-auto max-w-[1100px] px-8 py-16">
         <h2 className="mb-6 text-2xl font-semibold tracking-tight">Reviews</h2>
-        <ReviewList titleId={title.id} />
+        <div className="mb-8">
+          <ReviewForm title={title} onSubmitted={() => setReviewsVersion((v) => v + 1)} />
+        </div>
+        <ReviewList key={reviewsVersion} titleId={title.id} />
       </section>
     </>
   );

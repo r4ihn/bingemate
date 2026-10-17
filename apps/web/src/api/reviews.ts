@@ -30,6 +30,9 @@ export const reviewsApi = {
       throw new ApiError(400, 'Rating must be a whole number from 1 to 10');
     }
     if (!db.titles.some((t) => t.id === titleId)) throw new ApiError(404, 'Title not found');
+    if (db.reviews.some((r) => r.titleId === titleId && r.author.id === MOCK_USER)) {
+      throw new ApiError(409, 'You have already reviewed this title');
+    }
     const review: Review = {
       id: newId('r'),
       titleId,
