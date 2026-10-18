@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MediaType } from '@bingemate/shared';
 import { titlesApi } from '../api/titles.js';
@@ -22,18 +23,28 @@ export function Browse() {
   const pageParam = Number(params.get('page'));
   const page = Number.isInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
 
-  const { state, reload } = useAsync(
+  const { state, reload, refreshing } = useAsync(
     () => titlesApi.search({ q, type, page, pageSize: PAGE_SIZE }),
     [q, type, page],
+    { keepPrevious: true }, // keeps focus on the Pagination button while the next page loads
   );
 
-  function update(next: { type?: MediaType | undefined; page?: number }) {
+  // A stale link (?page=99) lands on the last page instead of an empty grid
+  const outOfRange =
+    state.status === 'ready' && state.data.items.length === 0 && state.data.total > 0 && page > 1;
+  useEffect(() => {
+    if (outOfRange && state.status === 'ready') {
+      update({ page: Math.ceil(state.data.total / PAGE_SIZE) }, true);
+    }
+  }, [outOfRange]);
+
+  function update(next: { type?: MediaType | undefined; page?: number }, replace = false) {
     const p = new URLSearchParams();
     if (q) p.set('q', q);
     const t = 'type' in next ? next.type : type;
     if (t) p.set('type', t);
     if (next.page && next.page > 1) p.set('page', String(next.page));
-    setParams(p);
+    setParams(p, { replace });
   }
 
   return (
@@ -66,7 +77,9 @@ export function Browse() {
         {state.status === 'error' && (
           <StateMessage kind="error" detail="Titles could not be loaded." onRetry={reload} />
         )}
+        {outOfRange && <StateMessage kind="loading" />}
         {state.status === 'ready' &&
+          !outOfRange &&
           (state.data.items.length === 0 ? (
             <StateMessage
               kind="empty"
@@ -75,7 +88,12 @@ export function Browse() {
             />
           ) : (
             <>
-              <ul className="grid grid-cols-2 gap-5 sm:grid-cols-3 lg:grid-cols-5">
+              <ul
+                aria-busy={refreshing}
+                className={`grid grid-cols-2 gap-5 transition-opacity sm:grid-cols-3 lg:grid-cols-5 ${
+                  refreshing ? 'opacity-60' : ''
+                }`}
+              >
                 {state.data.items.map((t) => (
                   <li key={t.id}>
                     <PosterCard title={t}>

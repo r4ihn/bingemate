@@ -62,6 +62,13 @@ describe('Browse', () => {
     expect(await screen.findByText(/no titles match/i)).toBeInTheDocument();
   });
 
+  it('an out-of-range ?page lands on the last page instead of an empty grid', async () => {
+    renderBrowse('/browse?page=99');
+    expect(await screen.findAllByRole('listitem')).not.toHaveLength(0);
+    expect(screen.getByTestId('where')).toHaveTextContent('page=2');
+    expect(screen.queryByText(/no titles/i)).not.toBeInTheDocument();
+  });
+
   it('paginates with ?page and writes the new page to the URL', async () => {
     const u = renderBrowse('/browse');
     await u.click(await screen.findByRole('button', { name: 'Next' }));

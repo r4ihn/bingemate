@@ -8,6 +8,7 @@ import { TitleHero } from '../components/TitleHero.js';
 import { ReviewForm } from '../components/review/ReviewForm.js';
 import { ReviewList } from '../components/review/ReviewList.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { MEDIA_SECTION } from '../labels.js';
 import { NotFound } from './NotFound.js';
 
 // The layout lets this page run full-bleed, so non-hero states need their own padding
@@ -45,7 +46,7 @@ export function TitleDetail() {
     <>
       <TitleHero
         title={title}
-        breadcrumb={['Main', 'Films', title.name]}
+        breadcrumb={['Main', MEDIA_SECTION[title.mediaType], title.name]}
         scrollHint={{ label: 'Scroll for reviews ↓', href: '#reviews' }}
       />
       <section id="reviews" className="mx-auto max-w-[1100px] px-8 py-16">

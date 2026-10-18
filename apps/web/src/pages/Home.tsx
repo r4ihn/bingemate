@@ -3,20 +3,22 @@ import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Breadcrumb } from '../components/Breadcrumb.js';
 import { posterBackground } from '../components/MockPoster.js';
-import { TypeRails } from '../components/TypeRails.js';
 import { TitleHero } from '../components/TitleHero.js';
-import { db } from '../mocks/db.js';
-import { mockTitles } from '../mocks/titles.js';
+import { titlesApi } from '../api/titles.js';
+import { StateMessage } from '../components/StateMessage.js';
+import { TypeRails } from '../components/TypeRails.js';
+import { useAsync } from '../hooks/useAsync.js';
+import { MEDIA_SECTION } from '../labels.js';
 import type { TitleDetail } from '../types/title.js';
 
-// Temporary: SJ replaces these with trending data (TASKS.md section 6/8)
-const FEATURED = db.titles[1] as TitleDetail;
-const PERSON = 'Ines Calloway';
+// Temporary: until SJ's trending queries exist (TASKS.md section 6/8), the hero and strip show the
+// first approved titles from the titles API
+const STRIP_SIZE = 7;
 
 // Vertical offsets make the posters settle unevenly, as in the reference
 const OFFSETS = ['0px', '-30px', '-10px', '0px', '0px', '-34px', '0px'];
 
-function Strip() {
+function Strip({ titles, ghost }: { titles: TitleDetail[]; ghost: string }) {
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -43,15 +45,15 @@ function Strip() {
       ref={ref}
       className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black"
     >
-      <Breadcrumb items={['Main', 'Films', PERSON]} />
+      <Breadcrumb items={['Main', 'Trending now']} />
       <div
         aria-hidden="true"
         className="pointer-events-none absolute bottom-[-6vw] left-1/2 -translate-x-1/2 text-[27vw] leading-none font-medium tracking-[-0.06em] whitespace-nowrap text-ghost select-none"
       >
-        Calloway
+        {ghost}
       </div>
       <ul className="relative z-10 flex max-w-full items-end gap-[22px] overflow-x-auto px-6 pt-[60px] md:overflow-visible">
-        {mockTitles.map((t, i) => (
+        {titles.map((t, i) => (
           <li
             key={t.id}
             style={
@@ -66,7 +68,7 @@ function Strip() {
           >
             <Link
               to={`/titles/${t.id}`}
-              style={posterBackground(t.hue)}
+              style={posterBackground(t.hue ?? 210)}
               className="relative block h-[480px] w-[145px] translate-y-[var(--dy)] overflow-hidden rounded-lg brightness-75 grayscale transition-[translate,scale,filter] duration-300 hover:z-10 hover:-translate-y-[34px] hover:scale-105 hover:brightness-100 hover:grayscale-0 focus-visible:-translate-y-[34px] focus-visible:scale-105 focus-visible:brightness-100 focus-visible:grayscale-0"
             >
               <span className="absolute top-3 left-2.5 text-xs tracking-widest opacity-80">
@@ -84,14 +86,31 @@ function Strip() {
 }
 
 export function Home() {
+  const { state, reload } = useAsync(() => titlesApi.search({ pageSize: STRIP_SIZE + 1 }), []);
+
+  if (state.status !== 'ready' || state.data.items.length === 0) {
+    return (
+      <div className="mx-auto max-w-[1100px] px-8 pt-32 pb-16">
+        {state.status === 'loading' && <StateMessage kind="loading" />}
+        {state.status === 'error' && (
+          <StateMessage kind="error" detail="Titles could not be loaded." onRetry={reload} />
+        )}
+        {state.status === 'ready' && (
+          <StateMessage kind="empty" title="No titles yet" detail="Check back soon." />
+        )}
+      </div>
+    );
+  }
+
+  const [featured, ...rest] = state.data.items as [TitleDetail, ...TitleDetail[]];
   return (
     <>
       <TitleHero
-        title={FEATURED}
-        breadcrumb={['Main', 'Films', PERSON, FEATURED.name]}
-        scrollHint={{ label: 'Scroll for filmography ↓', href: '#strip' }}
+        title={featured}
+        breadcrumb={['Main', MEDIA_SECTION[featured.mediaType], featured.name]}
+        scrollHint={{ label: 'Scroll for more titles ↓', href: '#strip' }}
       />
-      <Strip />
+      <Strip titles={rest} ghost={featured.name.split(/[\s:]+/)[0] ?? featured.name} />
       <TypeRails />
     </>
   );

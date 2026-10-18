@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
-import { ListStatus, MediaType } from '@bingemate/shared';
+import type { MediaType } from '@bingemate/shared';
+import { ListStatus } from '@bingemate/shared';
 import { listsApi } from '../api/lists.js';
 import { ConfirmDialog } from '../components/ConfirmDialog.js';
 import { FilterPill } from '../components/FilterPill.js';
@@ -8,19 +9,13 @@ import { PosterCard } from '../components/PosterCard.js';
 import { StateMessage } from '../components/StateMessage.js';
 import { inputClass } from '../components/ui/inputClass.js';
 import { useAsync } from '../hooks/useAsync.js';
+import { MEDIA_FILTERS } from '../labels.js';
 import type { ListItem } from '../types/list.js';
 
 const TABS: { status: ListStatus; label: string }[] = [
   { status: ListStatus.COMPLETED, label: 'Completed' },
   { status: ListStatus.IN_PROGRESS, label: 'In progress' },
   { status: ListStatus.PLAN_TO, label: 'Plan to' },
-];
-
-const MEDIA: { value: MediaType | undefined; label: string }[] = [
-  { value: undefined, label: 'All' },
-  { value: MediaType.MOVIE, label: 'Movies' },
-  { value: MediaType.BOOK, label: 'Books' },
-  { value: MediaType.TV_SHOW, label: 'TV shows' },
 ];
 
 export function MyLists() {
@@ -113,7 +108,7 @@ export function MyLists() {
           ))}
         </nav>
         <nav aria-label="Media type" className="flex flex-wrap gap-2">
-          {MEDIA.map((m) => (
+          {MEDIA_FILTERS.map((m) => (
             <FilterPill
               key={m.label}
               active={mediaType === m.value}

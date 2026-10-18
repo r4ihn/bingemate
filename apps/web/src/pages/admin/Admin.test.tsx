@@ -124,6 +124,14 @@ describe('UsersTable', () => {
     expect(db.users.find((x) => x.id === 'user-3')?.role).toBe(Role.CREATOR);
   });
 
+  it("an admin's own role cannot be changed from the table", async () => {
+    db.users[2] = { ...db.users[2]!, id: 'test-user' }; // the signed-in admin in renderWithProviders
+    renderAdmin('/admin/users');
+    const own = await screen.findByLabelText(`Role for ${db.users[2]!.email}`);
+    expect(own).toBeDisabled();
+    expect(screen.getByLabelText('Role for user1@mock.dev')).toBeEnabled();
+  });
+
   it('a failed role change rolls back and shows an error', async () => {
     vi.spyOn(adminApi, 'setRole').mockRejectedValue(new ApiError(500, 'boom'));
     const u = renderAdmin('/admin/users');

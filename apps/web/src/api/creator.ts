@@ -38,14 +38,14 @@ export const creatorApi = {
     return clone(toSubmission(title));
   },
 
-  /** Editing an APPROVED title sends it back to PENDING (TASKS.md section 0). */
+  /** Editing an APPROVED title sends it back to PENDING (TASKS.md section 0); editing a REJECTED one resubmits it. */
   async update(id: string, input: Partial<SubmissionInput>): Promise<Submission> {
     if (!useMock) notWired('creator endpoints (JW)');
     await delay();
     const title = own().find((t) => t.id === id);
     if (!title) throw new ApiError(404, 'Title not found');
     Object.assign(title, input);
-    if (title.status === TitleStatus.APPROVED) title.status = TitleStatus.PENDING;
+    if (title.status !== TitleStatus.PENDING) title.status = TitleStatus.PENDING;
     title.rejectionReason = undefined;
     return clone(toSubmission(title));
   },

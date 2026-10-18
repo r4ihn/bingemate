@@ -6,6 +6,7 @@ import { Pagination } from '../../components/Pagination.js';
 import { StateMessage } from '../../components/StateMessage.js';
 import { Table, Td } from '../../components/ui/Table.js';
 import { inputClass } from '../../components/ui/inputClass.js';
+import { useAuth } from '../../auth/AuthContext.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import type { AdminUser } from '../../types/admin.js';
 
@@ -16,6 +17,7 @@ const ROLE_LABEL: Record<Role, string> = {
 };
 
 export function UsersTable() {
+  const { user: me } = useAuth();
   const [page, setPage] = useState(1);
   const { state, reload } = useAsync(() => adminApi.users(page), [page]);
   // Roles shown before the server confirms. Each user's requests are numbered so a late failure of an
@@ -71,6 +73,8 @@ export function UsersTable() {
               <select
                 aria-label={`Role for ${u.email}`}
                 value={overrides[u.id] ?? u.role}
+                disabled={u.id === me?.id}
+                title={u.id === me?.id ? 'You cannot change your own role' : undefined}
                 onChange={(e) => requestRole(u, e.target.value as Role)}
                 className={`${inputClass} py-2 text-sm`}
               >

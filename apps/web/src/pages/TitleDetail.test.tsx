@@ -135,3 +135,12 @@ describe('TitleDetail', () => {
     expect(screen.queryByRole('button', { name: 'Reply' })).not.toBeInTheDocument();
   });
 });
+
+describe('TitleDetail breadcrumb', () => {
+  it('names the media section after the title type, not always Films', async () => {
+    renderTitle('mock-9'); // a BOOK in the seed data
+    const crumbs = await screen.findByRole('navigation', { name: 'Breadcrumb' });
+    expect(within(crumbs).getByText('Books')).toBeInTheDocument();
+    expect(within(crumbs).queryByText('Films')).not.toBeInTheDocument();
+  });
+});

@@ -13,3 +13,10 @@ export const MEDIA_FILTERS: { value: MediaType | undefined; label: string }[] = 
   { value: MediaType.TV_SHOW, label: 'TV' },
   { value: MediaType.BOOK, label: 'Books' },
 ];
+
+/** Breadcrumb section for each media type. */
+export const MEDIA_SECTION: Record<MediaType, string> = {
+  [MediaType.MOVIE]: 'Films',
+  [MediaType.TV_SHOW]: 'TV shows',
+  [MediaType.BOOK]: 'Books',
+};

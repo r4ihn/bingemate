@@ -20,6 +20,16 @@ describe('creatorApi', () => {
     expect(updated.title.status).toBe(TitleStatus.PENDING);
   });
 
+  it('editing a REJECTED title resubmits it as PENDING and clears the reason', async () => {
+    const rejected = db.titles.find(
+      (t) => t.status === TitleStatus.REJECTED && t.createdBy === 'mock-user',
+    );
+    expect(rejected).toBeDefined();
+    const updated = await creatorApi.update(rejected!.id, { name: 'Fixed poster' });
+    expect(updated.title.status).toBe(TitleStatus.PENDING);
+    expect(updated.rejectionReason).toBeUndefined();
+  });
+
   it('submit saves a new title as PENDING', async () => {
     const s = await creatorApi.submit({
       name: 'New One',

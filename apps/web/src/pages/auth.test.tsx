@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
 import type { AuthUser } from '@bingemate/shared';
 import { authApi } from '../api/auth.js';
@@ -11,6 +11,11 @@ import { Login } from './Login.js';
 import { Register } from './Register.js';
 
 const user: AuthUser = { id: 'u1', email: 'a@b.co', role: Role.CONSUMER };
+
+function Where() {
+  const { pathname, search, hash } = useLocation();
+  return <p data-testid="where">{pathname + search + hash}</p>;
+}
 
 function routes() {
   return (
@@ -62,6 +67,23 @@ describe('Login', () => {
     const u = await fill('a@b.co', 'whatever1');
     await u.click(screen.getByRole('button', { name: 'Log in' }));
     await waitFor(() => expect(screen.getByText('lists page')).toBeInTheDocument());
+  });
+
+  it('keeps the query string and hash of the stored "from" location', async () => {
+    vi.spyOn(authApi, 'login').mockResolvedValue(user);
+    renderWithProviders(
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/browse" element={<Where />} />
+      </Routes>,
+      {
+        route: '/login',
+        state: { from: { pathname: '/browse', search: '?q=salt', hash: '#top' } },
+      },
+    );
+    const u = await fill('a@b.co', 'whatever1');
+    await u.click(screen.getByRole('button', { name: 'Log in' }));
+    expect(await screen.findByTestId('where')).toHaveTextContent('/browse?q=salt#top');
   });
 
   it('disables the submit button while the request is pending', async () => {

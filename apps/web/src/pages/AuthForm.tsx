@@ -28,7 +28,12 @@ export function AuthForm({
   const { signIn } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const from = (location.state as { from?: { pathname?: string } } | null)?.from?.pathname ?? '/';
+  const fromState = (
+    location.state as { from?: { pathname?: string; search?: string; hash?: string } } | null
+  )?.from;
+  const from = fromState?.pathname
+    ? `${fromState.pathname}${fromState.search ?? ''}${fromState.hash ?? ''}`
+    : '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

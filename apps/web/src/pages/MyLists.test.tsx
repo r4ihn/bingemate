@@ -150,3 +150,15 @@ describe('MyLists regressions from the final review', () => {
     expect(screen.queryByLabelText('Status for Last Light')).not.toBeInTheDocument();
   });
 });
+
+describe('MyLists media filter', () => {
+  it('uses the same media labels as Browse and the nav search', async () => {
+    setup();
+    const nav = await screen.findByRole('navigation', { name: 'Media type' });
+    expect(
+      within(nav)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['All', 'Movies', 'TV', 'Books']);
+  });
+});
