@@ -1,5 +1,6 @@
 import type { Paginated } from '@bingemate/shared';
 import { db, getMockActor, newId } from '../mocks/db.js';
+import { MAX_RATING } from '../rating.js';
 import type { Comment, Review, ReviewInput } from '../types/review.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
@@ -25,8 +26,8 @@ export const reviewsApi = {
   async create(titleId: string, input: ReviewInput): Promise<Review> {
     if (!useMock) notWired('review endpoints (HS)');
     await delay();
-    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > 10) {
-      throw new ApiError(400, 'Rating must be a whole number from 1 to 10');
+    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) {
+      throw new ApiError(400, `Rating must be a whole number from 1 to ${MAX_RATING}`);
     }
     if (!db.titles.some((t) => t.id === titleId)) throw new ApiError(404, 'Title not found');
     if (db.reviews.some((r) => r.titleId === titleId && r.author.id === getMockActor().id)) {

@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
+import type userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import type { AuthUser, Role } from '@bingemate/shared';
 import { AuthTestProvider } from '../auth/AuthContext.js';
@@ -24,4 +25,9 @@ export function renderWithProviders(
       <MemoryRouter initialEntries={[{ pathname, search, state: opts.state }]}>{ui}</MemoryRouter>
     </AuthTestProvider>,
   );
+}
+
+/** Clicks the n-star radio of the review form's star rating. */
+export async function rate(user: ReturnType<typeof userEvent.setup>, n: number): Promise<void> {
+  await user.click(screen.getByRole('radio', { name: `${n} ${n === 1 ? 'star' : 'stars'}` }));
 }

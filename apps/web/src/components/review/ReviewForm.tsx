@@ -10,7 +10,9 @@ import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
 import { Panel } from '../ui/Panel.js';
 import { inputClass } from '../ui/inputClass.js';
+import { MAX_RATING } from '../../rating.js';
 import { fieldConfig } from './fieldConfig.js';
+import { StarRating } from './StarRating.js';
 
 const WHOLE = /^\d+$/;
 const whole = (v: string): number | null => (WHOLE.test(v.trim()) ? Number(v.trim()) : null);
@@ -29,7 +31,7 @@ function LoginPrompt() {
 function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Review) => void }) {
   const location = useLocation();
   const config = fieldConfig[title.mediaType];
-  const [rating, setRating] = useState('');
+  const [rating, setRating] = useState(0);
   const [body, setBody] = useState('');
   const [media, setMedia] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -42,8 +44,9 @@ function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Re
     if (inFlight.current) return;
 
     const found: Record<string, string> = {};
-    const r = whole(rating);
-    if (r === null || r < 1 || r > 10) found.rating = 'Rating must be a whole number from 1 to 10';
+    if (rating < 1 || rating > MAX_RATING) {
+      found.rating = `Choose a rating from 1 to ${MAX_RATING} stars`;
+    }
     if (!body.trim()) found.body = 'Write something about this title before posting';
     for (const f of config) {
       const n = whole(media[f.name] ?? '');
@@ -61,11 +64,11 @@ function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Re
         config.map((f) => [f.name, Number(media[f.name])]),
       ) as unknown as ReviewFields;
       const review = await reviewsApi.create(title.id, {
-        rating: r as number,
+        rating,
         body: body.trim(),
         fields,
       });
-      setRating('');
+      setRating(0);
       setBody('');
       setMedia({});
       onSubmitted(review);
@@ -85,14 +88,7 @@ function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Re
     <Panel>
       <h3 className="text-xl font-semibold tracking-tight">Write a review</h3>
       <form onSubmit={(e) => void onSubmit(e)} noValidate className="mt-4 grid gap-4">
-        <Field label="Rating (1–10)" error={errors.rating}>
-          <input
-            inputMode="numeric"
-            value={rating}
-            onChange={(e) => setRating(e.target.value)}
-            className={inputClass}
-          />
-        </Field>
+        <StarRating value={rating} onChange={setRating} error={errors.rating} />
         {config.map((f) => (
           <Field key={f.name} label={f.label} error={errors[f.name]}>
             <input

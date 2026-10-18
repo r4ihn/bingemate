@@ -8,13 +8,13 @@ export interface MockTitle extends TitleSummary {
 }
 
 export const mockTitles: MockTitle[] = [
-  ['Last Light', 2016, 210, 8.1, MediaType.MOVIE],
-  ['Last Light: Part Two', 2024, 25, 9.6, MediaType.MOVIE],
-  ['Ember Run', 2021, 275, 7.8, MediaType.MOVIE],
-  ['Isone', 2013, 200, 7.4, MediaType.MOVIE],
-  ['Hollow City', 2014, 190, 8.0, MediaType.MOVIE],
-  ['Neon Blade', 2017, 335, 8.3, MediaType.MOVIE],
-  ['Cartel', 2015, 40, 7.6, MediaType.MOVIE],
+  ['Last Light', 2016, 210, 4.1, MediaType.MOVIE],
+  ['Last Light: Part Two', 2024, 25, 4.8, MediaType.MOVIE],
+  ['Ember Run', 2021, 275, 3.9, MediaType.MOVIE],
+  ['Isone', 2013, 200, 3.7, MediaType.MOVIE],
+  ['Hollow City', 2014, 190, 4.0, MediaType.MOVIE],
+  ['Neon Blade', 2017, 335, 4.2, MediaType.MOVIE],
+  ['Cartel', 2015, 40, 3.8, MediaType.MOVIE],
 ].map(([name, year, hue, avgRating, mediaType], i) => ({
   id: `mock-${i + 1}`,
   name: name as string,

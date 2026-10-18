@@ -79,6 +79,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Comment endpoints: list, reply, delete
 - [ ] Creator official reply: one per review, only by the creator who owns the title; stored with `isOfficial: true` and returned pinned first
 - [ ] Return the author's role with reviews/comments so the UI can show the Creator badge
+- [ ] **Rating scale is whole stars, 1 to 5** (decided by WH, 2026-10-18; the UI and mock API already use it). `reviews.rating` needs a `CHECK (rating BETWEEN 1 AND 5)`, validation must reject anything else, and `avgRating` is on the same 1 to 5 scale. Convert the review datasets to 1 to 5 when loading them *(HS, SJ)*
 
 ## 6. Search, filtering, trending queries (SJ, Week 9–10)
 

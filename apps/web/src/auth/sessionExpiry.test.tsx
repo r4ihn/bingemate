@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { rate } from '../test/utils.js';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -16,7 +17,7 @@ const movie = {
   name: 'Quiet Orbit',
   mediaType: MediaType.MOVIE,
   status: TitleStatus.APPROVED,
-  avgRating: 7,
+  avgRating: 4,
   reviewCount: 0,
 };
 
@@ -54,7 +55,8 @@ describe('a 401 while posting (real session-clearing path)', () => {
     );
     renderWithRealAuth(<ReviewForm title={movie} onSubmitted={vi.fn()} />);
     const u = userEvent.setup();
-    await u.type(await screen.findByLabelText(/^Rating/), '8');
+    await screen.findByRole('radio', { name: '4 stars' });
+    await rate(u, 4);
     await u.type(screen.getByLabelText('Runtime watched (minutes)'), '100');
     await u.type(screen.getByLabelText('Your review'), 'Worth the wait');
     await u.click(screen.getByRole('button', { name: 'Post review' }));

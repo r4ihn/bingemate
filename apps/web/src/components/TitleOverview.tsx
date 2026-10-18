@@ -38,6 +38,7 @@ export function TitleOverview({ title, breadcrumb }: { title: TitleDetail; bread
             <Pill filled>
               <strong className="font-bold tracking-tight">BingeMate</strong>{' '}
               <span className="text-lg font-bold">{formatRating(title.avgRating)}</span>
+              <span className="text-xs">/ 5</span>
             </Pill>
             <span className="hidden text-sm text-muted md:inline">
               {title.reviewCount} {title.reviewCount === 1 ? 'review' : 'reviews'}

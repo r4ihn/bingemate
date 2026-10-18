@@ -46,7 +46,7 @@ describe('delete controls', () => {
       id: 'r-own',
       titleId: 'mock-20',
       author: me,
-      rating: 8,
+      rating: 4,
       body: 'My own take',
       fields: { runtimeMinutes: 100 },
       createdAt: new Date().toISOString(),

@@ -8,7 +8,7 @@ import { ApiError } from '../api/client.js';
 import { titlesApi } from '../api/titles.js';
 import { resetDb } from '../mocks/db.js';
 import type { Comment } from '../types/review.js';
-import { renderWithProviders } from '../test/utils.js';
+import { rate, renderWithProviders } from '../test/utils.js';
 import { TitleDetail } from './TitleDetail.js';
 
 function renderTitle(id: string, role?: Role) {
@@ -30,7 +30,7 @@ describe('TitleDetail', () => {
     expect(
       await screen.findByRole('heading', { level: 1, name: 'Last Light' }),
     ).toBeInTheDocument();
-    expect(screen.getByText('8.1')).toBeInTheDocument();
+    expect(screen.getByText('4.1')).toBeInTheDocument();
   });
 
   it('shows an empty state when there are no reviews', async () => {
@@ -120,7 +120,7 @@ describe('TitleDetail', () => {
     renderTitle('mock-20', Role.CONSUMER);
     await screen.findByText('No reviews yet');
     const u = userEvent.setup();
-    await u.type(screen.getByLabelText(/^Rating/), '9');
+    await rate(u, 5);
     await u.type(screen.getByLabelText('Your review'), 'A fresh take');
     await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
     await u.click(screen.getByRole('button', { name: 'Post review' }));
@@ -167,7 +167,7 @@ describe('TitleDetail layout', () => {
     const facts = screen.getByText('Studio').closest('dl') as HTMLElement;
     expect(within(facts).getByText('Country')).toBeInTheDocument();
     expect(within(facts).getByText('Runtime')).toBeInTheDocument();
-    expect(screen.getByText('8.1')).toBeInTheDocument();
+    expect(screen.getByText('4.1')).toBeInTheDocument();
     expect(screen.getByText(/\d+ reviews?/)).toBeInTheDocument();
   });
 

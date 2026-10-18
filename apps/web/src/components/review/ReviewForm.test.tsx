@@ -6,11 +6,11 @@ import type { TitleSummary } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
 import { reviewsApi } from '../../api/reviews.js';
 import { resetDb } from '../../mocks/db.js';
-import { renderWithProviders } from '../../test/utils.js';
+import { rate, renderWithProviders } from '../../test/utils.js';
 import type { Review } from '../../types/review.js';
 import { ReviewForm } from './ReviewForm.js';
 
-const base = { id: 'mock-20', status: TitleStatus.APPROVED, avgRating: 7, reviewCount: 0 };
+const base = { id: 'mock-20', status: TitleStatus.APPROVED, avgRating: 4, reviewCount: 0 };
 const movie: TitleSummary = { ...base, name: 'Quiet Orbit', mediaType: MediaType.MOVIE };
 const tv: TitleSummary = { ...base, name: 'Harbour Nine', mediaType: MediaType.TV_SHOW };
 
@@ -18,7 +18,7 @@ const fake: Review = {
   id: 'r1',
   titleId: 'mock-20',
   author: { id: 'mock-user', name: 'You', role: Role.CONSUMER },
-  rating: 8,
+  rating: 4,
   body: 'Great',
   fields: { runtimeMinutes: 100 },
   createdAt: new Date().toISOString(),
@@ -33,9 +33,9 @@ function setup(title = movie, onSubmitted = vi.fn()) {
 
 async function fill(
   user: ReturnType<typeof userEvent.setup>,
-  { rating = '8', body = 'Great', media = '100' } = {},
+  { rating = 4 as number | null, body = 'Great', media = '100' } = {},
 ) {
-  if (rating) await user.type(screen.getByLabelText(/^Rating/), rating);
+  if (rating) await rate(user, rating);
   if (body) await user.type(screen.getByLabelText('Your review'), body);
   if (media) await user.type(screen.getByLabelText('Runtime watched (minutes)'), media);
 }
@@ -66,17 +66,19 @@ describe('ReviewForm', () => {
     expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
   });
 
-  it.each(['0', '11', '', 'abc', '5.5'])(
-    'rating %j shows an error and does not call the API',
-    async (rating) => {
-      const create = vi.spyOn(reviewsApi, 'create');
-      const { user } = setup();
-      await fill(user, { rating });
-      await user.click(screen.getByRole('button', { name: 'Post review' }));
-      expect(create).not.toHaveBeenCalled();
-      expect(screen.getByRole('alert')).toHaveTextContent(/rating/i);
-    },
-  );
+  it('asks for a rating when no star is chosen and does not call the API', async () => {
+    const create = vi.spyOn(reviewsApi, 'create');
+    const { user } = setup();
+    await fill(user, { rating: null });
+    await user.click(screen.getByRole('button', { name: 'Post review' }));
+    expect(create).not.toHaveBeenCalled();
+    expect(screen.getByRole('alert')).toHaveTextContent('Choose a rating from 1 to 5 stars');
+  });
+
+  it('offers five stars, one to five', () => {
+    setup();
+    expect(screen.getAllByRole('radio', { name: /star/ })).toHaveLength(5);
+  });
 
   it('does not call the API when the review text is empty', async () => {
     const create = vi.spyOn(reviewsApi, 'create');
@@ -109,11 +111,11 @@ describe('ReviewForm', () => {
 
   it('submits the typed values, calls onSubmitted and clears the form', async () => {
     const { onSubmitted, user } = setup();
-    await fill(user, { rating: '9', body: 'Loved it', media: '120' });
+    await fill(user, { rating: 5, body: 'Loved it', media: '120' });
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     await vi.waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
     expect(onSubmitted.mock.calls[0]?.[0]).toMatchObject({
-      rating: 9,
+      rating: 5,
       body: 'Loved it',
       fields: { runtimeMinutes: 120 },
     });

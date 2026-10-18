@@ -68,7 +68,7 @@ export function Moderation() {
                   </Link>
                 </Td>
                 <Td>{r.author.name}</Td>
-                <Td>{r.rating}/10</Td>
+                <Td>{r.rating}/5</Td>
                 <Td className="max-w-xs truncate text-muted">{r.body}</Td>
                 <Td>
                   <Button

@@ -10,6 +10,7 @@ import { Pagination } from '../Pagination.js';
 import { StateMessage } from '../StateMessage.js';
 import { Badge } from '../ui/Badge.js';
 import { CommentThread } from './CommentThread.js';
+import { StarsDisplay } from './StarRating.js';
 
 function describeFields(fields: ReviewFields | undefined): string {
   if (!fields) return '';
@@ -44,9 +45,7 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
       <header className="flex flex-wrap items-center gap-3">
         <strong className="font-semibold">{review.author.name}</strong>
         {review.author.role === Role.CREATOR && <Badge tone="creator">Creator</Badge>}
-        <span className="rounded-full bg-accent px-3 py-1 text-sm font-semibold text-accent-ink">
-          ★ {review.rating}/10
-        </span>
+        <StarsDisplay value={review.rating} />
         <time dateTime={review.createdAt} className="ml-auto text-sm text-muted">
           {new Date(review.createdAt).toLocaleDateString()}
         </time>

@@ -14,7 +14,7 @@ describe('ReviewList with unexpected data', () => {
       id: 'r-odd',
       titleId: 't1',
       author: { id: 'a', name: 'someone', role: Role.CONSUMER },
-      rating: 7,
+      rating: 4,
       body: 'Odd one',
       fields: {},
       createdAt: new Date().toISOString(),
@@ -28,5 +28,27 @@ describe('ReviewList with unexpected data', () => {
     renderWithProviders(<ReviewList titleId="t1" />);
     await screen.findByText('Odd one');
     expect(document.body.textContent).not.toMatch(/undefined/);
+  });
+
+  it('shows a review rating as stars out of five, not as a number out of ten', async () => {
+    const review = {
+      id: 'r-stars',
+      titleId: 't1',
+      author: { id: 'a', name: 'someone', role: Role.CONSUMER },
+      rating: 4,
+      body: 'Four stars',
+      fields: { runtimeMinutes: 90 },
+      createdAt: new Date().toISOString(),
+    } as Review;
+    vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({
+      data: [review],
+      page: 1,
+      pageSize: 5,
+      total: 1,
+    });
+    renderWithProviders(<ReviewList titleId="t1" />);
+    await screen.findByText('Four stars');
+    expect(screen.getByRole('img', { name: '4 out of 5 stars' })).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/\d\/10(?!\/)/);
   });
 });
