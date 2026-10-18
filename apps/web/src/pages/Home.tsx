@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Breadcrumb } from '../components/Breadcrumb.js';
 import { posterBackground } from '../components/MockPoster.js';
+import { TypeRails } from '../components/TypeRails.js';
 import { TitleHero } from '../components/TitleHero.js';
 import { db } from '../mocks/db.js';
 import { mockTitles } from '../mocks/titles.js';
@@ -91,6 +92,7 @@ export function Home() {
         scrollHint={{ label: 'Scroll for filmography ↓', href: '#strip' }}
       />
       <Strip />
+      <TypeRails />
     </>
   );
 }
