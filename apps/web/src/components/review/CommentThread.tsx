@@ -4,6 +4,7 @@ import { Role } from '@bingemate/shared';
 import { commentsApi } from '../../api/reviews.js';
 import { ApiError } from '../../api/client.js';
 import { useAuth } from '../../auth/AuthContext.js';
+import { useCanWrite } from '../../auth/useCanWrite.js';
 import { canDelete } from '../../auth/permissions.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import type { Comment } from '../../types/review.js';
@@ -91,8 +92,8 @@ function CommentView({ comment, onDelete }: { comment: Comment; onDelete?: () =>
 
 /** One level of replies: top-level comments can be replied to, replies cannot (TASKS.md section 0). */
 export function CommentThread({ reviewId }: { reviewId: string }) {
-  const { user, sessionExpired } = useAuth();
-  const canPost = user !== null || sessionExpired; // keep drafts if a 401 clears the session
+  const { user } = useAuth();
+  const canPost = useCanWrite(reviewId);
   const { state, reload } = useAsync(() => commentsApi.list(reviewId), [reviewId]);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<Comment | null>(null);

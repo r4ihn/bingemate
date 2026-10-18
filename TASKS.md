@@ -78,8 +78,10 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Review endpoints: list by title, create, update, delete
 - [ ] Comment endpoints: list, reply, delete
 - [ ] Creator official reply: one per review, only by the creator who owns the title; stored with `isOfficial: true` and returned pinned first
+  - [ ] The comments list endpoint returns the final order itself: official replies first, then oldest first. The web UI only groups replies under their parent and does not re-sort *(HS)*
 - [ ] Return the author's role with reviews/comments so the UI can show the Creator badge
 - [ ] **Rating scale is whole stars, 1 to 5** (decided by WH, 2026-10-18; the UI and mock API already use it). `reviews.rating` needs a `CHECK (rating BETWEEN 1 AND 5)`, validation must reject anything else, and `avgRating` is on the same 1 to 5 scale. Convert the review datasets to 1 to 5 when loading them *(HS, SJ)*
+- [ ] `GET /titles/:id/reviews/mine` returns the signed-in user's review of the title, or `null`. The review form calls it to show "You have already reviewed this title" instead of a form that would end in a 409; if it fails the form still shows *(HS)*
 
 ## 6. Search, filtering, trending queries (SJ, Week 9–10)
 

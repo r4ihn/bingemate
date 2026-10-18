@@ -81,7 +81,14 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
   );
 }
 
-export function ReviewList({ titleId }: { titleId: string }) {
+export function ReviewList({
+  titleId,
+  onDeleted,
+}: {
+  titleId: string;
+  /** Called after a review is deleted, so the page can refresh the totals and the review form. */
+  onDeleted?: () => void;
+}) {
   const [page, setPage] = useState(1);
   const { state, reload } = useAsync(() => reviewsApi.listByTitle(titleId, page), [titleId, page]);
 
@@ -106,7 +113,11 @@ export function ReviewList({ titleId }: { titleId: string }) {
           <li key={r.id}>
             <ReviewCard
               review={r}
-              onDeleted={() => (data.length === 1 && page > 1 ? setPage(page - 1) : reload())}
+              onDeleted={() => {
+                if (data.length === 1 && page > 1) setPage(page - 1);
+                else reload();
+                onDeleted?.();
+              }}
             />
           </li>
         ))}

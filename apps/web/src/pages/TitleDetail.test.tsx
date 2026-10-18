@@ -6,7 +6,7 @@ import { Role } from '@bingemate/shared';
 import { commentsApi } from '../api/reviews.js';
 import { ApiError } from '../api/client.js';
 import { titlesApi } from '../api/titles.js';
-import { resetDb } from '../mocks/db.js';
+import { db, resetDb } from '../mocks/db.js';
 import type { Comment } from '../types/review.js';
 import { rate, renderWithProviders } from '../test/utils.js';
 import { TitleDetail } from './TitleDetail.js';
@@ -133,6 +133,75 @@ describe('TitleDetail', () => {
     await screen.findByText('Great pacing in the second half.');
     expect(screen.queryByLabelText('Add a comment')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Reply' })).not.toBeInTheDocument();
+  });
+});
+
+describe('TitleDetail when the reviews change', () => {
+  const countText = () => screen.getByText(/^\d+ reviews?$/).textContent;
+  const mine = (titleId: string) => ({
+    id: 'r-mine',
+    titleId,
+    author: { id: 'test-user', name: 'You', role: Role.CONSUMER },
+    rating: 4,
+    body: 'My own take',
+    fields: { runtimeMinutes: 100 },
+    createdAt: new Date().toISOString(),
+  });
+
+  it('posting a review raises the review count and average in the overview', async () => {
+    const title = db.titles.find((t) => t.id === 'mock-20')!;
+    Object.assign(title, { avgRating: 3, reviewCount: 4 });
+    renderTitle('mock-20', Role.CONSUMER);
+    await screen.findByText('No reviews yet');
+    expect(countText()).toBe('4 reviews');
+    const u = userEvent.setup();
+    await rate(u, 5);
+    await u.type(screen.getByLabelText('Your review'), 'A fresh take');
+    await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
+    await u.click(screen.getByRole('button', { name: 'Post review' }));
+    await screen.findByText('A fresh take');
+    await waitFor(() => expect(countText()).toBe('5 reviews'));
+    expect(screen.getByText('3.4')).toBeInTheDocument(); // (3 * 4 + 5) / 5
+  });
+
+  it('after posting, the form gives way to a message that the user has reviewed this title', async () => {
+    renderTitle('mock-20', Role.CONSUMER);
+    await screen.findByText('No reviews yet');
+    const u = userEvent.setup();
+    await rate(u, 5);
+    await u.type(screen.getByLabelText('Your review'), 'A fresh take');
+    await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
+    await u.click(screen.getByRole('button', { name: 'Post review' }));
+    expect(await screen.findByText(/You have already reviewed this title/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
+  });
+
+  it('deleting your review lowers the count and brings the form back', async () => {
+    const title = db.titles.find((t) => t.id === 'mock-20')!;
+    Object.assign(title, { avgRating: 4, reviewCount: 1 });
+    db.reviews.push(mine('mock-20'));
+    renderTitle('mock-20', Role.CONSUMER);
+    await screen.findByText('My own take');
+    expect(screen.getByText(/You have already reviewed this title/)).toBeInTheDocument();
+    const u = userEvent.setup();
+    await u.click(screen.getByRole('button', { name: 'Delete review by You' }));
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
+    await waitFor(() => expect(countText()).toBe('0 reviews'));
+    expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
+  });
+
+  it('still lets a user who already reviewed reply to comments more than once', async () => {
+    db.reviews.push(mine('mock-1'));
+    renderTitle('mock-1', Role.CONSUMER);
+    await screen.findByText('Great pacing in the second half.');
+    const u = userEvent.setup();
+    const [form] = screen.getAllByLabelText('Add a comment') as HTMLElement[];
+    for (const text of ['First comment', 'Second comment']) {
+      await u.type(form as HTMLElement, text);
+      const card = (form as HTMLElement).closest('article') as HTMLElement;
+      await u.click(within(card).getByRole('button', { name: 'Post comment' }));
+      await screen.findByText(text);
+    }
   });
 });
 

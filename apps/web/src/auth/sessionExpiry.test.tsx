@@ -35,11 +35,13 @@ function renderWithRealAuth(ui: React.ReactElement) {
       ),
     ),
   );
-  render(
+  const wrap = (el: React.ReactElement) => (
     <AuthProvider>
-      <MemoryRouter>{ui}</MemoryRouter>
-    </AuthProvider>,
+      <MemoryRouter>{el}</MemoryRouter>
+    </AuthProvider>
   );
+  const view = render(wrap(ui));
+  return { show: (el: React.ReactElement) => view.rerender(wrap(el)) };
 }
 
 beforeEach(() => resetDb());
@@ -78,5 +80,46 @@ describe('a 401 while posting (real session-clearing path)', () => {
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/session has expired/i);
     expect(screen.getByLabelText('Add a comment')).toHaveValue('Almost posted this');
+  });
+});
+
+describe('after the session has expired', () => {
+  const other = { ...movie, id: 'mock-21', name: 'Other Title' };
+
+  it('another title shows "Log in to review" instead of a form that is bound to fail', async () => {
+    vi.spyOn(reviewsApi, 'create').mockImplementation(() =>
+      apiFetch('/reviews', { method: 'POST' }),
+    );
+    const { show } = renderWithRealAuth(<ReviewForm title={movie} onSubmitted={vi.fn()} />);
+    const u = userEvent.setup();
+    await screen.findByRole('radio', { name: '4 stars' });
+    await rate(u, 4);
+    await u.type(screen.getByLabelText('Runtime watched (minutes)'), '100');
+    await u.type(screen.getByLabelText('Your review'), 'Worth the wait');
+    await u.click(screen.getByRole('button', { name: 'Post review' }));
+    await screen.findByRole('alert');
+
+    show(<ReviewForm title={other} onSubmitted={vi.fn()} />);
+    expect(screen.getByRole('link', { name: 'Log in to review' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
+
+    show(<ReviewForm title={movie} onSubmitted={vi.fn()} />);
+    expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument(); // the old draft is gone too
+  });
+
+  it('comments on another review show no comment box', async () => {
+    vi.spyOn(commentsApi, 'reply').mockImplementation(() =>
+      apiFetch('/comments', { method: 'POST' }),
+    );
+    const { show } = renderWithRealAuth(<CommentThread reviewId="r-mock-1-0" />);
+    const u = userEvent.setup();
+    await u.type(await screen.findByLabelText('Add a comment'), 'Almost posted this');
+    await u.click(screen.getByRole('button', { name: 'Post comment' }));
+    await screen.findByRole('alert');
+
+    show(<CommentThread reviewId="r-mock-1-1" />);
+    await screen.findByText('Loading comments…');
+    await vi.waitFor(() => expect(screen.queryByText('Loading comments…')).not.toBeInTheDocument());
+    expect(screen.queryByLabelText('Add a comment')).not.toBeInTheDocument();
   });
 });

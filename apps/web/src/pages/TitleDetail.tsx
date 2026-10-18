@@ -21,6 +21,12 @@ export function TitleDetail() {
   const { state, reload } = useAsync(() => titlesApi.get(id), [id]);
   // Bumping this remounts ReviewList so a new review shows up (and the list returns to page 1)
   const [reviewsVersion, setReviewsVersion] = useState(0);
+  // Bumped on every post or delete; tells the review form to check again whether the user has reviewed
+  const [changes, setChanges] = useState(0);
+  const reviewsChanged = () => {
+    setChanges((v) => v + 1);
+    reload(); // the average and review count in the overview
+  };
 
   if (state.status === 'loading') {
     return (
@@ -54,9 +60,16 @@ export function TitleDetail() {
       >
         <h2 className="mb-6 text-2xl font-semibold tracking-tight">Reviews</h2>
         <div className="mb-8">
-          <ReviewForm title={title} onSubmitted={() => setReviewsVersion((v) => v + 1)} />
+          <ReviewForm
+            title={title}
+            version={changes}
+            onSubmitted={() => {
+              setReviewsVersion((v) => v + 1);
+              reviewsChanged();
+            }}
+          />
         </div>
-        <ReviewList key={reviewsVersion} titleId={title.id} />
+        <ReviewList key={reviewsVersion} titleId={title.id} onDeleted={reviewsChanged} />
       </section>
     </>
   );

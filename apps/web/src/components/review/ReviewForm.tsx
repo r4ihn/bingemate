@@ -5,6 +5,8 @@ import type { TitleSummary } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
 import { reviewsApi } from '../../api/reviews.js';
 import { useAuth } from '../../auth/AuthContext.js';
+import { useCanWrite } from '../../auth/useCanWrite.js';
+import { useAsync } from '../../hooks/useAsync.js';
 import type { Review, ReviewFields } from '../../types/review.js';
 import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
@@ -12,7 +14,7 @@ import { Panel } from '../ui/Panel.js';
 import { inputClass } from '../ui/inputClass.js';
 import { MAX_RATING } from '../../rating.js';
 import { fieldConfig } from './fieldConfig.js';
-import { StarRating } from './StarRating.js';
+import { StarRating, StarsDisplay } from './StarRating.js';
 
 const WHOLE = /^\d+$/;
 const whole = (v: string): number | null => (WHOLE.test(v.trim()) ? Number(v.trim()) : null);
@@ -131,19 +133,43 @@ function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Re
   );
 }
 
+function AlreadyReviewed({ review }: { review: Review }) {
+  return (
+    <Panel>
+      <h3 className="text-xl font-semibold tracking-tight">Your review</h3>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <StarsDisplay value={review.rating} />
+        <p>You have already reviewed this title.</p>
+      </div>
+      <p className="mt-2 text-sm text-muted">Delete your review below to write a new one.</p>
+    </Panel>
+  );
+}
+
 export function ReviewForm({
   title,
   onSubmitted,
+  version = 0,
 }: {
   title: TitleSummary;
   onSubmitted: (r: Review) => void;
+  /** Change it after a review is posted or deleted to check again whether the user has reviewed. */
+  version?: number;
 }) {
-  const { user, sessionExpired } = useAuth();
-  // A 401 clears the session mid-post. Keep the form (and the draft) on screen so the user sees the
-  // "session expired" message instead of the form vanishing.
-  return user || sessionExpired ? (
-    <Form title={title} onSubmitted={onSubmitted} />
-  ) : (
-    <LoginPrompt />
+  const { user } = useAuth();
+  const canWrite = useCanWrite(title.id);
+  // One review per user per title: look first, so the user is not asked to write one that will be refused
+  const { state } = useAsync(
+    () => (user ? reviewsApi.mine(title.id) : Promise.resolve(null)),
+    [title.id, user?.id, version],
+    { keepPrevious: true },
   );
+
+  if (!canWrite) return <LoginPrompt />;
+  // Without a user (session expired mid-post) the form stays so the draft and the message survive
+  if (user && state.status === 'loading') return null;
+  if (user && state.status === 'ready' && state.data)
+    return <AlreadyReviewed review={state.data} />;
+  // If the check fails, show the form anyway: the 409 on submit is still the backstop
+  return <Form title={title} onSubmitted={onSubmitted} />;
 }

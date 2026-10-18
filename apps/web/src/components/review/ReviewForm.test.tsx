@@ -5,7 +5,7 @@ import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { TitleSummary } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
 import { reviewsApi } from '../../api/reviews.js';
-import { resetDb } from '../../mocks/db.js';
+import { db, resetDb } from '../../mocks/db.js';
 import { rate, renderWithProviders } from '../../test/utils.js';
 import type { Review } from '../../types/review.js';
 import { ReviewForm } from './ReviewForm.js';
@@ -24,11 +24,18 @@ const fake: Review = {
   createdAt: new Date().toISOString(),
 };
 
-function setup(title = movie, onSubmitted = vi.fn()) {
+function mount(title = movie, onSubmitted = vi.fn()) {
   renderWithProviders(<ReviewForm title={title} onSubmitted={onSubmitted} />, {
     role: Role.CONSUMER,
   });
   return { onSubmitted, user: userEvent.setup() };
+}
+
+/** Mounts the form and waits for the "already reviewed?" check to let it through. */
+async function setup(title = movie, onSubmitted = vi.fn()) {
+  const view = mount(title, onSubmitted);
+  await screen.findByLabelText('Your review');
+  return view;
 }
 
 async function fill(
@@ -44,14 +51,14 @@ beforeEach(() => resetDb());
 afterEach(() => vi.restoreAllMocks());
 
 describe('ReviewForm', () => {
-  it('renders movie fields for MOVIE and season/episode fields for TV_SHOW', () => {
-    setup(movie);
+  it('renders movie fields for MOVIE and season/episode fields for TV_SHOW', async () => {
+    await setup(movie);
     expect(screen.getByLabelText('Runtime watched (minutes)')).toBeInTheDocument();
     expect(screen.queryByLabelText('Season')).not.toBeInTheDocument();
   });
 
-  it('renders season and episode fields for TV_SHOW', () => {
-    setup(tv);
+  it('renders season and episode fields for TV_SHOW', async () => {
+    await setup(tv);
     expect(screen.getByLabelText('Season')).toBeInTheDocument();
     expect(screen.getByLabelText('Episodes watched')).toBeInTheDocument();
     expect(screen.queryByLabelText('Runtime watched (minutes)')).not.toBeInTheDocument();
@@ -68,21 +75,21 @@ describe('ReviewForm', () => {
 
   it('asks for a rating when no star is chosen and does not call the API', async () => {
     const create = vi.spyOn(reviewsApi, 'create');
-    const { user } = setup();
+    const { user } = await setup();
     await fill(user, { rating: null });
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     expect(create).not.toHaveBeenCalled();
     expect(screen.getByRole('alert')).toHaveTextContent('Choose a rating from 1 to 5 stars');
   });
 
-  it('offers five stars, one to five', () => {
-    setup();
+  it('offers five stars, one to five', async () => {
+    await setup();
     expect(screen.getAllByRole('radio', { name: /star/ })).toHaveLength(5);
   });
 
   it('does not call the API when the review text is empty', async () => {
     const create = vi.spyOn(reviewsApi, 'create');
-    const { user } = setup();
+    const { user } = await setup();
     await fill(user, { body: '' });
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     expect(create).not.toHaveBeenCalled();
@@ -91,7 +98,7 @@ describe('ReviewForm', () => {
 
   it('a 401 shows an error with a login link', async () => {
     vi.spyOn(reviewsApi, 'create').mockRejectedValue(new ApiError(401, 'Unauthorized'));
-    const { user } = setup();
+    const { user } = await setup();
     await fill(user);
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/session/i);
@@ -103,14 +110,14 @@ describe('ReviewForm', () => {
     const create = vi
       .spyOn(reviewsApi, 'create')
       .mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(fake), 50)));
-    const { user } = setup();
+    const { user } = await setup();
     await fill(user);
     await user.dblClick(screen.getByRole('button', { name: 'Post review' }));
     expect(create).toHaveBeenCalledTimes(1);
   });
 
   it('submits the typed values, calls onSubmitted and clears the form', async () => {
-    const { onSubmitted, user } = setup();
+    const { onSubmitted, user } = await setup();
     await fill(user, { rating: 5, body: 'Loved it', media: '120' });
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     await vi.waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
@@ -123,12 +130,36 @@ describe('ReviewForm', () => {
   });
 
   it('shows the server message when the user already reviewed the title (409)', async () => {
-    const { user } = setup();
+    const { user } = await setup();
     await fill(user);
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     await vi.waitFor(() => expect(screen.getByLabelText('Your review')).toHaveValue(''));
     await fill(user);
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     expect(await screen.findByRole('alert')).toHaveTextContent(/already reviewed/i);
+  });
+
+  it('shows a message with the rating instead of the form when the user already reviewed the title', async () => {
+    db.reviews.push({ ...fake, author: { id: 'test-user', name: 'You', role: Role.CONSUMER } });
+    mount();
+    expect(await screen.findByText(/You have already reviewed this title/)).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: '4 out of 5 stars' })).toBeInTheDocument();
+    expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
+  });
+
+  it('shows the form for a title the user has not reviewed, even if they reviewed another', async () => {
+    db.reviews.push({
+      ...fake,
+      titleId: 'mock-21',
+      author: { id: 'test-user', name: 'You', role: Role.CONSUMER },
+    });
+    mount();
+    expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
+  });
+
+  it('falls back to the form (the 409 still guards) when the check cannot load', async () => {
+    vi.spyOn(reviewsApi, 'mine').mockRejectedValue(new ApiError(500, 'boom'));
+    mount();
+    expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
   });
 });
