@@ -53,6 +53,7 @@ Nothing else is shown: no forms, lists, tables, comments, admin or mobile layout
 - Posters are **greyscale** by default.
 - The hovered poster turns **full colour**, grows slightly and lifts up.
 - A giant ghost surname (`Villeneuve`) sits behind the posters at the bottom, very dark grey on black, so large it is cropped by the screen edges.
+- **Our build differs:** the Home strip has no ghost word, and its section reserves a top zone for the breadcrumb so a lifted poster can never cover "Trending now". Ghost text stays on the loading, empty, error, 403 and 404 states.
 - Black background.
 
 ## A7. Motion seen

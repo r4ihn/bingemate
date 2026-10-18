@@ -18,7 +18,7 @@ const STRIP_SIZE = 7;
 // Vertical offsets make the posters settle unevenly, as in the reference
 const OFFSETS = ['0px', '-30px', '-10px', '0px', '0px', '-34px', '0px'];
 
-function Strip({ titles, ghost }: { titles: TitleDetail[]; ghost: string }) {
+function Strip({ titles }: { titles: TitleDetail[] }) {
   const ref = useRef<HTMLElement>(null);
   const [visible, setVisible] = useState(false);
 
@@ -43,15 +43,9 @@ function Strip({ titles, ghost }: { titles: TitleDetail[]; ghost: string }) {
     <section
       id="strip"
       ref={ref}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black"
+      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black pt-36 pb-12"
     >
       <Breadcrumb items={['Main', 'Trending now']} />
-      <div
-        aria-hidden="true"
-        className="pointer-events-none absolute bottom-[-6vw] left-1/2 -translate-x-1/2 text-[27vw] leading-none font-medium tracking-[-0.06em] whitespace-nowrap text-ghost select-none"
-      >
-        {ghost}
-      </div>
       <ul className="relative z-10 flex max-w-full items-end gap-[22px] overflow-x-auto px-6 pt-[60px] md:overflow-visible">
         {titles.map((t, i) => (
           <li
@@ -110,7 +104,7 @@ export function Home() {
         breadcrumb={['Main', MEDIA_SECTION[featured.mediaType], featured.name]}
         scrollHint={{ label: 'Scroll for more titles ↓', href: '#strip' }}
       />
-      <Strip titles={rest} ghost={featured.name.split(/[\s:]+/)[0] ?? featured.name} />
+      <Strip titles={rest} />
       <TypeRails />
     </>
   );

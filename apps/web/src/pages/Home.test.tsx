@@ -17,6 +17,13 @@ describe('Home', () => {
     expect(screen.queryByText(/calloway/i)).not.toBeInTheDocument();
   });
 
+  it('has no decorative ghost word behind the poster strip', async () => {
+    renderWithProviders(<Home />);
+    await screen.findByRole('heading', { level: 1 });
+    const strip = document.getElementById('strip') as HTMLElement;
+    expect(strip.querySelector('div[aria-hidden="true"]')).toBeNull();
+  });
+
   it('shows an error with Retry and no placeholder content when titles cannot load', async () => {
     vi.spyOn(titlesApi, 'search').mockRejectedValue(new ApiError(500, 'boom'));
     renderWithProviders(<Home />);
