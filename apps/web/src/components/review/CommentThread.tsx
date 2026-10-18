@@ -114,13 +114,14 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
     );
   }
 
-  const byTime = (a: Comment, b: Comment) => a.createdAt.localeCompare(b.createdAt);
-  const tops = state.data.filter((c) => c.parentId === null).sort(byTime);
-  // Official replies are pinned first, then oldest first
-  const repliesOf = (id: string) =>
-    state.data
-      .filter((c) => c.parentId === id)
-      .sort((a, b) => Number(b.isOfficial) - Number(a.isOfficial) || byTime(a, b));
+  // The API returns official replies first, then oldest first; keep that order and only group by parent
+  const tops: Comment[] = [];
+  const replies = new Map<string, Comment[]>();
+  for (const c of state.data) {
+    if (c.parentId === null) tops.push(c);
+    else replies.set(c.parentId, [...(replies.get(c.parentId) ?? []), c]);
+  }
+  const repliesOf = (id: string) => replies.get(id) ?? [];
 
   const deleteHandler = (c: Comment) =>
     canDelete(user, c.author.id) ? () => setDeleting(c) : undefined;

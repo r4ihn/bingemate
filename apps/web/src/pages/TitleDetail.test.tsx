@@ -60,7 +60,7 @@ describe('TitleDetail', () => {
     expect(screen.getAllByRole('button', { name: 'Reply' })).toHaveLength(2);
   });
 
-  it('renders an official reply before other replies, whatever order the API returns', async () => {
+  it('renders an official reply, which the API returns pinned first, with its badges', async () => {
     const at = (m: number) => new Date(Date.UTC(2026, 9, 17, 10, m)).toISOString();
     const author = { id: 'a', name: 'someone', role: Role.CONSUMER };
     const creator = { id: 'b', name: 'studio_north', role: Role.CREATOR };
@@ -75,15 +75,6 @@ describe('TitleDetail', () => {
         createdAt: at(1),
       },
       {
-        id: 'x2',
-        reviewId: 'r-mock-1-0',
-        parentId: 'x1',
-        author,
-        body: 'Plain reply',
-        isOfficial: false,
-        createdAt: at(2),
-      },
-      {
         id: 'x3',
         reviewId: 'r-mock-1-0',
         parentId: 'x1',
@@ -91,6 +82,15 @@ describe('TitleDetail', () => {
         body: 'Official words',
         isOfficial: true,
         createdAt: at(3),
+      },
+      {
+        id: 'x2',
+        reviewId: 'r-mock-1-0',
+        parentId: 'x1',
+        author,
+        body: 'Plain reply',
+        isOfficial: false,
+        createdAt: at(2),
       },
     ];
     vi.spyOn(commentsApi, 'list').mockImplementation((id) =>

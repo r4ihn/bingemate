@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 /** Style for a title's poster: the real image when the data has one, else the mock gradient. */
 export function posterStyle(title: { posterUrl?: string | null; hue?: number }): CSSProperties {
   return title.posterUrl
-    ? { background: `center / cover url(${title.posterUrl})` }
+    ? { background: `center / cover url("${title.posterUrl.replace(/["\\]/g, '\\$&')}")` }
     : posterBackground(title.hue ?? 210);
 }
 

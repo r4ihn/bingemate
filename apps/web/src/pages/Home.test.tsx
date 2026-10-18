@@ -24,6 +24,20 @@ describe('Home', () => {
     expect(strip.querySelector('div[aria-hidden="true"]')).toBeNull();
   });
 
+  it("shows a title's real poster in the strip when the data has one", async () => {
+    const real = await titlesApi.search({ pageSize: 9 });
+    vi.spyOn(titlesApi, 'search').mockResolvedValue({
+      ...real,
+      items: real.items.map((t, i) =>
+        i === 1 ? { ...t, posterUrl: 'https://img.test/p.jpg' } : t,
+      ),
+    });
+    renderWithProviders(<Home />);
+    await screen.findByRole('heading', { level: 1 });
+    const strip = document.getElementById('strip') as HTMLElement;
+    expect(strip.innerHTML).toContain('img.test/p.jpg');
+  });
+
   it('shows an error with Retry and no placeholder content when titles cannot load', async () => {
     vi.spyOn(titlesApi, 'search').mockRejectedValue(new ApiError(500, 'boom'));
     renderWithProviders(<Home />);

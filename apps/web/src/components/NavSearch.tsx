@@ -6,7 +6,7 @@ import { titlesApi } from '../api/titles.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { MEDIA_FILTERS, MEDIA_LABEL } from '../labels.js';
 import type { TitleDetail } from '../types/title.js';
-import { posterBackground } from './MockPoster.js';
+import { posterStyle } from './MockPoster.js';
 
 const MAX_SUGGESTIONS = 5;
 const DEBOUNCE_MS = 150;
@@ -219,11 +219,7 @@ export function NavSearch() {
               >
                 <span
                   aria-hidden="true"
-                  style={
-                    t.posterUrl
-                      ? { background: `center / cover url(${t.posterUrl})` }
-                      : posterBackground(t.hue ?? 210)
-                  }
+                  style={posterStyle(t)}
                   className="h-[50px] w-[34px] flex-none rounded-md"
                 />
                 <span className="min-w-0 flex-1">

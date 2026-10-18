@@ -116,6 +116,24 @@ describe('reviewsApi', () => {
 });
 
 describe('commentsApi', () => {
+  it('list pins an official reply before an older plain one', async () => {
+    const top = db.comments.find((c) => c.id === 'c4')!; // no replies yet
+    db.comments.push({
+      id: 'c-late-official',
+      reviewId: 'r-mock-1-0',
+      parentId: top.id,
+      author: { id: 'studio', name: 'studio', role: Role.CREATOR },
+      body: 'Late but official',
+      isOfficial: true,
+      createdAt: new Date(Date.UTC(2026, 9, 18)).toISOString(),
+    });
+    db.comments.push({ ...db.comments[0]!, id: 'c-plain', parentId: top.id, isOfficial: false });
+    const ids = (await commentsApi.list('r-mock-1-0'))
+      .filter((c) => c.parentId === top.id)
+      .map((c) => c.id);
+    expect(ids).toEqual(['c-late-official', 'c-plain']);
+  });
+
   it('reply rejects a parent comment that belongs to another review', async () => {
     const parent = db.comments.find((c) => c.parentId === null)!;
     await expect(commentsApi.reply('r-mock-1-1', parent.id, 'wrong thread')).rejects.toMatchObject({

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { Breadcrumb } from '../components/Breadcrumb.js';
-import { posterBackground } from '../components/MockPoster.js';
+import { posterStyle } from '../components/MockPoster.js';
 import { TitleHero } from '../components/TitleHero.js';
 import { titlesApi } from '../api/titles.js';
 import { StateMessage } from '../components/StateMessage.js';
@@ -65,7 +65,7 @@ function Strip({ titles }: { titles: TitleDetail[] }) {
           >
             <Link
               to={`/titles/${t.id}`}
-              style={posterBackground(t.hue ?? 210)}
+              style={posterStyle(t)}
               className="relative block h-[480px] w-[145px] translate-y-[var(--dy)] overflow-hidden rounded-lg brightness-75 grayscale transition-[translate,scale,filter] duration-300 hover:z-10 hover:-translate-y-[34px] hover:scale-105 hover:brightness-100 hover:grayscale-0 focus-visible:-translate-y-[34px] focus-visible:scale-105 focus-visible:brightness-100 focus-visible:grayscale-0"
             >
               <span className="absolute top-3 left-2.5 text-xs tracking-widest opacity-80">
