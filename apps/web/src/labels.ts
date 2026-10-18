@@ -1,4 +1,4 @@
-import { MediaType } from '@bingemate/shared';
+import { ListStatus, MediaType } from '@bingemate/shared';
 
 export const MEDIA_LABEL: Record<MediaType, string> = {
   [MediaType.MOVIE]: 'Movie',
@@ -20,3 +20,10 @@ export const MEDIA_SECTION: Record<MediaType, string> = {
   [MediaType.TV_SHOW]: 'TV shows',
   [MediaType.BOOK]: 'Books',
 };
+
+/** List statuses in the order My Lists and the title page offer them. */
+export const LIST_STATUSES: { status: ListStatus; label: string }[] = [
+  { status: ListStatus.COMPLETED, label: 'Completed' },
+  { status: ListStatus.IN_PROGRESS, label: 'In progress' },
+  { status: ListStatus.PLAN_TO, label: 'Plan to' },
+];

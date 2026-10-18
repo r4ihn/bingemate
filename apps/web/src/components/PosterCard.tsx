@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import type { TitleSummary } from '@bingemate/shared';
-import { posterBackground } from './MockPoster.js';
+import { posterStyle } from './MockPoster.js';
 
 export type PosterTitle = TitleSummary & { hue?: number; year?: number };
 
@@ -10,9 +10,7 @@ export type PosterTitle = TitleSummary & { hue?: number; year?: number };
  * (docs/ui.md A6). Uses `posterUrl` when the data has one, else the mock gradient.
  */
 export function PosterCard({ title, children }: { title: PosterTitle; children?: ReactNode }) {
-  const style = title.posterUrl
-    ? { background: `center / cover url(${title.posterUrl})` }
-    : posterBackground(title.hue ?? 210);
+  const style = posterStyle(title);
 
   return (
     <div className="grid content-start gap-3">

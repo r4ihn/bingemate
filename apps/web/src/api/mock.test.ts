@@ -89,6 +89,22 @@ describe('listsApi', () => {
     const books = await listsApi.list({ mediaType: MediaType.BOOK, page: 1 });
     expect(books.data.every((e) => e.title.mediaType === MediaType.BOOK)).toBe(true);
   });
+
+  it('forTitle returns the entry for a listed title and null otherwise', async () => {
+    expect((await listsApi.forTitle('mock-1'))?.id).toBe('l-1');
+    expect(await listsApi.forTitle('mock-20')).toBeNull();
+  });
+
+  it('add puts a title on the list with the chosen status', async () => {
+    const entry = await listsApi.add('mock-20', ListStatus.PLAN_TO);
+    expect(entry).toMatchObject({ titleId: 'mock-20', status: ListStatus.PLAN_TO });
+    expect((await listsApi.forTitle('mock-20'))?.id).toBe(entry.id);
+  });
+
+  it('add rejects a title that is already listed (409) or unknown (404)', async () => {
+    await expect(listsApi.add('mock-1', ListStatus.PLAN_TO)).rejects.toMatchObject({ status: 409 });
+    await expect(listsApi.add('nope', ListStatus.PLAN_TO)).rejects.toMatchObject({ status: 404 });
+  });
 });
 
 describe('titlesApi and adminApi', () => {

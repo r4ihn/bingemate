@@ -9,14 +9,8 @@ import { PosterCard } from '../components/PosterCard.js';
 import { StateMessage } from '../components/StateMessage.js';
 import { inputClass } from '../components/ui/inputClass.js';
 import { useAsync } from '../hooks/useAsync.js';
-import { MEDIA_FILTERS } from '../labels.js';
+import { LIST_STATUSES, MEDIA_FILTERS } from '../labels.js';
 import type { ListItem } from '../types/list.js';
-
-const TABS: { status: ListStatus; label: string }[] = [
-  { status: ListStatus.COMPLETED, label: 'Completed' },
-  { status: ListStatus.IN_PROGRESS, label: 'In progress' },
-  { status: ListStatus.PLAN_TO, label: 'Plan to' },
-];
 
 export function MyLists() {
   const [status, setStatus] = useState<ListStatus>(ListStatus.COMPLETED);
@@ -94,7 +88,7 @@ export function MyLists() {
     }
   }
 
-  const tabLabel = TABS.find((t) => t.status === status)?.label ?? '';
+  const tabLabel = LIST_STATUSES.find((t) => t.status === status)?.label ?? '';
 
   return (
     <section>
@@ -102,7 +96,7 @@ export function MyLists() {
 
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3">
         <nav aria-label="List status" className="flex flex-wrap gap-2">
-          {TABS.map((t) => (
+          {LIST_STATUSES.map((t) => (
             <FilterPill
               key={t.status}
               active={status === t.status}
@@ -169,7 +163,7 @@ export function MyLists() {
                             onChange={(e) => void move(entry, e.target.value as ListStatus)}
                             className={`${inputClass} py-2 text-sm`}
                           >
-                            {TABS.map((t) => (
+                            {LIST_STATUSES.map((t) => (
                               <option key={t.status} value={t.status}>
                                 {t.label}
                               </option>

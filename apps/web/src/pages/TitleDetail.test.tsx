@@ -144,3 +144,46 @@ describe('TitleDetail breadcrumb', () => {
     expect(within(crumbs).queryByText('Films')).not.toBeInTheDocument();
   });
 });
+
+describe('TitleDetail layout', () => {
+  it('puts the poster before the title and the title before the reviews', async () => {
+    renderTitle('mock-1');
+    const h1 = await screen.findByRole('heading', { level: 1, name: 'Last Light' });
+    const poster = screen.getByRole('img', { name: 'Poster for Last Light' });
+    const reviews = screen.getByRole('heading', { level: 2, name: 'Reviews' });
+    expect(poster.compareDocumentPosition(h1) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(h1.compareDocumentPosition(reviews) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('is not the full-screen hero used on Home', async () => {
+    renderTitle('mock-1');
+    await screen.findByRole('heading', { level: 1, name: 'Last Light' });
+    expect(document.getElementById('hero')).toBeNull();
+  });
+
+  it('shows the synopsis, facts, rating and review count next to the poster', async () => {
+    renderTitle('mock-1');
+    await screen.findByRole('heading', { level: 1, name: 'Last Light' });
+    const facts = screen.getByText('Studio').closest('dl') as HTMLElement;
+    expect(within(facts).getByText('Country')).toBeInTheDocument();
+    expect(within(facts).getByText('Runtime')).toBeInTheDocument();
+    expect(screen.getByText('8.1')).toBeInTheDocument();
+    expect(screen.getByText(/\d+ reviews?/)).toBeInTheDocument();
+  });
+
+  it('offers Add to list to signed-in users and a sign-in link to visitors', async () => {
+    const view = renderTitle('mock-20', Role.CONSUMER);
+    expect(await screen.findByRole('combobox', { name: 'Add to list' })).toBeInTheDocument();
+    view.unmount();
+    renderTitle('mock-20');
+    expect(await screen.findByRole('link', { name: 'Sign in to add to list' })).toBeInTheDocument();
+  });
+
+  it('keeps a skip-to-reviews link', async () => {
+    renderTitle('mock-1');
+    expect(await screen.findByRole('link', { name: /Scroll for reviews/ })).toHaveAttribute(
+      'href',
+      '#reviews',
+    );
+  });
+});
