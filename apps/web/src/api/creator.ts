@@ -1,10 +1,12 @@
 import { MediaType, TitleStatus } from '@bingemate/shared';
-import { MOCK_USER, db, newId } from '../mocks/db.js';
+import { MOCK_USER, db, getMockActor, newId } from '../mocks/db.js';
 import type { CreatorStat, Submission, SubmissionInput } from '../types/creator.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
-const own = () => db.titles.filter((t) => t.createdBy === MOCK_USER);
+// The seeded demo titles belong to MOCK_USER; every creator sees them alongside their own submissions
+const own = () =>
+  db.titles.filter((t) => t.createdBy === getMockActor().id || t.createdBy === MOCK_USER);
 const toSubmission = (t: (typeof db.titles)[number]): Submission => ({
   title: t,
   rejectionReason: t.rejectionReason,
@@ -32,7 +34,7 @@ export const creatorApi = {
       studio: '',
       runtime: '',
       hue: 200,
-      createdBy: MOCK_USER,
+      createdBy: getMockActor().id,
     };
     db.titles.push(title);
     return clone(toSubmission(title));

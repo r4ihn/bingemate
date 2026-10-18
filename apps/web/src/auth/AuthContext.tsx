@@ -4,6 +4,7 @@ import { Role } from '@bingemate/shared';
 import type { AuthUser } from '@bingemate/shared';
 import { authApi } from '../api/auth.js';
 import { setUnauthorizedHandler } from '../api/client.js';
+import { setMockActor } from '../mocks/db.js';
 
 type AuthStatus = 'loading' | 'authenticated' | 'anonymous';
 
@@ -18,6 +19,13 @@ interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
+/** Mock API writes (reviews, comments, submissions) are attributed to whoever is signed in. */
+function useMockActor(user: AuthUser | null) {
+  useEffect(() => {
+    setMockActor(user);
+  }, [user]);
+}
+
 /** Test helper: provides a fixed auth state and never calls /auth/me. */
 export function AuthTestProvider({
   user,
@@ -28,6 +36,7 @@ export function AuthTestProvider({
   signIn?: (user: AuthUser) => void;
   children: ReactNode;
 }) {
+  useMockActor(user);
   const value: AuthContextValue = {
     user,
     status: user ? 'authenticated' : 'anonymous',
@@ -49,6 +58,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [sessionExpired, setSessionExpired] = useState(false);
+  useMockActor(user);
 
   // Restore the session on page load (TASKS.md section 3: GET /auth/me)
   useEffect(() => {

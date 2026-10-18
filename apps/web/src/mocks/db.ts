@@ -21,6 +21,23 @@ export interface Db {
 
 export const MOCK_USER = 'mock-user';
 
+export interface MockActor {
+  id: string;
+  name: string;
+  role: Role;
+}
+
+const DEMO_ACTOR: MockActor = { id: MOCK_USER, name: 'You', role: Role.CONSUMER };
+let actor: MockActor = DEMO_ACTOR;
+
+/** Who the mock writes are attributed to: the signed-in user, or the demo user when nobody is. */
+export function setMockActor(user: { id: string; email: string; role: Role } | null): void {
+  actor = user
+    ? { id: user.id, name: user.email.split('@')[0] ?? user.id, role: user.role }
+    : DEMO_ACTOR;
+}
+export const getMockActor = (): MockActor => actor;
+
 const SYNOPSIS =
   'Placeholder synopsis. A short description of the story goes here so layouts have realistic text.';
 const NAMES = [
@@ -180,6 +197,7 @@ function seed(): Db {
 export const db: Db = seed();
 
 export function resetDb(): void {
+  actor = DEMO_ACTOR;
   Object.assign(db, seed());
 }
 

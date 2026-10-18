@@ -1,6 +1,5 @@
-import { Role } from '@bingemate/shared';
 import type { Paginated } from '@bingemate/shared';
-import { MOCK_USER, db, newId } from '../mocks/db.js';
+import { db, getMockActor, newId } from '../mocks/db.js';
 import type { Comment, Review, ReviewInput } from '../types/review.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
@@ -30,13 +29,13 @@ export const reviewsApi = {
       throw new ApiError(400, 'Rating must be a whole number from 1 to 10');
     }
     if (!db.titles.some((t) => t.id === titleId)) throw new ApiError(404, 'Title not found');
-    if (db.reviews.some((r) => r.titleId === titleId && r.author.id === MOCK_USER)) {
+    if (db.reviews.some((r) => r.titleId === titleId && r.author.id === getMockActor().id)) {
       throw new ApiError(409, 'You have already reviewed this title');
     }
     const review: Review = {
       id: newId('r'),
       titleId,
-      author: { id: MOCK_USER, name: 'You', role: Role.CONSUMER },
+      author: { ...getMockActor() },
       rating: input.rating,
       body: input.body,
       fields: input.fields,
@@ -79,7 +78,7 @@ export const commentsApi = {
       id: newId('c'),
       reviewId,
       parentId,
-      author: { id: MOCK_USER, name: 'You', role: Role.CONSUMER },
+      author: { ...getMockActor() },
       body,
       isOfficial: false,
       createdAt: new Date().toISOString(),

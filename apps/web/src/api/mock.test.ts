@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
-import { db, resetDb } from '../mocks/db.js';
+import { db, resetDb, setMockActor } from '../mocks/db.js';
 import { adminApi } from './admin.js';
 import { creatorApi } from './creator.js';
 import { listsApi } from './lists.js';
@@ -159,5 +159,50 @@ describe('titlesApi.search', () => {
   it('treats a blank query as no filter', async () => {
     const all = await titlesApi.search({});
     expect((await titlesApi.search({ q: '   ' })).total).toBe(all.total);
+  });
+});
+
+describe('mock writes follow the signed-in user', () => {
+  const alex = { id: 'user-alex', email: 'alex@example.com', role: Role.CONSUMER };
+  const studio = { id: 'user-studio', email: 'studio@example.com', role: Role.CREATOR };
+  const input = { rating: 7, body: 'ok', fields: { runtimeMinutes: 100 } };
+
+  it('a review is stored under the signed-in user, with their role', async () => {
+    setMockActor(alex);
+    const review = await reviewsApi.create('mock-20', input);
+    expect(review.author).toEqual({ id: 'user-alex', name: 'alex', role: Role.CONSUMER });
+  });
+
+  it('two users can each review the same title', async () => {
+    setMockActor(alex);
+    await reviewsApi.create('mock-20', input);
+    setMockActor({ ...alex, id: 'user-sam', email: 'sam@example.com' });
+    await expect(reviewsApi.create('mock-20', input)).resolves.toBeDefined();
+  });
+
+  it('a creator comment carries the CREATOR role', async () => {
+    setMockActor(studio);
+    const [review] = db.reviews;
+    const comment = await commentsApi.reply((review as { id: string }).id, null, 'Thanks!');
+    expect(comment.author).toMatchObject({ id: 'user-studio', role: Role.CREATOR });
+  });
+
+  it("a creator sees their own submissions and the demo titles, not another creator's", async () => {
+    setMockActor(studio);
+    const mine = await creatorApi.submit({
+      name: 'Mine',
+      mediaType: MediaType.MOVIE,
+      synopsis: 'x',
+    });
+    setMockActor({ ...studio, id: 'user-other', email: 'other@example.com' });
+    const theirs = await creatorApi.submissions();
+    expect(theirs.some((s) => s.title.id === mine.title.id)).toBe(false);
+    expect(theirs.length).toBeGreaterThan(0); // the seeded demo titles still show
+  });
+
+  it('with nobody signed in the writes fall back to the demo user', async () => {
+    setMockActor(null);
+    const review = await reviewsApi.create('mock-20', input);
+    expect(review.author.id).toBe('mock-user');
   });
 });
