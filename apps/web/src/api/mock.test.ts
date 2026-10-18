@@ -20,6 +20,15 @@ describe('creatorApi', () => {
     expect(updated.title.status).toBe(TitleStatus.PENDING);
   });
 
+  it('update ignores keys that are present but undefined', async () => {
+    const own = db.titles.find(
+      (t) => t.createdBy === 'mock-user' && t.status === TitleStatus.APPROVED,
+    )!;
+    const updated = await creatorApi.update(own.id, { name: 'Renamed', mediaType: undefined });
+    expect(updated.title.name).toBe('Renamed');
+    expect(updated.title.mediaType).toBe(own.mediaType);
+  });
+
   it('editing a REJECTED title resubmits it as PENDING and clears the reason', async () => {
     const rejected = db.titles.find(
       (t) => t.status === TitleStatus.REJECTED && t.createdBy === 'mock-user',
@@ -42,6 +51,34 @@ describe('creatorApi', () => {
 });
 
 describe('reviewsApi', () => {
+  const input = { rating: 4, body: 'ok', fields: { runtimeMinutes: 100 } };
+  const title = (id: string) => db.titles.find((t) => t.id === id)!;
+
+  it('the first review sets the title average and count, and deleting it clears them', async () => {
+    Object.assign(title('mock-20'), { avgRating: 0, reviewCount: 0 });
+    const review = await reviewsApi.create('mock-20', { ...input, rating: 5 });
+    expect(title('mock-20')).toMatchObject({ avgRating: 5, reviewCount: 1 });
+    await reviewsApi.remove(review.id);
+    expect(title('mock-20')).toMatchObject({ avgRating: 0, reviewCount: 0 });
+  });
+
+  it('a new review moves the running average, and deleting it moves it back', async () => {
+    Object.assign(title('mock-20'), { avgRating: 4, reviewCount: 3 });
+    const review = await reviewsApi.create('mock-20', { ...input, rating: 2 });
+    expect(title('mock-20').reviewCount).toBe(4);
+    expect(title('mock-20').avgRating).toBeCloseTo(3.5);
+    await reviewsApi.remove(review.id);
+    expect(title('mock-20').reviewCount).toBe(3);
+    expect(title('mock-20').avgRating).toBeCloseTo(4);
+  });
+
+  it("mine returns the signed-in user's review of a title, or null", async () => {
+    expect(await reviewsApi.mine('mock-20')).toBeNull();
+    const review = await reviewsApi.create('mock-20', input);
+    expect(await reviewsApi.mine('mock-20')).toMatchObject({ id: review.id });
+    expect(await reviewsApi.mine('mock-21')).toBeNull();
+  });
+
   it.each([0, 6, 4.5, Number.NaN])('create rejects rating %s', async (rating) => {
     await expect(
       reviewsApi.create('mock-1', { rating, body: 'ok', fields: { runtimeMinutes: 100 } }),
@@ -79,6 +116,14 @@ describe('reviewsApi', () => {
 });
 
 describe('commentsApi', () => {
+  it('reply rejects a parent comment that belongs to another review', async () => {
+    const parent = db.comments.find((c) => c.parentId === null)!;
+    await expect(commentsApi.reply('r-mock-1-1', parent.id, 'wrong thread')).rejects.toMatchObject({
+      status: 404,
+    });
+    expect(db.comments.some((c) => c.body === 'wrong thread')).toBe(false);
+  });
+
   it('reply rejects a reply to a reply (one level only)', async () => {
     const reply = db.comments.find((c) => c.parentId !== null)!;
     await expect(commentsApi.reply(reply.reviewId, reply.id, 'nested')).rejects.toMatchObject({

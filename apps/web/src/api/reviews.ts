@@ -7,6 +7,18 @@ import { clone, delay, notWired, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 5;
 
+/**
+ * Moves a title's running average and count by one review (`sign` +1 adds, -1 removes), like the real
+ * aggregates will. Works from the stored values so the seeded averages are not rebuilt from a few reviews.
+ */
+function applyToAggregates(titleId: string, rating: number, sign: 1 | -1) {
+  const title = db.titles.find((t) => t.id === titleId);
+  if (!title) return;
+  const count = Math.max(0, title.reviewCount + sign);
+  title.avgRating = count === 0 ? 0 : (title.avgRating * title.reviewCount + sign * rating) / count;
+  title.reviewCount = count;
+}
+
 export const reviewsApi = {
   async listByTitle(titleId: string, page: number): Promise<Paginated<Review>> {
     if (!useMock) notWired('review endpoints (HS)');
@@ -21,6 +33,16 @@ export const reviewsApi = {
       pageSize: PAGE_SIZE,
       total: all.length,
     });
+  },
+
+  /** The signed-in user's review of this title, or null. Lets the form know before the user writes one. */
+  async mine(titleId: string): Promise<Review | null> {
+    if (!useMock) notWired('review endpoints (HS)');
+    await delay();
+    const review = db.reviews.find(
+      (r) => r.titleId === titleId && r.author.id === getMockActor().id,
+    );
+    return review ? clone(review) : null;
   },
 
   async create(titleId: string, input: ReviewInput): Promise<Review> {
@@ -43,12 +65,15 @@ export const reviewsApi = {
       createdAt: new Date().toISOString(),
     };
     db.reviews.push(review);
+    applyToAggregates(titleId, review.rating, 1);
     return clone(review);
   },
 
   async remove(id: string): Promise<void> {
     if (!useMock) notWired('review endpoints (HS)');
     await delay();
+    const review = db.reviews.find((r) => r.id === id);
+    if (review) applyToAggregates(review.titleId, review.rating, -1);
     db.reviews = db.reviews.filter((r) => r.id !== id);
     db.comments = db.comments.filter((c) => c.reviewId !== id);
   },
@@ -72,7 +97,9 @@ export const commentsApi = {
   async reply(reviewId: string, parentId: string | null, body: string): Promise<Comment> {
     if (!useMock) notWired('comment endpoints (HS)');
     await delay();
-    const parent = parentId ? db.comments.find((c) => c.id === parentId) : undefined;
+    const parent = parentId
+      ? db.comments.find((c) => c.id === parentId && c.reviewId === reviewId)
+      : undefined;
     if (parentId && !parent) throw new ApiError(404, 'Comment not found');
     if (parent?.parentId) throw new ApiError(400, 'Replies are limited to one level');
     const comment: Comment = {

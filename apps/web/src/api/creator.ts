@@ -46,7 +46,11 @@ export const creatorApi = {
     await delay();
     const title = own().find((t) => t.id === id);
     if (!title) throw new ApiError(404, 'Title not found');
-    Object.assign(title, input);
+    // A key that is present but undefined (an unset form field) must not wipe the stored value
+    Object.assign(
+      title,
+      Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined)),
+    );
     if (title.status !== TitleStatus.PENDING) title.status = TitleStatus.PENDING;
     title.rejectionReason = undefined;
     return clone(toSubmission(title));
