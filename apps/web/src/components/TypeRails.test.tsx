@@ -14,7 +14,7 @@ describe('TypeRails', () => {
     for (const [name, href] of expected) {
       const rail = await screen.findByRole('region', { name });
       expect(within(rail).getByRole('link', { name: /see all/i })).toHaveAttribute('href', href);
-      const posters = within(rail).getAllByRole('listitem');
+      const posters = await within(rail).findAllByRole('listitem'); // the rail renders before its data loads
       expect(posters.length).toBeGreaterThan(0);
       expect(posters.length).toBeLessThanOrEqual(8);
     }
@@ -23,7 +23,7 @@ describe('TypeRails', () => {
   it('only lists titles of the rail’s own media type', async () => {
     renderWithProviders(<TypeRails />);
     const books = await screen.findByRole('region', { name: 'Books' });
+    expect((await within(books).findAllByText('Book')).length).toBeGreaterThan(0);
     expect(within(books).queryAllByText('Movie')).toHaveLength(0);
-    expect(within(books).getAllByText('Book').length).toBeGreaterThan(0);
   });
 });

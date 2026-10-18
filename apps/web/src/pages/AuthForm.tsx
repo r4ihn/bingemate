@@ -84,7 +84,7 @@ export function AuthForm({
             />
           </Field>
           {submitError && (
-            <p role="alert" className="text-[0.8rem] text-danger">
+            <p role="alert" className="text-sm text-danger">
               {submitError}
             </p>
           )}
@@ -92,7 +92,7 @@ export function AuthForm({
             {submitLabel}
           </Button>
         </form>
-        <p className="mt-6 text-[0.8rem] text-muted">{footer}</p>
+        <p className="mt-6 text-sm text-muted">{footer}</p>
       </Panel>
     </div>
   );

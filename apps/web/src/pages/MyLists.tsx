@@ -130,7 +130,7 @@ export function MyLists() {
       </div>
 
       {error && (
-        <p role="alert" className="mt-4 text-[0.85rem] text-danger">
+        <p role="alert" className="mt-4 text-sm text-danger">
           {error}
         </p>
       )}
@@ -163,7 +163,7 @@ export function MyLists() {
                             aria-label={`Status for ${entry.title.name}`}
                             value={entry.status}
                             onChange={(e) => void move(entry, e.target.value as ListStatus)}
-                            className={`${inputClass} py-2 text-[0.8rem]`}
+                            className={`${inputClass} py-2 text-sm`}
                           >
                             {TABS.map((t) => (
                               <option key={t.status} value={t.status}>
@@ -174,7 +174,7 @@ export function MyLists() {
                           <button
                             type="button"
                             onClick={() => setRemoving(entry)}
-                            className="cursor-pointer text-left text-[0.8rem] text-muted underline"
+                            className="cursor-pointer text-left text-sm text-muted underline inline-flex min-h-11 items-center"
                           >
                             Remove <span className="sr-only">{entry.title.name}</span>
                           </button>

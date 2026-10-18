@@ -22,7 +22,7 @@ export function PosterCard({ title, children }: { title: PosterTitle; children?:
         className="relative block aspect-[2/3] overflow-hidden rounded-lg brightness-75 grayscale transition duration-300 hover:-translate-y-1.5 hover:brightness-100 hover:grayscale-0 focus-visible:-translate-y-1.5 focus-visible:brightness-100 focus-visible:grayscale-0 motion-reduce:transition-none"
       >
         {title.year !== undefined && (
-          <span className="absolute top-3 left-2.5 text-[0.65rem] tracking-widest opacity-80">
+          <span className="absolute top-3 left-2.5 text-xs tracking-widest opacity-80">
             {title.year}
           </span>
         )}

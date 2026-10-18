@@ -24,7 +24,7 @@ function Rail({ type, name }: (typeof RAILS)[number]) {
         <h2 id={heading} className="text-xl font-semibold tracking-tight">
           {name}
         </h2>
-        <Link to={`/browse?type=${type}`} className="text-[0.8rem] text-accent">
+        <Link to={`/browse?type=${type}`} className="text-sm text-accent">
           See all
           <span className="sr-only"> {name}</span> →
         </Link>
@@ -38,7 +38,7 @@ function Rail({ type, name }: (typeof RAILS)[number]) {
           {state.data.items.map((t) => (
             <li key={t.id} className="w-[150px] flex-none">
               <PosterCard title={t}>
-                <p className="text-[0.75rem] text-muted">{MEDIA_LABEL[t.mediaType]}</p>
+                <p className="text-xs text-muted">{MEDIA_LABEL[t.mediaType]}</p>
               </PosterCard>
             </li>
           ))}

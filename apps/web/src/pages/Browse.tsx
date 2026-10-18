@@ -79,7 +79,7 @@ export function Browse() {
                 {state.data.items.map((t) => (
                   <li key={t.id}>
                     <PosterCard title={t}>
-                      <p className="text-[0.75rem] text-muted">{MEDIA_LABEL[t.mediaType]}</p>
+                      <p className="text-xs text-muted">{MEDIA_LABEL[t.mediaType]}</p>
                     </PosterCard>
                   </li>
                 ))}

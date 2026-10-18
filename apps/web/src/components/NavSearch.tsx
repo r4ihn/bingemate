@@ -118,7 +118,7 @@ export function NavSearch() {
         ref={buttonRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-[46px] w-[54px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] bg-white/[0.06] text-[0.5rem] text-white/60 transition-colors hover:bg-white/15"
+        className="flex h-[46px] w-[54px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] bg-white/[0.06] text-caption text-white/60 transition-colors hover:bg-white/15"
       >
         <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] fill-white" aria-hidden="true">
           <path d={SEARCH_ICON} />
@@ -144,7 +144,7 @@ export function NavSearch() {
             aria-haspopup="menu"
             aria-expanded={scopeMenu}
             onClick={() => setScopeMenu((m) => !m)}
-            className="h-[30px] cursor-pointer rounded-lg bg-white/[0.12] px-2 text-[0.75rem] font-medium"
+            className="h-[30px] cursor-pointer rounded-lg bg-white/[0.12] px-2 text-xs font-medium"
           >
             {scopeLabel} ▾
           </button>
@@ -165,9 +165,9 @@ export function NavSearch() {
               setQuery(e.target.value);
               setActive(-1);
             }}
-            className="min-w-0 flex-1 bg-transparent text-[0.875rem] outline-none placeholder:text-muted"
+            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted"
           />
-          <kbd className="hidden rounded border border-line px-1.5 py-0.5 text-[0.6rem] text-muted sm:block">
+          <kbd className="hidden rounded border border-line px-1.5 py-0.5 text-xs text-muted sm:block">
             Esc
           </kbd>
 
@@ -188,7 +188,7 @@ export function NavSearch() {
                     setScopeMenu(false);
                     inputRef.current?.focus();
                   }}
-                  className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left text-[0.8rem] hover:bg-white/10"
+                  className="flex w-full cursor-pointer items-center justify-between rounded-lg px-2.5 py-2 text-left text-sm hover:bg-white/10"
                 >
                   {f.label}
                   {f.value === scope && <span aria-hidden="true">✓</span>}
@@ -227,8 +227,8 @@ export function NavSearch() {
                   className="h-[50px] w-[34px] flex-none rounded-md"
                 />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-[0.875rem] font-semibold">{t.name}</span>
-                  <span className="block text-[0.75rem] text-muted">
+                  <span className="block truncate text-sm font-semibold">{t.name}</span>
+                  <span className="block text-xs text-muted">
                     {t.year !== undefined && `${t.year} · `}
                     {MEDIA_LABEL[t.mediaType]}
                   </span>
@@ -241,7 +241,7 @@ export function NavSearch() {
               aria-selected={active === items.length}
               onMouseEnter={() => setActive(items.length)}
               onClick={seeAll}
-              className={`mt-1 cursor-pointer rounded-[10px] border-t border-line px-2.5 py-3 text-[0.8125rem] font-medium text-accent ${
+              className={`mt-1 cursor-pointer rounded-[10px] border-t border-line px-2.5 py-3 text-sm font-medium text-accent ${
                 active === items.length ? 'bg-white/10' : ''
               }`}
             >

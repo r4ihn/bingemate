@@ -112,7 +112,7 @@ function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Re
           />
         </Field>
         {submitError === 'session' && (
-          <p role="alert" className="text-[0.8rem] text-danger">
+          <p role="alert" className="text-sm text-danger">
             Your session has expired.{' '}
             <Link to="/login" state={{ from: location }} className="underline">
               Log in
@@ -121,7 +121,7 @@ function Form({ title, onSubmitted }: { title: TitleSummary; onSubmitted: (r: Re
           </p>
         )}
         {submitError && submitError !== 'session' && (
-          <p role="alert" className="text-[0.8rem] text-danger">
+          <p role="alert" className="text-sm text-danger">
             {submitError}
           </p>
         )}

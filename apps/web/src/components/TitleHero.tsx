@@ -82,7 +82,7 @@ export function TitleHero({
           </div>
         </div>
 
-        <dl className="grid gap-2.5 text-[0.8rem] md:absolute md:bottom-28 md:left-8 md:z-10">
+        <dl className="grid gap-2.5 text-sm md:absolute md:bottom-28 md:left-8 md:z-10">
           {countries.length > 0 && (
             <div className="flex items-center gap-2.5">
               <dt className="min-w-[52px]">Country:</dt>

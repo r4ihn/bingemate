@@ -23,12 +23,12 @@ export function Field({
 
   return (
     <div className="grid gap-2">
-      <label className="grid gap-2 text-[0.8rem] text-muted">
+      <label className="grid gap-2 text-sm text-muted">
         <span>{label}</span>
         {control}
       </label>
       {error && (
-        <p id={errorId} role="alert" className="text-[0.8rem] text-danger">
+        <p id={errorId} role="alert" className="text-sm text-danger">
           {error}
         </p>
       )}

@@ -5,7 +5,7 @@ export function Breadcrumb({ items }: { items: string[] }) {
   return (
     <nav
       aria-label="Breadcrumb"
-      className="absolute top-[92px] left-1/2 z-10 hidden -translate-x-1/2 gap-3 text-[0.85rem] whitespace-nowrap text-muted md:flex"
+      className="absolute top-[92px] left-1/2 z-10 hidden -translate-x-1/2 gap-3 text-sm whitespace-nowrap text-muted md:flex"
     >
       {items.map((item, i) => (
         <Fragment key={item}>

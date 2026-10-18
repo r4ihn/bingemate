@@ -16,7 +16,7 @@ export function AdminDashboard() {
             key={l.to}
             to={l.to}
             className={({ isActive }) =>
-              `rounded-full border px-[18px] py-2 text-[0.85rem] transition-colors ${
+              `rounded-full border px-[18px] py-2 text-sm transition-colors ${
                 isActive
                   ? 'border-white bg-white text-black'
                   : 'border-line text-muted hover:border-white hover:text-white'

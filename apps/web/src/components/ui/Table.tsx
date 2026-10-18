@@ -12,7 +12,7 @@ export function Table({
 }) {
   return (
     <div className="relative overflow-x-auto rounded-2xl border border-line bg-surface">
-      <table className="w-full border-collapse text-[0.85rem]">
+      <table className="w-full border-collapse text-sm">
         <caption className="sr-only">{caption}</caption>
         <thead>
           <tr>

@@ -65,7 +65,7 @@ function Form({
   return (
     <Panel className="mx-auto max-w-xl">
       {editingApproved && (
-        <p className="mb-4 rounded-xl border border-warn p-3 text-[0.85rem] text-warn">
+        <p className="mb-4 rounded-xl border border-warn p-3 text-sm text-warn">
           This title is approved. Editing it means it is sent back for approval and hidden from
           browse until an admin approves it again.
         </p>
@@ -96,7 +96,7 @@ function Form({
           />
         </Field>
         {saveError && (
-          <p role="alert" className="text-[0.8rem] text-danger">
+          <p role="alert" className="text-sm text-danger">
             {saveError}
           </p>
         )}
@@ -104,7 +104,7 @@ function Form({
           <Button type="submit" loading={pending}>
             {submitLabel}
           </Button>
-          <Link to="/creator" className="text-[0.85rem] text-muted underline">
+          <Link to="/creator" className="text-sm text-muted underline">
             Cancel
           </Link>
         </div>

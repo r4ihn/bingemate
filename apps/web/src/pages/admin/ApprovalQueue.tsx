@@ -47,7 +47,7 @@ export function ApprovalQueue() {
   return (
     <>
       {error && (
-        <p role="alert" className="mb-4 text-[0.85rem] text-danger">
+        <p role="alert" className="mb-4 text-sm text-danger">
           {error}
         </p>
       )}
@@ -79,7 +79,7 @@ export function ApprovalQueue() {
                 <div className="flex gap-2">
                   <Button
                     disabled={busy.has(t.id)}
-                    className="px-4 py-2 text-[0.8rem]"
+                    className="px-4 py-2 text-sm"
                     onClick={() => void decide(t, TitleStatus.APPROVED)}
                   >
                     Approve <span className="sr-only">{t.name}</span>
@@ -87,7 +87,7 @@ export function ApprovalQueue() {
                   <Button
                     variant="danger"
                     disabled={busy.has(t.id)}
-                    className="px-4 py-2 text-[0.8rem]"
+                    className="px-4 py-2 text-sm"
                     onClick={() => void decide(t, TitleStatus.REJECTED)}
                   >
                     Reject <span className="sr-only">{t.name}</span>

@@ -58,7 +58,7 @@ function CommentForm({
         />
       </Field>
       <div>
-        <Button type="submit" loading={pending} className="px-5 py-2 text-[0.85rem]">
+        <Button type="submit" loading={pending} className="px-5 py-2 text-sm">
           {submitLabel}
         </Button>
       </div>
@@ -69,18 +69,18 @@ function CommentForm({
 function CommentView({ comment, onDelete }: { comment: Comment; onDelete?: () => void }) {
   return (
     <div className="grid gap-1">
-      <p className="flex flex-wrap items-center gap-2 text-[0.85rem]">
+      <p className="flex flex-wrap items-center gap-2 text-sm">
         <strong className="font-semibold">{comment.author.name}</strong>
         {comment.author.role === Role.CREATOR && <Badge tone="creator">Creator</Badge>}
         {comment.isOfficial && <Badge tone="neutral">Official reply</Badge>}
       </p>
-      <p>{comment.body}</p>
+      <p className="max-w-[65ch]">{comment.body}</p>
       {onDelete && (
         <button
           type="button"
           onClick={onDelete}
           aria-label={`Delete comment by ${comment.author.name}`}
-          className="justify-self-start text-[0.8rem] text-muted underline"
+          className="justify-self-start text-sm text-muted underline inline-flex min-h-11 items-center"
         >
           Delete
         </button>
@@ -98,13 +98,16 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
   const [deleting, setDeleting] = useState<Comment | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  if (state.status === 'loading')
-    return <p className="text-[0.8rem] text-muted">Loading comments…</p>;
+  if (state.status === 'loading') return <p className="text-sm text-muted">Loading comments…</p>;
   if (state.status === 'error') {
     return (
-      <p role="alert" className="text-[0.8rem] text-danger">
+      <p role="alert" className="text-sm text-danger">
         Could not load comments.{' '}
-        <button type="button" onClick={reload} className="underline">
+        <button
+          type="button"
+          onClick={reload}
+          className="inline-flex min-h-11 items-center underline"
+        >
           Retry
         </button>
       </p>
@@ -145,7 +148,7 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
   return (
     <div className="mt-4 border-t border-line pt-4">
       {deleteError && (
-        <p role="alert" className="mb-3 text-[0.8rem] text-danger">
+        <p role="alert" className="mb-3 text-sm text-danger">
           {deleteError}
         </p>
       )}
@@ -167,7 +170,7 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
                 <button
                   type="button"
                   onClick={() => setReplyingTo(c.id)}
-                  className="mt-2 text-[0.8rem] text-muted underline"
+                  className="mt-2 text-sm text-muted underline inline-flex min-h-11 items-center"
                 >
                   Reply
                 </button>

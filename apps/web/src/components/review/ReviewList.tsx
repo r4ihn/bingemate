@@ -44,17 +44,17 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
       <header className="flex flex-wrap items-center gap-3">
         <strong className="font-semibold">{review.author.name}</strong>
         {review.author.role === Role.CREATOR && <Badge tone="creator">Creator</Badge>}
-        <span className="rounded-full bg-accent px-3 py-1 text-[0.8rem] font-semibold text-accent-ink">
+        <span className="rounded-full bg-accent px-3 py-1 text-sm font-semibold text-accent-ink">
           ★ {review.rating}/10
         </span>
-        <time dateTime={review.createdAt} className="ml-auto text-[0.8rem] text-muted">
+        <time dateTime={review.createdAt} className="ml-auto text-sm text-muted">
           {new Date(review.createdAt).toLocaleDateString()}
         </time>
       </header>
-      <p className="mt-3">{review.body}</p>
-      {detail && <p className="mt-2 text-[0.8rem] text-muted">{detail}</p>}
+      <p className="mt-3 max-w-[65ch]">{review.body}</p>
+      {detail && <p className="mt-2 text-sm text-muted">{detail}</p>}
       {deleteError && (
-        <p role="alert" className="mt-2 text-[0.8rem] text-danger">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {deleteError}
         </p>
       )}
@@ -63,7 +63,7 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
           type="button"
           onClick={() => setConfirming(true)}
           aria-label={`Delete review by ${review.author.name}`}
-          className="mt-2 text-[0.8rem] text-muted underline"
+          className="mt-2 text-sm text-muted underline inline-flex min-h-11 items-center"
         >
           Delete
         </button>

@@ -19,7 +19,7 @@ export function Pagination({
       <Button variant="secondary" disabled={page <= 1} onClick={() => onChange(page - 1)}>
         Previous
       </Button>
-      <span aria-live="polite" className="text-[0.8rem] text-muted">
+      <span aria-live="polite" className="text-sm text-muted">
         Page {page} of {pages}
       </span>
       <Button variant="secondary" disabled={page >= pages} onClick={() => onChange(page + 1)}>

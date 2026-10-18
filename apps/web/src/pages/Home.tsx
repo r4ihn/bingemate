@@ -69,10 +69,10 @@ function Strip() {
               style={posterBackground(t.hue)}
               className="relative block h-[480px] w-[145px] translate-y-[var(--dy)] overflow-hidden rounded-lg brightness-75 grayscale transition-[translate,scale,filter] duration-300 hover:z-10 hover:-translate-y-[34px] hover:scale-105 hover:brightness-100 hover:grayscale-0 focus-visible:-translate-y-[34px] focus-visible:scale-105 focus-visible:brightness-100 focus-visible:grayscale-0"
             >
-              <span className="absolute top-3 left-2.5 text-[0.65rem] tracking-widest opacity-80">
+              <span className="absolute top-3 left-2.5 text-xs tracking-widest opacity-80">
                 {t.year}
               </span>
-              <span className="absolute right-2.5 bottom-3.5 left-2.5 text-[1.05rem] leading-none font-bold tracking-tight uppercase">
+              <span className="absolute right-2.5 bottom-3.5 left-2.5 text-lg leading-none font-bold tracking-tight uppercase">
                 {t.name}
               </span>
             </Link>

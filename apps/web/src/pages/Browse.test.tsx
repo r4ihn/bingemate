@@ -32,7 +32,7 @@ describe('Browse', () => {
   it('shows results for the q in the URL, each linking to its title', async () => {
     renderBrowse('/browse?q=salt');
     expect(await screen.findByRole('heading', { name: 'Results for “salt”' })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /salt archive/i })).toHaveAttribute(
+    expect(await screen.findByRole('link', { name: /salt archive/i })).toHaveAttribute(
       'href',
       expect.stringMatching(/^\/titles\//),
     );

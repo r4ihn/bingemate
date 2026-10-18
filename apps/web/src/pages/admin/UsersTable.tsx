@@ -59,7 +59,7 @@ export function UsersTable() {
   return (
     <>
       {error && (
-        <p role="alert" className="mb-4 text-[0.85rem] text-danger">
+        <p role="alert" className="mb-4 text-sm text-danger">
           {error}
         </p>
       )}
@@ -72,7 +72,7 @@ export function UsersTable() {
                 aria-label={`Role for ${u.email}`}
                 value={overrides[u.id] ?? u.role}
                 onChange={(e) => requestRole(u, e.target.value as Role)}
-                className={`${inputClass} py-2 text-[0.8rem]`}
+                className={`${inputClass} py-2 text-sm`}
               >
                 {Object.values(Role).map((r) => (
                   <option key={r} value={r}>

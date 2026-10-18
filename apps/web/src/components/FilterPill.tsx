@@ -15,10 +15,10 @@ export function FilterPill({
       type="button"
       aria-pressed={active}
       onClick={onClick}
-      className={`cursor-pointer rounded-full border px-[18px] py-2 text-[0.85rem] transition-colors ${
+      className={`min-h-11 cursor-pointer rounded-full border px-[18px] text-sm transition-colors ${
         active
           ? 'border-white bg-white text-black'
-          : 'border-line text-muted hover:border-white hover:text-white'
+          : 'border-field text-muted hover:border-white hover:text-white'
       }`}
     >
       {children}
