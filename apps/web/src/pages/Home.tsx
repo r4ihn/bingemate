@@ -43,10 +43,13 @@ function Strip({ titles }: { titles: TitleDetail[] }) {
     <section
       id="strip"
       ref={ref}
-      className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black pt-36 pb-12"
+      className="relative flex min-h-screen flex-col items-center justify-center gap-4 overflow-hidden bg-black py-24"
     >
-      <Breadcrumb items={['Main', 'Trending now']} />
-      <ul className="relative z-10 flex max-w-full items-end gap-[22px] overflow-x-auto px-6 pt-[60px] md:overflow-visible">
+      {/* In the flow, centred with the posters as one block, so it can never be covered or float far above them */}
+      <div className="hidden md:block">
+        <Breadcrumb items={['Main', 'Trending now']} inline />
+      </div>
+      <ul className="relative z-10 mx-auto flex max-w-full items-end gap-[22px] overflow-x-auto px-6 pt-[60px] pb-4">
         {titles.map((t, i) => (
           <li
             key={t.id}
