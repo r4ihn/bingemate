@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { act, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ListStatus, MediaType, Role } from '@bingemate/shared';
 import { ApiError } from '../api/client.js';
@@ -148,6 +148,54 @@ describe('MyLists regressions from the final review', () => {
     );
     await u.click(screen.getByRole('button', { name: 'Completed' }));
     expect(screen.queryByLabelText('Status for Last Light')).not.toBeInTheDocument();
+  });
+});
+
+describe('MyLists late responses', () => {
+  const entry = (id: string, i: number, status: ListStatus) => ({
+    id,
+    titleId: (db.titles[i] as (typeof db.titles)[number]).id,
+    status,
+    title: db.titles[i] as (typeof db.titles)[number],
+  });
+
+  it('a remove that resolves after switching tab does not refetch or step back in the new view', async () => {
+    db.lists = [entry('l-1', 0, ListStatus.COMPLETED), entry('l-2', 1, ListStatus.PLAN_TO)];
+    let release!: () => void;
+    vi.spyOn(listsApi, 'remove').mockImplementation(() => new Promise((r) => (release = r)));
+    const list = vi.spyOn(listsApi, 'list');
+    const u = setup();
+    await screen.findByRole('button', { name: /^Remove/ });
+    await u.click(screen.getByRole('button', { name: /^Remove/ }));
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    // Cancel closes the dialog while the request is still in flight
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    await u.click(screen.getByRole('button', { name: 'Plan to' }));
+    await screen.findByLabelText(/^Status for /);
+    const before = list.mock.calls.length;
+
+    await act(async () => {
+      release();
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(list).toHaveBeenCalledTimes(before);
+  });
+
+  it('a move that fails after switching tab does not show its error in the new view', async () => {
+    db.lists = [entry('l-1', 0, ListStatus.COMPLETED), entry('l-2', 1, ListStatus.PLAN_TO)];
+    let reject!: (e: unknown) => void;
+    vi.spyOn(listsApi, 'setStatus').mockImplementation(() => new Promise((_, r) => (reject = r)));
+    const u = setup();
+    await screen.findByRole('link', { name: new RegExp((db.titles[0] as { name: string }).name) });
+    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await u.click(screen.getByRole('button', { name: 'Plan to' }));
+    await screen.findByLabelText(/^Status for /);
+
+    await act(async () => {
+      reject(new ApiError(500, 'boom'));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
 

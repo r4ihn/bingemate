@@ -26,6 +26,10 @@ export function MyLists() {
   const [hidden, setHidden] = useState<ReadonlySet<string>>(new Set());
   const hiddenRef = useRef<ReadonlySet<string>>(hidden);
   const [error, setError] = useState<string | null>(null);
+  // Identifies the view on screen; an action that resolves after the view changed must not touch the new one
+  const viewKey = `${status}|${mediaType ?? ''}|${page}`;
+  const viewRef = useRef(viewKey);
+  viewRef.current = viewKey;
   const [removing, setRemoving] = useState<ListItem | null>(null);
   const { state, reload } = useAsync(
     () => listsApi.list({ status, mediaType, page }),
@@ -49,8 +53,8 @@ export function MyLists() {
   };
 
   /** After the server confirms a change that leaves this page empty: previous page, or refetch. */
-  function settle() {
-    if (state.status !== 'ready') return;
+  function settle(startedIn: string) {
+    if (viewRef.current !== startedIn || state.status !== 'ready') return;
     const left = state.data.data.filter((e) => !hiddenRef.current.has(e.id)).length;
     if (left > 0) return;
     syncHidden(new Set());
@@ -61,11 +65,13 @@ export function MyLists() {
   async function move(entry: ListItem, next: ListStatus) {
     if (next === entry.status) return;
     setError(null);
+    const startedIn = viewRef.current;
     hide(entry.id); // optimistic
     try {
       await listsApi.setStatus(entry.id, next);
-      settle();
+      settle(startedIn);
     } catch {
+      if (viewRef.current !== startedIn) return; // the view reset already cleared the optimistic hide
       unhide(entry.id); // roll back
       setError(`Could not move “${entry.title.name}”. Try again.`);
     }
@@ -74,12 +80,15 @@ export function MyLists() {
   async function confirmRemove() {
     if (!removing) return;
     const entry = removing;
+    const startedIn = viewRef.current;
     try {
       await listsApi.remove(entry.id);
+      if (viewRef.current !== startedIn) return;
       hide(entry.id);
-      settle();
+      settle(startedIn);
     } catch {
-      setError(`Could not remove “${entry.title.name}”. Try again.`);
+      if (viewRef.current === startedIn)
+        setError(`Could not remove “${entry.title.name}”. Try again.`);
     } finally {
       setRemoving(null);
     }
