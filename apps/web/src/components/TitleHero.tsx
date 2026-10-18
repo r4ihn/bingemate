@@ -30,7 +30,11 @@ export function TitleHero({
   ].join(', ');
 
   return (
-    <section id="hero" className="relative min-h-screen overflow-hidden" style={{ background }}>
+    <section
+      id="hero"
+      className="relative min-h-[56rem] overflow-hidden md:min-h-screen"
+      style={{ background }}
+    >
       <Breadcrumb items={breadcrumb} />
       {/* Mock silhouettes stand in for the poster art */}
       {SILHOUETTES.map((pos) => (
@@ -56,54 +60,57 @@ export function TitleHero({
           ))}
       </h1>
 
-      <div className="absolute right-8 bottom-52 left-8 z-10 md:top-30 md:right-8 md:bottom-auto md:left-auto md:w-[380px]">
-        <p className="leading-relaxed">{title.synopsis}</p>
-        <div className="mt-[18px]">
-          <Pill filled>
-            <strong className="font-bold tracking-tight">BingeMate</strong>{' '}
-            {formatRating(title.avgRating)}
-          </Pill>
-        </div>
-      </div>
-
       <button
         type="button"
         aria-label="Play trailer"
-        className="absolute top-1/2 left-1/2 z-10 grid h-[110px] w-[110px] -translate-x-1/2 -translate-y-1/2 cursor-pointer place-items-center rounded-full bg-[rgb(120_100_90/0.6)] backdrop-blur-md"
+        className="absolute top-[40%] left-1/2 z-10 grid h-[110px] w-[110px] -translate-x-1/2 -translate-y-1/2 md:top-1/2 cursor-pointer place-items-center rounded-full bg-[rgb(120_100_90/0.6)] backdrop-blur-md"
       >
         <svg viewBox="0 0 24 24" className="ml-1 h-[34px] w-[34px] fill-white" aria-hidden="true">
           <path d="M6 3l15 9-15 9z" />
         </svg>
       </button>
 
-      <dl className="absolute bottom-28 left-8 z-10 grid gap-2.5 text-[0.8rem]">
-        {countries.length > 0 && (
-          <div className="flex items-center gap-2.5">
-            <dt className="min-w-[52px]">Country:</dt>
-            {countries.map((c) => (
-              <dd key={c}>
-                <Pill>{c}</Pill>
+      {/* One bottom-anchored stack on phones; on md+ the synopsis and facts are placed separately */}
+      <div className="absolute inset-x-8 bottom-20 z-10 flex flex-col gap-8 md:contents">
+        <div className="md:absolute md:top-30 md:right-8 md:z-10 md:w-[380px]">
+          <p className="leading-relaxed">{title.synopsis}</p>
+          <div className="mt-[18px]">
+            <Pill filled>
+              <strong className="font-bold tracking-tight">BingeMate</strong>{' '}
+              {formatRating(title.avgRating)}
+            </Pill>
+          </div>
+        </div>
+
+        <dl className="grid gap-2.5 text-[0.8rem] md:absolute md:bottom-28 md:left-8 md:z-10">
+          {countries.length > 0 && (
+            <div className="flex items-center gap-2.5">
+              <dt className="min-w-[52px]">Country:</dt>
+              {countries.map((c) => (
+                <dd key={c}>
+                  <Pill>{c}</Pill>
+                </dd>
+              ))}
+            </div>
+          )}
+          {title.studio && (
+            <div className="flex items-center gap-2.5">
+              <dt className="min-w-[52px]">Studio:</dt>
+              <dd>
+                <Pill>{title.studio}</Pill>
               </dd>
-            ))}
-          </div>
-        )}
-        {title.studio && (
-          <div className="flex items-center gap-2.5">
-            <dt className="min-w-[52px]">Studio:</dt>
-            <dd>
-              <Pill>{title.studio}</Pill>
-            </dd>
-          </div>
-        )}
-        {title.runtime && (
-          <div className="flex items-center gap-2.5">
-            <dt className="min-w-[52px]" />
-            <dd>
-              <Pill>{title.runtime}</Pill>
-            </dd>
-          </div>
-        )}
-      </dl>
+            </div>
+          )}
+          {title.runtime && (
+            <div className="flex items-center gap-2.5">
+              <dt className="min-w-[52px]" />
+              <dd>
+                <Pill>{title.runtime}</Pill>
+              </dd>
+            </div>
+          )}
+        </dl>
+      </div>
 
       {scrollHint && (
         <a href={scrollHint.href} className="absolute right-8 bottom-6 z-10 text-xs text-muted">

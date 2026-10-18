@@ -19,7 +19,7 @@ function Rail({ type, name }: (typeof RAILS)[number]) {
   const heading = `rail-${type}`;
 
   return (
-    <section aria-labelledby={heading}>
+    <section aria-labelledby={heading} className="min-w-0">
       <div className="flex items-baseline justify-between">
         <h2 id={heading} className="text-xl font-semibold tracking-tight">
           {name}

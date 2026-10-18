@@ -25,6 +25,8 @@
 @layer base {
   html {
     scroll-behavior: smooth;
+    /* Reserve the scrollbar's space so the centred dock does not shift between short and long pages */
+    scrollbar-gutter: stable;
   }
   body {
     @apply bg-bg font-sans text-[0.95rem] text-white antialiased;

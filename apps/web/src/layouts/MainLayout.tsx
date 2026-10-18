@@ -72,7 +72,7 @@ export function MainLayout() {
         Skip to content
       </a>
 
-      <header className="fixed top-4 left-1/2 z-50 flex -translate-x-1/2 gap-2 rounded-[14px] border border-line bg-dock p-1.5 backdrop-blur-md">
+      <header className="fixed inset-x-4 top-4 z-50 mx-auto flex w-fit max-w-[calc(100vw-2rem)] gap-2 rounded-[14px] border border-line bg-dock p-1.5 backdrop-blur-md">
         <Link
           to="/"
           className="flex h-[46px] items-center rounded-[10px] bg-accent px-[18px] text-[1.05rem] font-bold tracking-tight text-accent-ink"
@@ -100,7 +100,9 @@ export function MainLayout() {
         </button>
 
         <div className="flex gap-1.5">
-          <IconLink to="/me/lists" label="Save" d={<Icon d="M6 2h12v20l-6-4-6 4z" />} />
+          <span className="hidden sm:block">
+            <IconLink to="/me/lists" label="Save" d={<Icon d="M6 2h12v20l-6-4-6 4z" />} />
+          </span>
           <NavSearch />
           {status === 'loading' ? null : user ? (
             <button type="button" className={iconBtn} onClick={() => void signOut()}>

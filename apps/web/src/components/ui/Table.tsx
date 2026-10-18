@@ -11,7 +11,7 @@ export function Table({
   children: ReactNode;
 }) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-line bg-surface">
+    <div className="relative overflow-x-auto rounded-2xl border border-line bg-surface">
       <table className="w-full border-collapse text-[0.85rem]">
         <caption className="sr-only">{caption}</caption>
         <thead>

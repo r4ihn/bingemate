@@ -97,7 +97,7 @@ export function MyLists() {
       <h1 className="text-4xl font-semibold tracking-tight">My Lists</h1>
 
       <div className="mt-6 flex flex-wrap items-center gap-x-8 gap-y-3">
-        <nav aria-label="List status" className="flex gap-2">
+        <nav aria-label="List status" className="flex flex-wrap gap-2">
           {TABS.map((t) => (
             <FilterPill
               key={t.status}
@@ -112,7 +112,7 @@ export function MyLists() {
             </FilterPill>
           ))}
         </nav>
-        <nav aria-label="Media type" className="flex gap-2">
+        <nav aria-label="Media type" className="flex flex-wrap gap-2">
           {MEDIA.map((m) => (
             <FilterPill
               key={m.label}
