@@ -1,0 +1,300 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BingeMate design preview</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* Tokens: keep in sync with docs/ui.md B2 */
+    :root {
+      --bg: #070707;
+      --surface: #161616;
+      --surface-2: #222;
+      --dock: rgba(38, 38, 38, 0.82);
+      --border: rgba(255, 255, 255, 0.14);
+      --text: #fff;
+      --text-muted: #9a9a9a;
+      --ghost: #1e1e1e;
+      --accent: #f5c518;
+      --accent-ink: #111;
+      --danger: #ff5c5c;
+      --success: #4cd083;
+      --warn: #f5a623;
+      --fs-display: clamp(3.5rem, 8vw, 7rem);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, sans-serif;
+      font-size: 0.95rem;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; text-decoration: none; }
+    :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+    /* ---------- Fixed top dock ---------- */
+    .dock {
+      position: fixed; top: 16px; left: 50%; transform: translateX(-50%);
+      z-index: 100; display: flex; gap: 8px; padding: 6px;
+      background: var(--dock); backdrop-filter: blur(14px);
+      border-radius: 14px; border: 1px solid var(--border);
+    }
+    .dock .logo {
+      background: var(--accent); color: var(--accent-ink); font-weight: 700;
+      letter-spacing: -0.03em; font-size: 1.05rem; padding: 0 18px;
+      display: flex; align-items: center; border-radius: 10px; height: 46px;
+    }
+    .dock .links { display: flex; align-items: center; gap: 4px; padding: 0 8px; }
+    .dock .links a { font-size: 0.8rem; padding: 10px 12px; color: rgba(255,255,255,.72); border-radius: 8px; display: flex; gap: 8px; align-items: center; }
+    .dock .links a:hover, .dock .links a.active { color: #fff; background: rgba(255,255,255,.08); }
+    .dock .icons { display: flex; gap: 6px; }
+    .dock .icon-btn {
+      width: 54px; height: 46px; border-radius: 10px; background: rgba(255,255,255,.06);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      font-size: 0.5rem; color: rgba(255,255,255,.6); border: 0; font-family: inherit; cursor: pointer;
+    }
+    .dock .icon-btn svg { width: 15px; height: 15px; fill: #fff; }
+    .dock .icon-btn:hover { background: rgba(255,255,255,.14); }
+
+    .crumbs {
+      position: absolute; top: 92px; left: 50%; transform: translateX(-50%);
+      display: flex; gap: 12px; font-size: 0.85rem; color: var(--text-muted); z-index: 5; white-space: nowrap;
+    }
+    .crumbs b { color: #fff; font-weight: 500; }
+
+    section { position: relative; min-height: 100vh; overflow: hidden; }
+
+    /* ---------- Hero (mock art, no real posters) ---------- */
+    .hero {
+      background:
+        radial-gradient(ellipse 60% 55% at 50% 38%, #ff8a1f 0%, #d9540a 38%, transparent 70%),
+        radial-gradient(ellipse 120% 80% at 50% 0%, #8c2f06 0%, transparent 70%),
+        linear-gradient(#5a1b04, #1a0702);
+    }
+    .hero .figure { position: absolute; border-radius: 50% 50% 8% 8%; background: linear-gradient(#2a0f05, #120502); filter: blur(1px); opacity: .85; }
+    .hero .shade { position: absolute; inset: 0; background: linear-gradient(to bottom, transparent 55%, #000 100%); }
+    .hero h1 {
+      position: absolute; left: 32px; top: 120px; margin: 0; z-index: 3;
+      font-size: var(--fs-display); font-weight: 500; letter-spacing: -0.045em; line-height: .95;
+    }
+    .hero .synopsis { position: absolute; right: 32px; top: 120px; width: 380px; z-index: 3; line-height: 1.55; }
+    .pill { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; font-size: 0.85rem; padding: 8px 18px; }
+    .pill.rating { background: var(--accent); color: var(--accent-ink); margin-top: 18px; font-weight: 500; }
+    .pill.rating strong { font-weight: 700; letter-spacing: -0.03em; }
+    .pill.outline { border: 1px solid #fff; background: transparent; color: #fff; }
+    .play {
+      position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 3;
+      width: 110px; height: 110px; border-radius: 50%; border: 0; cursor: pointer;
+      background: rgba(120, 100, 90, .6); backdrop-filter: blur(6px);
+      display: grid; place-items: center;
+    }
+    .play svg { width: 34px; height: 34px; fill: #fff; margin-left: 5px; }
+    .meta { position: absolute; left: 32px; bottom: 110px; z-index: 3; display: grid; gap: 10px; }
+    .meta .row { display: flex; align-items: center; gap: 10px; }
+    .meta label { font-size: 0.8rem; min-width: 52px; }
+    .scroll-hint { position: absolute; bottom: 24px; right: 32px; z-index: 3; font-size: .75rem; color: var(--text-muted); }
+
+    /* ---------- Filmography strip ---------- */
+    .strip { background: #000; display: flex; align-items: center; justify-content: center; }
+    .ghost {
+      position: absolute; left: 50%; bottom: -6vw; transform: translateX(-50%); z-index: 0; user-select: none;
+      font-size: 27vw; font-weight: 500; letter-spacing: -0.06em; line-height: 1; color: var(--ghost); white-space: nowrap;
+    }
+    .posters { position: relative; z-index: 1; display: flex; gap: 22px; align-items: flex-end; padding-top: 60px; }
+    .poster {
+      width: 145px; height: 480px; border-radius: 8px; flex: none; position: relative; overflow: hidden;
+      filter: grayscale(1) brightness(.78); transition: transform .35s ease, filter .35s ease;
+      opacity: 0; transform: translateX(-90px);
+    }
+    .poster .t { position: absolute; left: 10px; right: 10px; bottom: 14px; font-weight: 700; font-size: 1.05rem; line-height: 1; letter-spacing: -0.03em; text-transform: uppercase; }
+    .poster .y { position: absolute; left: 10px; top: 12px; font-size: .65rem; letter-spacing: .1em; opacity: .8; }
+    .strip.in .poster { opacity: 1; transform: translateX(0) translateY(var(--dy, 0)); transition: opacity .6s ease var(--d), transform .8s cubic-bezier(.2,.8,.2,1) var(--d), filter .35s ease; }
+    .poster:hover, .poster:focus-visible { filter: none; transform: translateY(calc(var(--dy, 0px) - 34px)) scale(1.05) !important; transition-delay: 0s !important; z-index: 2; }
+
+    /* ---------- Component sheet (how other pages will look) ---------- */
+    .sheet { padding: 120px 32px 80px; min-height: 0; background: var(--bg); }
+    .sheet h2 { font-size: 1.5rem; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.02em; }
+    .sheet h3 { font-size: .8rem; color: var(--text-muted); font-weight: 500; text-transform: uppercase; letter-spacing: .08em; margin: 36px 0 14px; }
+    .wrap { max-width: 1100px; margin: 0 auto; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .btn { border: 0; font: inherit; font-weight: 600; border-radius: 999px; padding: 12px 24px; cursor: pointer; }
+    .btn.primary { background: var(--accent); color: var(--accent-ink); }
+    .btn.secondary { background: transparent; color: #fff; border: 1px solid #fff; }
+    .btn.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); }
+    .badge { font-size: .75rem; font-weight: 500; padding: 5px 12px; border-radius: 999px; border: 1px solid currentColor; }
+    .badge.pending { color: var(--warn); } .badge.approved { color: var(--success); } .badge.rejected { color: var(--danger); } .badge.neutral { color: var(--text-muted); }
+    .badge.creator { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+    .panel { background: var(--surface); border-radius: 16px; padding: 24px; border: 1px solid var(--border); }
+    .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+    label.f { display: grid; gap: 8px; font-size: .8rem; color: var(--text-muted); margin-bottom: 16px; }
+    input.in, select.in, textarea.in { background: var(--bg); color: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 12px 16px; font: inherit; }
+    input.in:focus, textarea.in:focus { outline: 2px solid var(--accent); border-color: transparent; }
+    .tabs { display: flex; gap: 8px; }
+    .tab { padding: 8px 18px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-muted); font-size: .85rem; }
+    .tab.on { background: #fff; color: #000; border-color: #fff; }
+    table { width: 100%; border-collapse: collapse; font-size: .85rem; }
+    th { text-align: left; color: var(--text-muted); font-weight: 500; font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; padding: 10px 12px; }
+    td { padding: 14px 12px; border-top: 1px solid var(--border); }
+    .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 18px; }
+    .card .art { aspect-ratio: 2/3; border-radius: 8px; filter: grayscale(1) brightness(.8); transition: filter .3s, transform .3s; }
+    .card:hover .art { filter: none; transform: translateY(-6px); }
+    .card p { margin: 10px 0 2px; font-weight: 600; font-size: .9rem; } .card small { color: var(--text-muted); }
+    .comment { border-top: 1px solid var(--border); padding: 16px 0; display: grid; gap: 6px; }
+    .comment.reply { margin-left: 28px; }
+    .big404 { font-size: 16vw; font-weight: 500; letter-spacing: -0.06em; color: var(--ghost); line-height: 1; margin: 0; }
+
+    @media (max-width: 800px) {
+      .dock .links { display: none; }
+      .hero h1 { top: 150px; } .hero .synopsis { top: auto; bottom: 200px; left: 32px; right: 32px; width: auto; }
+      .posters { overflow-x: auto; max-width: 100%; padding: 60px 24px 0; }
+      .crumbs { display: none; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .poster { opacity: 1 !important; transform: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Fixed top navigation -->
+  <header class="dock">
+    <a class="logo" href="#hero" aria-label="BingeMate home">BingeMate</a>
+    <nav class="links" aria-label="Main">
+      <a href="#"><svg width="14" height="14" viewBox="0 0 14 14" fill="rgba(255,255,255,.6)"><circle cx="2" cy="2" r="1.2"/><circle cx="7" cy="2" r="1.2"/><circle cx="12" cy="2" r="1.2"/><circle cx="2" cy="7" r="1.2"/><circle cx="7" cy="7" r="1.2"/><circle cx="12" cy="7" r="1.2"/><circle cx="2" cy="12" r="1.2"/><circle cx="7" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/></svg>Menu</a>
+      <a href="#" class="active">Browse</a>
+      <a href="#">Trending</a>
+      <a href="#">My Lists</a>
+    </nav>
+    <div class="icons">
+      <button class="icon-btn" type="button"><svg viewBox="0 0 24 24"><path d="M6 2h12v20l-6-4-6 4z"/></svg>Save</button>
+      <button class="icon-btn" type="button"><svg viewBox="0 0 24 24"><path d="M10 2a8 8 0 105 14.3l5.4 5.4 1.4-1.4-5.4-5.4A8 8 0 0010 2zm0 2a6 6 0 110 12 6 6 0 010-12z"/></svg>Search</button>
+      <button class="icon-btn" type="button"><svg viewBox="0 0 24 24"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.500-4-6-9-6z"/></svg>Sign in</button>
+    </div>
+  </header>
+
+  <!-- 1. Title hero -->
+  <section class="hero" id="hero">
+    <nav class="crumbs" aria-label="Breadcrumb"><span>Main</span>›<span>Films</span>›<span>Ines Calloway</span>›<b>Last Light: Part Two</b></nav>
+    <div class="figure" style="left:12%;bottom:8%;width:20%;height:46%"></div>
+    <div class="figure" style="left:30%;bottom:-4%;width:20%;height:52%"></div>
+    <div class="figure" style="left:44%;bottom:12%;width:14%;height:40%"></div>
+    <div class="figure" style="left:56%;bottom:-2%;width:20%;height:48%"></div>
+    <div class="figure" style="left:76%;bottom:10%;width:14%;height:36%"></div>
+    <div class="shade"></div>
+    <h1>Last Light:<br />Part Two</h1>
+    <div class="synopsis">
+      <p>Placeholder synopsis. A fugitive pilot joins the desert nomads on a campaign against the order that erased her home, and must choose between her future and the world she is trying to save.</p>
+      <span class="pill rating"><strong>BingeMate</strong> 9.6</span>
+    </div>
+    <button class="play" type="button" aria-label="Play trailer"><svg viewBox="0 0 24 24"><path d="M6 3l15 9-15 9z"/></svg></button>
+    <div class="meta">
+      <div class="row"><label>Country:</label><span class="pill outline">Usa</span><span class="pill outline">Canada</span></div>
+      <div class="row"><label>Studio:</label><span class="pill outline">North Star Pictures</span></div>
+      <div class="row"><label></label><span class="pill outline">2h 46min</span></div>
+    </div>
+    <a class="scroll-hint" href="#strip">Scroll for filmography ↓</a>
+  </section>
+
+  <!-- 2. Filmography strip -->
+  <section class="strip" id="strip">
+    <nav class="crumbs" aria-label="Breadcrumb"><span>Main</span>›<span>Films</span>›<b>Ines Calloway</b></nav>
+    <div class="ghost" aria-hidden="true">Calloway</div>
+    <div class="posters" id="posters"></div>
+  </section>
+
+  <!-- 3. Component sheet: how every other page will look -->
+  <section class="sheet" id="sheet">
+    <div class="wrap">
+      <h2>Component sheet</h2>
+      <p style="color:var(--text-muted);margin:0">Same tokens and shapes, applied to the pages the reference does not show.</p>
+
+      <h3>Buttons and badges</h3>
+      <div class="row">
+        <button class="btn primary" type="button">Write a review</button>
+        <button class="btn secondary" type="button">Add to list</button>
+        <button class="btn danger" type="button">Delete</button>
+        <span class="badge pending">Pending</span><span class="badge approved">Approved</span><span class="badge rejected">Rejected</span>
+        <span class="badge neutral">In progress</span><span class="badge creator">Creator</span>
+      </div>
+
+      <h3>Browse: filters and poster grid</h3>
+      <div class="row" style="margin-bottom:20px"><span class="pill outline">All</span><span class="pill outline" style="background:#fff;color:#000">Movies</span><span class="pill outline">Books</span><span class="pill outline">TV shows</span><span class="pill outline">Genre ▾</span><span class="pill outline">Rating ▾</span></div>
+      <div class="cards" id="cards"></div>
+
+      <h3>Login / register, review form</h3>
+      <div class="grid2">
+        <form class="panel" onsubmit="return false">
+          <h2>Log in</h2>
+          <label class="f">Email<input class="in" type="email" placeholder="you@example.com" /></label>
+          <label class="f">Password<input class="in" type="password" placeholder="••••••••" /></label>
+          <button class="btn primary" type="submit">Log in</button>
+        </form>
+        <form class="panel" onsubmit="return false">
+          <h2>Write a review</h2>
+          <label class="f">Rating<input class="in" type="text" value="8 / 10" /></label>
+          <label class="f">Runtime watched (movie)<input class="in" type="text" placeholder="e.g. 2h 46min" /></label>
+          <label class="f">Your review<textarea class="in" rows="3" placeholder="What did you think?"></textarea></label>
+          <button class="btn primary" type="submit">Post review</button>
+        </form>
+      </div>
+
+      <h3>My Lists tabs, creator and admin tables</h3>
+      <div class="tabs" style="margin-bottom:18px"><span class="tab on">Completed</span><span class="tab">In progress</span><span class="tab">Plan to</span></div>
+      <div class="panel">
+        <table>
+          <thead><tr><th>Title</th><th>Type</th><th>Status</th><th>Note</th></tr></thead>
+          <tbody>
+            <tr><td>Last Light: Part Two</td><td>Movie</td><td><span class="badge approved">Approved</span></td><td>-</td></tr>
+            <tr><td>The Salt Archive</td><td>Book</td><td><span class="badge pending">Pending</span></td><td>Awaiting admin review</td></tr>
+            <tr><td>Harbour Nine</td><td>TV show</td><td><span class="badge rejected">Rejected</span></td><td>Poster missing</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Comments (one reply level)</h3>
+      <div class="panel">
+        <div class="comment"><div><strong>maya_r</strong> <span class="badge neutral">Consumer</span></div><div>Great pacing in the second half.</div></div>
+        <div class="comment reply"><div><strong>studio_north</strong> <span class="badge creator">Creator</span> <span class="badge neutral">Official reply</span></div><div>Thank you for watching!</div></div>
+      </div>
+
+      <h3>Forbidden / not found</h3>
+      <p class="big404" aria-hidden="true">404</p>
+      <p style="margin:0">That address does not exist.</p>
+    </div>
+  </section>
+
+  <script>
+    // Mock posters: CSS gradients stand in for real artwork
+    const films = [
+      ['Last Light', '2016', 210, 30], ['Last Light 2', '2024', 25, 8], ['Ember Run', '2021', 275, 38],
+      ['Isone', '2013', 200, 20], ['Hollow City', '2014', 190, 10], ['Neon Blade', '2017', 335, 45], ['Cartel', '2015', 40, 24]
+    ];
+    const dy = ['0px', '-30px', '-10px', '0px', '0px', '-34px', '0px'];
+    const posters = document.getElementById('posters');
+    films.forEach(([t, y, h, s], i) => {
+      const a = document.createElement('a');
+      a.className = 'poster'; a.href = '#'; a.tabIndex = 0;
+      a.style.cssText = `--d:${i * 90}ms; --dy:${dy[i]}; background:linear-gradient(165deg, hsl(${h} ${s + 35}% 52%), hsl(${h} 45% 14%) 70%, #050505)`;
+      a.innerHTML = `<span class="y">${y}</span><span class="t">${t}</span>`;
+      posters.appendChild(a);
+    });
+    const cards = document.getElementById('cards');
+    [['Last Light', 'Movie · 2016', 210], ['Ember Run', 'Movie · 2021', 275], ['The Salt Archive', 'Book', 150], ['Harbour Nine', 'TV show', 95], ['Hollow City', 'Movie · 2014', 190], ['Neon Blade', 'Movie · 2017', 335]]
+      .forEach(([t, m, h]) => {
+        const d = document.createElement('div'); d.className = 'card';
+        d.innerHTML = `<div class="art" style="background:linear-gradient(165deg,hsl(${h} 70% 52%),hsl(${h} 45% 14%) 70%,#050505)"></div><p>${t}</p><small>${m}</small>`;
+        cards.appendChild(d);
+      });
+    // Stagger the strip in when it scrolls into view
+    new IntersectionObserver((es, o) => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); o.unobserve(e.target); } }), { threshold: .35 })
+      .observe(document.getElementById('strip'));
+  </script>
+</body>
+</html>

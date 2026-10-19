@@ -1,0 +1,212 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { ListStatus, MediaType, Role } from '@bingemate/shared';
+import { ApiError } from '../api/client.js';
+import { listsApi } from '../api/lists.js';
+import { db, resetDb } from '../mocks/db.js';
+import { renderWithProviders } from '../test/utils.js';
+import { MyLists } from './MyLists.js';
+
+function setup() {
+  renderWithProviders(<MyLists />, { role: Role.CONSUMER, route: '/me/lists' });
+  return userEvent.setup();
+}
+
+const firstStatusSelect = () => screen.getAllByRole('combobox')[0] as HTMLSelectElement;
+
+beforeEach(() => resetDb());
+afterEach(() => vi.restoreAllMocks());
+
+describe('MyLists', () => {
+  it('starts on Completed and shows its entries', async () => {
+    const list = vi.spyOn(listsApi, 'list');
+    setup();
+    expect(await screen.findByRole('link', { name: /Last Light/ })).toBeInTheDocument();
+    expect(list).toHaveBeenCalledWith({
+      status: ListStatus.COMPLETED,
+      mediaType: undefined,
+      page: 1,
+    });
+    expect(screen.getByRole('button', { name: 'Completed' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+  });
+
+  it('switching tab requests that status', async () => {
+    const list = vi.spyOn(listsApi, 'list');
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.click(screen.getByRole('button', { name: 'In progress' }));
+    expect(list).toHaveBeenLastCalledWith({
+      status: ListStatus.IN_PROGRESS,
+      mediaType: undefined,
+      page: 1,
+    });
+    expect(await screen.findByRole('link', { name: /Last Light: Part Two/ })).toBeInTheDocument();
+  });
+
+  it('the media filter requests that media type', async () => {
+    const list = vi.spyOn(listsApi, 'list');
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.click(screen.getByRole('button', { name: 'Books' }));
+    expect(list).toHaveBeenLastCalledWith(
+      expect.objectContaining({ mediaType: MediaType.BOOK, page: 1 }),
+    );
+  });
+
+  it('an empty tab shows an empty state', async () => {
+    db.lists = [];
+    setup();
+    expect(await screen.findByText(/Nothing in/)).toBeInTheDocument();
+  });
+
+  it('shows an error with Retry when the list fails to load', async () => {
+    vi.spyOn(listsApi, 'list').mockRejectedValueOnce(new ApiError(500, 'boom'));
+    const u = setup();
+    await u.click(await screen.findByRole('button', { name: 'Retry' }));
+    expect(await screen.findByRole('link', { name: /Last Light/ })).toBeInTheDocument();
+  });
+
+  it('moving an entry hides it from the tab straight away and saves the new status', async () => {
+    const setStatus = vi.spyOn(listsApi, 'setStatus');
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    expect(screen.queryByRole('link', { name: /^2016/ })).not.toBeInTheDocument();
+    expect(setStatus).toHaveBeenCalledWith('l-1', ListStatus.IN_PROGRESS);
+  });
+
+  it('a status change rolls back and shows an error when the API rejects', async () => {
+    let reject!: (e: unknown) => void;
+    vi.spyOn(listsApi, 'setStatus').mockImplementation(() => new Promise((_, r) => (reject = r)));
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    const label = firstStatusSelect().getAttribute('aria-label') as string;
+    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    expect(screen.queryByLabelText(label)).not.toBeInTheDocument(); // optimistic: gone at once
+
+    reject(new ApiError(500, 'boom'));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Could not move/);
+    expect(screen.getByLabelText(label)).toBeInTheDocument(); // rolled back
+  });
+
+  it('remove asks for confirmation first, and Cancel keeps the entry', async () => {
+    const remove = vi.spyOn(listsApi, 'remove');
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.click(screen.getAllByRole('button', { name: /^Remove/ })[0] as HTMLElement);
+    const dialog = screen.getByRole('dialog');
+    expect(within(dialog).getByText('Remove from list?')).toBeInTheDocument();
+    expect(remove).not.toHaveBeenCalled();
+
+    await u.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(remove).not.toHaveBeenCalled();
+    expect(screen.getByRole('link', { name: /Last Light/ })).toBeInTheDocument();
+  });
+
+  it('confirming remove deletes the entry once', async () => {
+    const remove = vi.spyOn(listsApi, 'remove');
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.click(screen.getAllByRole('button', { name: /^Remove/ })[0] as HTMLElement);
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    await vi.waitFor(() => expect(remove).toHaveBeenCalledTimes(1));
+    expect(remove).toHaveBeenCalledWith('l-1');
+    await vi.waitFor(() =>
+      expect(screen.queryByRole('link', { name: /^2016/ })).not.toBeInTheDocument(),
+    );
+  });
+});
+
+describe('MyLists regressions from the final review', () => {
+  it('removing the last entry on page 2 steps back to page 1, not an empty state', async () => {
+    db.lists = db.titles.slice(0, 13).map((title, i) => ({
+      id: `l-${i + 1}`,
+      titleId: title.id,
+      status: ListStatus.COMPLETED,
+      title,
+    }));
+    const u = setup();
+    await screen.findAllByRole('combobox');
+    await u.click(screen.getByRole('button', { name: 'Next' }));
+    await vi.waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(1));
+    await u.click(screen.getAllByRole('button', { name: /^Remove/ })[0] as HTMLElement);
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    await vi.waitFor(() => expect(screen.getAllByRole('combobox')).toHaveLength(12));
+    expect(screen.queryByText(/Nothing in/)).not.toBeInTheDocument();
+  });
+
+  it('clicking the already-active tab does not bring a moved entry back', async () => {
+    const u = setup();
+    await screen.findByRole('link', { name: /Last Light/ });
+    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await vi.waitFor(() =>
+      expect(db.lists.find((e) => e.id === 'l-1')?.status).toBe(ListStatus.IN_PROGRESS),
+    );
+    await u.click(screen.getByRole('button', { name: 'Completed' }));
+    expect(screen.queryByLabelText('Status for Last Light')).not.toBeInTheDocument();
+  });
+});
+
+describe('MyLists late responses', () => {
+  const entry = (id: string, i: number, status: ListStatus) => ({
+    id,
+    titleId: (db.titles[i] as (typeof db.titles)[number]).id,
+    status,
+    title: db.titles[i] as (typeof db.titles)[number],
+  });
+
+  it('a remove that resolves after switching tab does not refetch or step back in the new view', async () => {
+    db.lists = [entry('l-1', 0, ListStatus.COMPLETED), entry('l-2', 1, ListStatus.PLAN_TO)];
+    let release!: () => void;
+    vi.spyOn(listsApi, 'remove').mockImplementation(() => new Promise((r) => (release = r)));
+    const list = vi.spyOn(listsApi, 'list');
+    const u = setup();
+    await screen.findByRole('button', { name: /^Remove/ });
+    await u.click(screen.getByRole('button', { name: /^Remove/ }));
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Remove' }));
+    // Cancel closes the dialog while the request is still in flight
+    await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Cancel' }));
+    await u.click(screen.getByRole('button', { name: 'Plan to' }));
+    await screen.findByLabelText(/^Status for /);
+    const before = list.mock.calls.length;
+
+    await act(async () => {
+      release();
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(list).toHaveBeenCalledTimes(before);
+  });
+
+  it('a move that fails after switching tab does not show its error in the new view', async () => {
+    db.lists = [entry('l-1', 0, ListStatus.COMPLETED), entry('l-2', 1, ListStatus.PLAN_TO)];
+    let reject!: (e: unknown) => void;
+    vi.spyOn(listsApi, 'setStatus').mockImplementation(() => new Promise((_, r) => (reject = r)));
+    const u = setup();
+    await screen.findByRole('link', { name: new RegExp((db.titles[0] as { name: string }).name) });
+    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await u.click(screen.getByRole('button', { name: 'Plan to' }));
+    await screen.findByLabelText(/^Status for /);
+
+    await act(async () => {
+      reject(new ApiError(500, 'boom'));
+      await new Promise((r) => setTimeout(r, 20));
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
+
+describe('MyLists media filter', () => {
+  it('uses the same media labels as Browse and the nav search', async () => {
+    setup();
+    const nav = await screen.findByRole('navigation', { name: 'Media type' });
+    expect(
+      within(nav)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['All', 'Movies', 'TV', 'Books']);
+  });
+});

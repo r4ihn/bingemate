@@ -64,7 +64,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Delete any review (PostgreSQL header + MongoDB body) or comment, and keep the PostgreSQL aggregates in sync
 - [ ] `GET /admin/users` (paginated), `PATCH /admin/users/:id/role`
 - [ ] Title approval queue: `GET /admin/titles?status=PENDING`, `PATCH /admin/titles/:id/status` (APPROVED / REJECTED, optional rejection reason)
-- [ ] Admin pages in the frontend *(with WH)*
+- [x] Admin pages in the frontend *(with WH)*. UI done against mock data (branch `feat/web-shell`); real endpoints still to be wired
 
 ## 5. MongoDB: reviews, comments, trending (HS lead; SJ co-owns trending)
 
@@ -78,7 +78,10 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Review endpoints: list by title, create, update, delete
 - [ ] Comment endpoints: list, reply, delete
 - [ ] Creator official reply: one per review, only by the creator who owns the title; stored with `isOfficial: true` and returned pinned first
+  - [ ] The comments list endpoint returns the final order itself: official replies first, then oldest first. The web UI only groups replies under their parent and does not re-sort *(HS)*
 - [ ] Return the author's role with reviews/comments so the UI can show the Creator badge
+- [ ] **Rating scale is whole stars, 1 to 5** (decided by WH, 2026-10-18; the UI and mock API already use it). `reviews.rating` needs a `CHECK (rating BETWEEN 1 AND 5)`, validation must reject anything else, and `avgRating` is on the same 1 to 5 scale. Convert the review datasets to 1 to 5 when loading them *(HS, SJ)*
+- [ ] `GET /titles/:id/reviews/mine` returns the signed-in user's review of the title, or `null`. The review form calls it to show "You have already reviewed this title" instead of a form that would end in a 409; if it fails the form still shows *(HS)*
 
 ## 6. Search, filtering, trending queries (SJ, Week 9–10)
 
@@ -94,24 +97,24 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Status per entry: `COMPLETED`, `IN_PROGRESS`, `PLAN_TO`, filterable by media type *(JW)*
 - [ ] `GET/POST/PATCH/DELETE /me/lists` *(JW)*
 - [ ] Wrap list updates in a transaction (the report promises ACID for list updates) *(JW, RA support — overlaps auth/ownership checks)*
-- [ ] My Lists UI page *(WH — see §8)*
+- [x] My Lists UI page *(WH — see §8)*. UI done against mock data; waiting on JW's `/me/lists`
 
 ## 8. Frontend (WH lead; SJ co-owns the data-heavy pages — rebalanced from solo)
 
 - [x] Browse and search page connected to the backend
-- [ ] Router, layout, typed API client, `AuthContext`, protected routes *(WH)*
-- [ ] Login and register pages *(WH)*
-- [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*
-- [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*
-- [ ] Title detail page: info, reviews, comment threads *(WH)*
-- [ ] Write/edit/delete review form (media-specific fields) *(WH)*
-- [ ] My Lists page *(WH)*
-- [ ] Role-based controls (hide or disable actions the role cannot perform; the backend still enforces them) *(WH)*
-- [ ] Creator upload flow: create, edit and delete own titles; "My submissions" list showing PENDING / APPROVED / REJECTED + rejection reason; warn that editing an approved title re-submits it *(WH UI + JW backend — Week 11; JW now owns the backend)*
-- [ ] Creator stats page; pinned official-reply UI on own titles; Creator badge on reviews/comments *(WH)*
-- [ ] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login *(WH)*
-- [ ] Admin dashboard: users/roles, title approval queue, review/comment moderation *(WH UI + RA endpoints — Week 11)*
-- [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*
+- [x] Router, layout, typed API client, `AuthContext`, protected routes *(WH)*. Done; `AuthContext` calls the real `/auth/*` once RA ships them
+- [x] Login and register pages *(WH)*. Done; the password rule (8+ characters, a letter and a digit) is client-side only, RA to confirm it matches the API
+- [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*. WH built the layout (hero, poster strip, Movies/TV/Books rails) on the titles API; swap in SJ's trending data
+- [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*. WH built the shell: `?q`, `?type`, `?page` in the URL, type pills and pagination, plus the nav search with quick matches. Genre and rating filters are still SJ's, and the real `GET /titles?q=&type=&page=` needs wiring
+- [x] Title detail page: info, reviews, comment threads *(WH)*. Done against mock data; waiting on HS's review and comment shapes
+- [ ] Write/edit/delete review form (media-specific fields) *(WH)*. Write and delete are done; **edit is not built** (needs an update call in the API plan)
+- [x] My Lists page *(WH)*. Done against mock data (status tabs, media filter, move/remove with rollback)
+- [x] Role-based controls (hide or disable actions the role cannot perform; the backend still enforces them) *(WH)*. Done: nav links, route guards, delete buttons, own-role select
+- [ ] Creator upload flow *(UI done against mock data, including the edit-resubmits warning; waiting on JW's endpoints)*: create, edit and delete own titles; "My submissions" list showing PENDING / APPROVED / REJECTED + rejection reason; warn that editing an approved title re-submits it *(WH UI + JW backend — Week 11; JW now owns the backend)*
+- [ ] Creator stats page; pinned official-reply UI on own titles; Creator badge on reviews/comments *(WH)*. Stats page, Creator badge and pin-first display are done; **a creator cannot yet post the official reply** (UI not built)
+- [x] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login *(WH)*. Done; forms keep their drafts when a 401 arrives
+- [ ] Admin dashboard: users/roles, title approval queue, review/comment moderation *(WH UI + RA endpoints — Week 11)*. WH UI done against mock data; RA's endpoints still to build and wire
+- [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*. States and automated a11y checks are done; a manual keyboard-only pass on a real browser is still to do
 
 ## 9. Performance & SQL vs NoSQL comparison (SJ lead; HS co-owns the Mongo side, Week 12)
 

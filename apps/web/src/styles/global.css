@@ -1,0 +1,45 @@
+@import 'tailwindcss';
+
+/* Design tokens: keep in sync with docs/ui.md (Part B2). Each becomes a utility, e.g. bg-accent, text-muted. */
+@theme {
+  --font-sans: 'Inter', system-ui, sans-serif;
+
+  --color-bg: #070707;
+  --color-surface: #161616;
+  --color-surface-2: #222222;
+  --color-dock: rgb(38 38 38 / 0.82);
+  --color-line: rgb(255 255 255 / 0.14);
+  /* Borders that mark a control (inputs, inactive pills): about 4.5:1 on bg, over the 3:1 minimum */
+  --color-field: rgb(255 255 255 / 0.45);
+  --color-muted: #9a9a9a;
+  --color-ghost: #1e1e1e;
+  --color-accent: #f5c518;
+  --color-accent-ink: #111111;
+  --color-danger: #ff5c5c;
+  --color-success: #4cd083;
+  --color-warn: #f5a623;
+
+  --text-caption: 0.6875rem;
+  --text-display: clamp(3.5rem, 8vw, 7rem);
+  --text-display--line-height: 0.95;
+  --text-display--letter-spacing: -0.045em;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+    /* Reserve the scrollbar's space so the centred dock does not shift between short and long pages */
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-bg font-sans text-[0.95rem] text-white antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+  }
+}
