@@ -4,7 +4,7 @@ Source: Group 29 INF2003 Progress Report (30 Sep 2026) + agreed tech stack
 (React + TS frontend, Node.js + TS backend, PostgreSQL/Prisma, MongoDB, bcrypt, JWT, email & password).
 
 Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop · **SJ** Shang Jay · **ALL** whole team
-`[x]` = already reported done in the progress report.
+`[x]` = done (progress report, or verified in the repo). Last checked against `main` + local working tree on 21 Oct 2026.
 
 ---
 
@@ -36,27 +36,28 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Download datasets and load them into PostgreSQL and MongoDB
 - [x] Initial ER diagram (Users, Titles, Genres, Reviews, Lists, junction tables)
 - [x] Basic CRUD for Titles and Users in PostgreSQL
-- [ ] Finalise the ER diagram: `users`, `titles` (with `media_type` MOVIE/BOOK/TV_SHOW, `status` PENDING/APPROVED/REJECTED, `created_by` → users), `genres`, `title_genres`, `people`, `title_people` (role: author/director/actor/showrunner), `list_entries`, `reviews` (header row only)
-- [ ] Write `prisma/schema.prisma` and generate the first migration
-- [ ] Constraints: unique email, FKs with explicit `onDelete`, unique `(user_id, title_id)` on `list_entries` and on `reviews` (one review per user per title), `CHECK` on the rating range
-- [ ] Indexes for browse/search: `titles(media_type)`, `titles(name)`, `titles(status)`, `title_genres(genre_id)`, `titles(avg_rating)`, `reviews(title_id)`
+- [ ] Finalise the ER diagram: `users`, `titles` (with `media_type` MOVIE/BOOK/TV_SHOW, `status` PENDING/APPROVED/REJECTED, `created_by` → users), `genres`, `title_genres`, `people`, `title_people` (role: author/director/actor/showrunner), `list_entries`, `reviews` (header row only). All of these tables are in `schema.prisma`; the diagram itself still needs redrawing to match
+- [x] Write `prisma/schema.prisma` and generate the first migration. Migration `20261019011516_initial_bingemate_migration` exists locally but is **not committed yet**
+- [ ] Constraints: unique email, FKs with explicit `onDelete`, unique `(user_id, title_id)` on `list_entries` and on `reviews` (one review per user per title), `CHECK` on the rating range. Everything is in except the **`CHECK (rating BETWEEN 1 AND 5)`** (Prisma can't express it; add it as raw SQL in a migration)
+- [x] Indexes for browse/search: `titles(media_type)`, `titles(name)`, `titles(status)`, `title_genres(genre_id)`, `titles(avg_rating)`, `reviews(title_id)`
 - [ ] Rating aggregates (`avg_rating`, `review_count` on `titles`) recomputed in the same transaction as a `reviews` insert/update/delete
 - [ ] Imported dataset titles get `status = APPROVED` and `created_by = NULL`
 - [ ] ETL scripts: clean nulls/duplicates, normalise genre names across the three datasets, dedupe people, keep a dataset-ID → DB-ID mapping
-- [ ] `prisma/seed.ts`: one admin, one creator, one consumer, plus a small sample of titles
+- [x] `prisma/seed.ts`: one admin, one creator, one consumer, plus a small sample of titles (3 approved + 1 pending creator title)
 - [ ] Turn the CRUD into `titles` and `users` API modules with validation
-- [ ] Creator title endpoints: create (→ `PENDING`), edit/delete own; editing an `APPROVED` title resets it to `PENDING`; store `rejection_reason` on `titles`
+- [ ] Creator title endpoints: create (→ `PENDING`), edit/delete own; editing an `APPROVED` title resets it to `PENDING`; store `rejection_reason` on `titles`. The `rejectionReason` column exists; endpoints not started
 
 ## 3. Authentication & RBAC (RA, Week 7–8)
 
-- [ ] `POST /auth/register`: validate email and password strength, hash with bcrypt (cost ≥ 12), default role `CONSUMER`
-- [ ] `POST /auth/login`: bcrypt compare, sign a JWT (`sub`, `role`, `exp` = 2h) and set it as an httpOnly, `SameSite=Lax` cookie (`Secure` in prod); return the same generic error for a wrong email or a wrong password
+- [ ] `POST /auth/register`: validate email and password strength, hash with bcrypt (cost ≥ 12), default role `CONSUMER`. Helper `utils/password.ts` (cost 12) is ready; route not built
+- [ ] `POST /auth/login`: bcrypt compare, sign a JWT (`sub`, `role`, `exp` = 2h) and set it as an httpOnly, `SameSite=Lax` cookie (`Secure` in prod); return the same generic error for a wrong email or a wrong password. Helpers `utils/jwt.ts` and `utils/authCookie.ts` are ready; route not built
 - [ ] `GET /auth/me` (frontend calls it on load to restore the session), `POST /auth/logout` (clears the cookie)
-- [ ] `cookie-parser` + CORS with `credentials: true` restricted to the web origin
-- [ ] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
+- [x] `cookie-parser` + CORS with `credentials: true` restricted to the web origin (`app.ts`, origin from `WEB_ORIGIN`)
+- [x] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
+  - [ ] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401
 - [ ] Ownership checks: users edit/delete only their own reviews and comments, creators edit/delete only their own titles (`titles.created_by`), admins override all
 - [ ] Comment permission: `CONSUMER` and `CREATOR` can comment and reply; `ADMIN` can delete any comment
-- [ ] Rate-limit login/register; keep the JWT secret in env only
+- [ ] Rate-limit login/register; keep the JWT secret in env only. `authLimiter` exists and `JWT_SECRET` is env-only (Zod-validated); the limiter just needs applying to the auth routes
 - [ ] Tests for every role × protected route
 
 ## 4. Admin moderation (RA, Week 11)
@@ -68,12 +69,12 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 
 ## 5. MongoDB: reviews, comments, trending (HS lead; SJ co-owns trending)
 
-- [ ] Mongoose connection module
-- [ ] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with discriminators per media type (movie: runtime, book: chapters, TV: season/episodes). No rating here; the rating lives in PostgreSQL
+- [x] Mongoose connection module (`db/mongo.ts`)
+- [x] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with discriminators per media type (movie: runtime, book: chapters, TV: season/episodes). No rating here; the rating lives in PostgreSQL
 - [ ] Cross-store write order: insert the PostgreSQL row (transaction) → insert the Mongo body; if the Mongo write fails, delete the PostgreSQL row (compensating delete). Same idea for delete
-- [ ] Comment threads, one reply level: embedded in the review vs. a separate `comments` collection with `reviewId` + `parentId` (watch the 16 MB document limit on popular reviews)
-- [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job *(HS, SJ support — SJ owns the trending queries in §6)*
-- [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`
+- [x] Comment threads, one reply level: embedded in the review vs. a separate `comments` collection with `reviewId` + `parentId` (watch the 16 MB document limit on popular reviews). Went with the separate `comments` collection (`comment.model.ts`, with `isOfficial`)
+- [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job *(HS, SJ support — SJ owns the trending queries in §6)*. The model is done; `jobs/refreshTrending.ts` is still a stub that throws
+- [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`. The first two are done. `{rating}` doesn't apply any more since ratings live in PostgreSQL (option B); confirm with the team and drop it
 - [ ] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets
 - [ ] Review endpoints: list by title, create, update, delete
 - [ ] Comment endpoints: list, reply, delete
@@ -134,4 +135,4 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Updated ER diagram + architecture diagram
 - [ ] Slides
 - [ ] Video presentation and demo script
-- [ ] README with setup steps (docker compose → migrate → seed → run)
+- [x] README with setup steps (docker compose → migrate → seed → run). Update it if the local Postgres port change to `5433` (uncommitted) is kept
