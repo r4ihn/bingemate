@@ -2,16 +2,16 @@ import type { Paginated } from '@bingemate/shared';
 import { Role } from '@bingemate/shared';
 import { db, getMockActor, newId, ownerId } from '../mocks/db.js';
 import { MAX_RATING } from '../rating.js';
-import type { Comment, Review, ReviewInput } from '../types/review.js';
+import type { Reply, Review, ReviewInput } from '../types/review.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 5;
 
-/** Admins read and moderate (delete); they never write reviews or comments. */
+/** Admins read and moderate (delete); they never write reviews or replies. */
 function assertCanWrite(): void {
   if (getMockActor().role === Role.ADMIN) {
-    throw new ApiError(403, 'Admins cannot write reviews or comments');
+    throw new ApiError(403, 'Admins cannot write reviews or replies');
   }
 }
 
@@ -115,47 +115,42 @@ export const reviewsApi = {
     const review = db.reviews.find((r) => r.id === id);
     if (review) applyToAggregates(review.titleId, review.rating, -1);
     db.reviews = db.reviews.filter((r) => r.id !== id);
-    db.comments = db.comments.filter((c) => c.reviewId !== id);
+    db.replies = db.replies.filter((r) => r.reviewId !== id);
   },
 };
 
-export const commentsApi = {
+export const repliesApi = {
   /** Oldest first. */
-  async list(reviewId: string): Promise<Comment[]> {
-    if (!useMock) notWired('comment endpoints (HS)');
+  async list(reviewId: string): Promise<Reply[]> {
+    if (!useMock) notWired('reply endpoints (HS)');
     await delay();
     return clone(
-      db.comments
-        .filter((c) => c.reviewId === reviewId)
+      db.replies
+        .filter((r) => r.reviewId === reviewId)
         .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     );
   },
 
-  /** Any signed-in user except an admin may comment or reply, one level deep. */
-  async reply(reviewId: string, parentId: string | null, body: string): Promise<Comment> {
-    if (!useMock) notWired('comment endpoints (HS)');
+  /** Any signed-in user except an admin may reply to a review, including its author. */
+  async create(reviewId: string, body: string): Promise<Reply> {
+    if (!useMock) notWired('reply endpoints (HS)');
     await delay();
     assertCanWrite();
-    const parent = parentId
-      ? db.comments.find((c) => c.id === parentId && c.reviewId === reviewId)
-      : undefined;
-    if (parentId && !parent) throw new ApiError(404, 'Comment not found');
-    if (parent?.parentId) throw new ApiError(400, 'Replies are limited to one level');
-    const comment: Comment = {
-      id: newId('c'),
+    if (!db.reviews.some((r) => r.id === reviewId)) throw new ApiError(404, 'Review not found');
+    const reply: Reply = {
+      id: newId('rp'),
       reviewId,
-      parentId,
       author: { ...getMockActor() },
       body,
       createdAt: new Date().toISOString(),
     };
-    db.comments.push(comment);
-    return clone(comment);
+    db.replies.push(reply);
+    return clone(reply);
   },
 
   async remove(id: string): Promise<void> {
-    if (!useMock) notWired('comment endpoints (HS)');
+    if (!useMock) notWired('reply endpoints (HS)');
     await delay();
-    db.comments = db.comments.filter((c) => c.id !== id && c.parentId !== id);
+    db.replies = db.replies.filter((r) => r.id !== id);
   },
 };

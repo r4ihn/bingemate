@@ -208,6 +208,20 @@ describe('ReviewForm', () => {
       return view;
     }
 
+    it('moves focus into the form on Edit and back to the Edit button on Cancel', async () => {
+      const { user } = await edit();
+      expect(screen.getByRole('heading', { name: 'Edit your review' })).toHaveFocus();
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByRole('button', { name: 'Edit review' })).toHaveFocus();
+    });
+
+    it('returns focus to the Edit button after saving', async () => {
+      const { user, onSubmitted } = await edit();
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      await vi.waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+      expect(await screen.findByRole('button', { name: 'Edit review' })).toHaveFocus();
+    });
+
     it('opens the form filled with the current review', async () => {
       await edit();
       expect(screen.getByRole('heading', { name: 'Edit your review' })).toBeInTheDocument();

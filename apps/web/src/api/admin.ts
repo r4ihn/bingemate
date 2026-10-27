@@ -67,6 +67,6 @@ export const adminApi = {
     if (!useMock) notWired('admin moderation (RA)');
     await delay();
     db.reviews = db.reviews.filter((r) => r.id !== id);
-    db.comments = db.comments.filter((c) => c.reviewId !== id);
+    db.replies = db.replies.filter((r) => r.reviewId !== id);
   },
 };

@@ -16,7 +16,7 @@ export function TitleOverview({ title, breadcrumb }: { title: TitleDetail; bread
   ].filter((f) => f.values.length > 0);
 
   return (
-    <section className="mx-auto max-w-[1100px] px-6 pt-32 pb-16 sm:px-8">
+    <section className="mx-auto max-w-[1100px] px-6 pt-32 pb-8 sm:px-8 sm:pb-16">
       <Breadcrumb items={breadcrumb} inline />
 
       <div className="mt-7 grid grid-cols-[132px_minmax(0,1fr)] items-end gap-x-4 gap-y-6 md:grid-cols-[minmax(0,340px)_minmax(0,1fr)] md:grid-rows-[auto_1fr] md:items-start md:gap-x-14 md:gap-y-8">
@@ -67,7 +67,8 @@ export function TitleOverview({ title, breadcrumb }: { title: TitleDetail; bread
           <div className="mt-8 flex flex-wrap items-center gap-4">
             <ListControl titleId={title.id} titleName={title.name} />
           </div>
-          <a href="#reviews" className="mt-8 inline-block text-sm text-muted">
+          {/* On a phone the Reviews heading already shows below, so the prompt is only for taller screens */}
+          <a href="#reviews" className="mt-8 hidden text-sm text-muted md:inline-block">
             Scroll for reviews ↓
           </a>
         </div>

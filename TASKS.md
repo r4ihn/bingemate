@@ -14,7 +14,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] **Creator privileges (baseline).** Creators create titles and can edit/delete **only their own** titles; admins can edit/delete any.
   - [x] Extras locked: (a) submission status + rejection reason, (b) stats per own title, (c) editing an approved title sends it back to `PENDING`, (d) ~~one pinned official reply per review~~ dropped by WH on 2026-10-27: a creator replies like anyone else, (e) "Creator" badge beside the name on the creator's own reviews/comments, only on titles they created.
 - [x] **Creator-uploaded titles.** Saved as `PENDING`; hidden from browse/search until an admin sets them to `APPROVED` (or `REJECTED`).
-- [x] **Comments.** Consumers and creators can comment (admins can delete any). Assumed depth: one level of replies (review → comment → reply). Change it if you want deeper threads.
+- [x] **Replies, not comments (WH, 2026-10-27).** Nobody comments on a review. Anyone signed in except an admin, including the review's author, can reply under it. Replies are one flat list per review, oldest first, with no replies to replies and no `@name` for now. Admins can delete any reply.
 - [x] **JWT strategy.** One access token (2h) in an httpOnly cookie (`Secure` in prod, `SameSite=Lax`), no refresh tokens. Logout clears the cookie; on expiry the user logs in again.
 - [x] **Libraries.** Express, Mongoose, Vite, Zod, Vitest/Jest + Supertest.
 - [x] **Dev dataset size.** A subset of the 950k films for local dev; the full set for benchmarking only.
@@ -56,31 +56,31 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
   - [ ] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401
 - [ ] Ownership checks: users edit/delete only their own reviews and comments, creators edit/delete only their own titles (`titles.created_by`), admins override all
-- [ ] Comment permission: `CONSUMER` and `CREATOR` can comment and reply; `ADMIN` can delete any comment
+- [ ] Reply permission: `CONSUMER` and `CREATOR` can reply to a review; `ADMIN` can delete any reply but never writes one
 - [ ] Rate-limit login/register; keep the JWT secret in env only. `authLimiter` exists and `JWT_SECRET` is env-only (Zod-validated); the limiter just needs applying to the auth routes
 - [ ] Tests for every role × protected route
 
 ## 4. Admin moderation (RA, Week 11)
 
-- [ ] Delete any review (PostgreSQL header + MongoDB body) or comment, and keep the PostgreSQL aggregates in sync
+- [ ] Delete any review (PostgreSQL header + MongoDB body) or reply, and keep the PostgreSQL aggregates in sync
 - [ ] `GET /admin/users` (paginated), `PATCH /admin/users/:id/role`
 - [ ] Title approval queue: `GET /admin/titles?status=PENDING`, `PATCH /admin/titles/:id/status` (APPROVED / REJECTED, optional rejection reason)
 - [x] Admin pages in the frontend *(with WH)*. UI done against mock data (branch `feat/web-shell`); real endpoints still to be wired
 
-## 5. MongoDB: reviews, comments, trending (HS lead; SJ co-owns trending)
+## 5. MongoDB: reviews, replies, trending (HS lead; SJ co-owns trending)
 
 - [x] Mongoose connection module (`db/mongo.ts`)
 - [x] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with discriminators per media type (movie: runtime, book: chapters, TV: season/episodes). No rating here; the rating lives in PostgreSQL
 - [ ] Cross-store write order: insert the PostgreSQL row (transaction) → insert the Mongo body; if the Mongo write fails, delete the PostgreSQL row (compensating delete). Same idea for delete
-- [x] Comment threads, one reply level: embedded in the review vs. a separate `comments` collection with `reviewId` + `parentId` (watch the 16 MB document limit on popular reviews). Went with the separate `comments` collection (`comment.model.ts`, with `isOfficial`)
+- [x] Reply storage: embedded in the review vs. a separate collection with `reviewId` (watch the 16 MB document limit on popular reviews). Went with a separate collection (`comment.model.ts` today). **Now flat:** drop `parentId` and `isOfficial`, and rename the model, collection and endpoints to replies *(HS)*
 - [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job *(HS, SJ support — SJ owns the trending queries in §6)*. The model is done; `jobs/refreshTrending.ts` is still a stub that throws
 - [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`. The first two are done. `{rating}` doesn't apply any more since ratings live in PostgreSQL (option B); confirm with the team and drop it
 - [x] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets (`load-postgres.ts` + `load-mongo-reviews.ts`; the 0 to 10 scores are converted to 1 to 5 stars in `clean-reviews.ts`)
 - [ ] Review endpoints: list by title, create, update, delete
-- [ ] Comment endpoints: list, reply, delete
-- [ ] Creator badge: a comment or review whose author created the title shows "Creator" beside the name. Not by role: the same account on another creator's title gets no badge. Needs `createdById` on the title response *(JW)*. No `isOfficial`, no pinning, no separate reply
-  - [ ] The comments list endpoint returns oldest first, and the UI only groups replies under their parent *(HS)*
-- [ ] Return the author's id with reviews/comments; the UI compares it with the title's `createdById` to show the Creator badge (the role alone is no longer enough)
+- [ ] Reply endpoints *(HS)*: `GET /reviews/:id/replies` (oldest first), `POST /reviews/:id/replies` (not admins, review must exist), `DELETE /replies/:id` (author or admin)
+- [ ] Creator badge: a reply or review whose author created the title shows "Creator" beside the name. Not by role: the same account on another creator's title gets no badge. Needs `createdById` on the title response *(JW)*. No `isOfficial`, no pinning, no separate reply
+  - [ ] The replies list endpoint returns oldest first and the UI does not re-sort it *(HS)*
+- [ ] Return the author's id with reviews/replies; the UI compares it with the title's `createdById` to show the Creator badge (the role alone is no longer enough)
 - [ ] **Rating scale is whole stars, 1 to 5** (decided by WH, 2026-10-18; the UI and mock API already use it). `reviews.rating` needs a `CHECK (rating BETWEEN 1 AND 5)`, validation must reject anything else, and `avgRating` is on the same 1 to 5 scale. Convert the review datasets to 1 to 5 when loading them *(HS, SJ)*
 - [ ] `GET /titles/:id/reviews/mine` returns the signed-in user's review of the title, or `null`. The review form calls it to show "You have already reviewed this title" instead of a form that would end in a 409; if it fails the form still shows *(HS)*
 
@@ -107,19 +107,19 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Login and register pages *(WH)*. Done; the password rule (8+ characters, a letter and a digit) is client-side only, RA to confirm it matches the API
 - [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*. WH built the layout (hero, poster strip, Movies/TV/Books rails) on the titles API; swap in SJ's trending data
 - [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*. WH built the shell: `?q`, `?type`, `?page` in the URL, type pills and pagination, plus the nav search with quick matches. Genre and rating filters are still SJ's, and the real `GET /titles?q=&type=&page=` needs wiring
-- [x] Title detail page: info, reviews, comment threads *(WH)*. Done against mock data; waiting on HS's review and comment shapes
+- [x] Title detail page: info, reviews, replies *(WH)*. Done against mock data; waiting on HS's review and reply shapes
 - [x] Write/edit/delete review form (media-specific fields) *(WH)*. Write, edit and delete are done against mock data; edit needs `PATCH /reviews/:id` (owner only, rating 1 to 5) from HS. Media fields accept digits only. Rules the API must enforce (WH, 2026-10-27): admins never write reviews or comments; the creator of a title cannot review it but can comment and reply
 - [x] My Lists page *(WH)*. Done against mock data (status tabs, media filter, move/remove with rollback)
 - [x] Role-based controls (hide or disable actions the role cannot perform; the backend still enforces them) *(WH)*. Done: nav links, route guards, delete buttons, own-role select
 - [ ] Creator upload flow *(UI done against mock data, including the edit-resubmits warning; waiting on JW's endpoints)*: create, edit and delete own titles; "My submissions" list showing PENDING / APPROVED / REJECTED + rejection reason; warn that editing an approved title re-submits it *(WH UI + JW backend — Week 11; JW now owns the backend)*
 - [x] Creator stats page; Creator badge on the creator's own reviews/comments *(WH)*. Done against mock data. The badge is by title ownership, not by role, and needs `createdById` on the title response (JW)
 - [x] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login *(WH)*. Done; forms keep their drafts when a 401 arrives
-- [ ] Admin dashboard: users/roles, title approval queue, review/comment moderation *(WH UI + RA endpoints — Week 11)*. WH UI done against mock data; RA's endpoints still to build and wire
+- [ ] Admin dashboard: users/roles, title approval queue, review/reply moderation *(WH UI + RA endpoints — Week 11)*. WH UI done against mock data; RA's endpoints still to build and wire
 - [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*. States and automated a11y checks are done; a manual keyboard-only pass on a real browser is still to do
 
 ## 9. Performance & SQL vs NoSQL comparison (SJ lead; HS co-owns the Mongo side, Week 12)
 
-- [ ] Define scenarios: fetch reviews for a title, top-N trending, insert a review, nested comment read, filtered browse
+- [ ] Define scenarios: fetch reviews for a title, top-N trending, insert a review, read the replies of a review (was "nested comment read"; replies are flat now, so confirm this still makes the case for MongoDB), filtered browse
 - [ ] Benchmark scripts that run the same workload against PostgreSQL and MongoDB
 - [ ] Load-test the API (e.g. autocannon or k6)
 - [ ] Tables and charts for the final report

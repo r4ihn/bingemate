@@ -35,10 +35,10 @@ export interface ReviewInput {
   fields: ReviewFields;
 }
 
-export interface Comment {
+/** A reply under a review: one flat list per review, no replies to replies. */
+export interface Reply {
   id: string;
   reviewId: string;
-  parentId: string | null;
   author: Author;
   body: string;
   createdAt: string;

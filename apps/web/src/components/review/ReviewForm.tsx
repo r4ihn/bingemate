@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
@@ -62,6 +62,12 @@ function Form({
   const [submitError, setSubmitError] = useState<'session' | string | null>(null);
   const [pending, setPending] = useState(false);
   const inFlight = useRef(false);
+  const heading = useRef<HTMLHeadingElement>(null);
+
+  // The Edit button that opened this form is gone, so move focus here instead of dropping it on the page
+  useEffect(() => {
+    if (existing) heading.current?.focus();
+  }, [existing]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
@@ -113,7 +119,7 @@ function Form({
 
   return (
     <Panel>
-      <h3 className="text-xl font-semibold tracking-tight">
+      <h3 ref={heading} tabIndex={-1} className="text-xl font-semibold tracking-tight">
         {existing ? 'Edit your review' : 'Write a review'}
       </h3>
       <form onSubmit={(e) => void onSubmit(e)} noValidate className="mt-4 grid gap-4">
@@ -198,6 +204,14 @@ export function ReviewForm({
   const { user } = useAuth();
   const canWrite = useCanWrite(title.id);
   const [editing, setEditing] = useState(false);
+  const panel = useRef<HTMLDivElement>(null);
+  const wasEditing = useRef(false);
+
+  // Leaving edit mode (save or cancel) removes the form: hand focus back to the Edit button
+  useEffect(() => {
+    if (wasEditing.current && !editing) panel.current?.querySelector('button')?.focus();
+    wasEditing.current = editing;
+  }, [editing]);
   // One review per user per title: look first, so the user is not asked to write one that will be refused
   const { state } = useAsync(
     () =>
@@ -228,7 +242,9 @@ export function ReviewForm({
         onCancel={() => setEditing(false)}
       />
     ) : (
-      <AlreadyReviewed review={mine} onEdit={() => setEditing(true)} />
+      <div ref={panel}>
+        <AlreadyReviewed review={mine} onEdit={() => setEditing(true)} />
+      </div>
     );
   }
   // If the check fails, show the form anyway: the 409 on submit is still the backstop

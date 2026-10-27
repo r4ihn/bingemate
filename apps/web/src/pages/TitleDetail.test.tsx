@@ -3,11 +3,11 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
-import { commentsApi } from '../api/reviews.js';
+import { repliesApi } from '../api/reviews.js';
 import { ApiError } from '../api/client.js';
 import { titlesApi } from '../api/titles.js';
 import { db, resetDb } from '../mocks/db.js';
-import type { Comment } from '../types/review.js';
+import type { Reply } from '../types/review.js';
 import { rate, renderWithProviders } from '../test/utils.js';
 import { TitleDetail } from './TitleDetail.js';
 
@@ -53,25 +53,24 @@ describe('TitleDetail', () => {
     expect(await screen.findByRole('heading', { name: 'Page not found' })).toBeInTheDocument();
   });
 
-  it('offers Reply on top-level comments only (one reply level)', async () => {
+  it('offers one Reply button per review, not one per reply', async () => {
     renderTitle('mock-1', Role.CONSUMER);
     await screen.findByText('Great pacing in the second half.');
-    // r-mock-1-0 has two top-level comments (c1, c4) and two replies (c2, c3)
-    expect(screen.getAllByRole('button', { name: 'Reply' })).toHaveLength(2);
+    // The first page shows 5 reviews; r-mock-1-0 has four replies but still a single button
+    expect(screen.getAllByRole('button', { name: /^Reply to review by / })).toHaveLength(5);
   });
 
   it('badges the creator of this title in the thread, but not the same account on another title', async () => {
     const studio = { id: 'u-studio', name: 'studio_north', role: Role.CREATOR };
-    const comment = (reviewId: string): Comment => ({
+    const reply = (reviewId: string): Reply => ({
       id: `x-${reviewId}`,
       reviewId,
-      parentId: null,
       author: studio,
       body: `Studio words on ${reviewId}`,
       createdAt: new Date(Date.UTC(2026, 9, 17, 10, 1)).toISOString(),
     });
-    vi.spyOn(commentsApi, 'list').mockImplementation((id) =>
-      Promise.resolve(id === 'r-mock-1-0' || id === 'r-mock-2-0' ? [comment(id)] : []),
+    vi.spyOn(repliesApi, 'list').mockImplementation((id) =>
+      Promise.resolve(id === 'r-mock-1-0' || id === 'r-mock-2-0' ? [reply(id)] : []),
     );
     // mock-1 was created by u-studio; mock-2 was not
     const own = renderTitle('mock-1');
@@ -83,15 +82,17 @@ describe('TitleDetail', () => {
     expect(within(otherRow as HTMLElement).queryByText('Creator')).not.toBeInTheDocument();
   });
 
-  it('posting a comment adds it to the thread', async () => {
+  it('posting a reply adds it under the review', async () => {
     renderTitle('mock-1', Role.CONSUMER);
     await screen.findByText('Great pacing in the second half.');
     const u = userEvent.setup();
-    const [form] = screen.getAllByLabelText('Add a comment');
-    await u.type(form as HTMLElement, 'My new comment');
-    const card = (form as HTMLElement).closest('article') as HTMLElement;
-    await u.click(within(card).getByRole('button', { name: 'Post comment' }));
-    await waitFor(() => expect(screen.getByText('My new comment')).toBeInTheDocument());
+    const [open] = screen.getAllByRole('button', { name: /^Reply to review by / });
+    const card = (open as HTMLElement).closest('article') as HTMLElement;
+    await u.click(open as HTMLElement);
+    await u.type(within(card).getByLabelText('Write a reply'), 'My new reply');
+    await u.click(within(card).getByRole('button', { name: 'Post reply' }));
+    await waitFor(() => expect(screen.getByText('My new reply')).toBeInTheDocument());
+    expect(within(card).queryByLabelText('Write a reply')).not.toBeInTheDocument(); // form closed
   });
 
   it('posting a review replaces the empty state with the new review', async () => {
@@ -106,11 +107,11 @@ describe('TitleDetail', () => {
     expect(screen.queryByText('No reviews yet')).not.toBeInTheDocument();
   });
 
-  it('hides comment forms from anonymous visitors', async () => {
+  it('hides the reply button from anonymous visitors', async () => {
     renderTitle('mock-1');
     await screen.findByText('Great pacing in the second half.');
-    expect(screen.queryByLabelText('Add a comment')).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Reply' })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Write a reply')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Reply to review by / })).not.toBeInTheDocument();
   });
 });
 
@@ -168,16 +169,16 @@ describe('TitleDetail when the reviews change', () => {
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
   });
 
-  it('still lets a user who already reviewed reply to comments more than once', async () => {
+  it('still lets a user who already reviewed reply under a review more than once', async () => {
     db.reviews.push(mine('mock-1'));
     renderTitle('mock-1', Role.CONSUMER);
     await screen.findByText('Great pacing in the second half.');
     const u = userEvent.setup();
-    const [form] = screen.getAllByLabelText('Add a comment') as HTMLElement[];
-    for (const text of ['First comment', 'Second comment']) {
-      await u.type(form as HTMLElement, text);
-      const card = (form as HTMLElement).closest('article') as HTMLElement;
-      await u.click(within(card).getByRole('button', { name: 'Post comment' }));
+    const card = screen.getAllByRole('article')[0] as HTMLElement;
+    for (const text of ['First reply', 'Second reply']) {
+      await u.click(within(card).getByRole('button', { name: /^Reply to review by / }));
+      await u.type(within(card).getByLabelText('Write a reply'), text);
+      await u.click(within(card).getByRole('button', { name: 'Post reply' }));
       await screen.findByText(text);
     }
   });

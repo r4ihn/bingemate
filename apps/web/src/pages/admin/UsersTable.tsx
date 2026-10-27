@@ -92,7 +92,7 @@ export function UsersTable() {
       <ConfirmDialog
         open={promoting !== null}
         title={promoting ? `Make ${promoting.email} an admin?` : ''}
-        body="Admins can manage users, approve titles and delete any review or comment."
+        body="Admins can manage users, approve titles and delete any review or reply."
         confirmLabel="Make admin"
         tone="danger"
         onConfirm={async () => {

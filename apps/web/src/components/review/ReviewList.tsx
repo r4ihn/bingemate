@@ -8,7 +8,7 @@ import { ConfirmDialog } from '../ConfirmDialog.js';
 import { Pagination } from '../Pagination.js';
 import { StateMessage } from '../StateMessage.js';
 import { Badge } from '../ui/Badge.js';
-import { CommentThread } from './CommentThread.js';
+import { ReplyThread } from './ReplyThread.js';
 import { StarsDisplay } from './StarRating.js';
 
 function describeFields(fields: ReviewFields | undefined): string {
@@ -76,11 +76,15 @@ function ReviewCard({
           Delete
         </button>
       )}
-      <CommentThread reviewId={review.id} titleOwnerId={titleOwnerId} />
+      <ReplyThread
+        reviewId={review.id}
+        reviewAuthor={review.author.name}
+        titleOwnerId={titleOwnerId}
+      />
       <ConfirmDialog
         open={confirming}
         title="Delete review?"
-        body="This review and its comments will be deleted."
+        body="This review and its replies will be deleted."
         confirmLabel="Delete"
         tone="danger"
         onConfirm={confirmDelete}
@@ -96,7 +100,7 @@ export function ReviewList({
   onDeleted,
 }: {
   titleId: string;
-  /** Creator of the title: their reviews and comments get the Creator badge, only on this title. */
+  /** Creator of the title: their reviews and replies get the Creator badge, only on this title. */
   titleOwnerId?: string | null;
   /** Called after a review is deleted, so the page can refresh the totals and the review form. */
   onDeleted?: () => void;

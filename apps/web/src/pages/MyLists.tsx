@@ -7,10 +7,12 @@ import { FilterPill } from '../components/FilterPill.js';
 import { Pagination } from '../components/Pagination.js';
 import { PosterCard } from '../components/PosterCard.js';
 import { StateMessage } from '../components/StateMessage.js';
-import { inputClass } from '../components/ui/inputClass.js';
+import { Dropdown } from '../components/ui/Dropdown.js';
 import { useAsync } from '../hooks/useAsync.js';
 import { LIST_STATUSES, MEDIA_FILTERS } from '../labels.js';
 import type { ListItem } from '../types/list.js';
+
+const STATUS_OPTIONS = LIST_STATUSES.map((s) => ({ value: s.status, label: s.label }));
 
 export function MyLists() {
   const [status, setStatus] = useState<ListStatus>(ListStatus.COMPLETED);
@@ -157,18 +159,13 @@ export function MyLists() {
                     <li key={entry.id}>
                       <PosterCard title={entry.title}>
                         <div className="grid gap-2">
-                          <select
-                            aria-label={`Status for ${entry.title.name}`}
+                          <Dropdown
+                            label={`Status for ${entry.title.name}`}
                             value={entry.status}
-                            onChange={(e) => void move(entry, e.target.value as ListStatus)}
-                            className={`${inputClass} py-2 text-sm`}
-                          >
-                            {LIST_STATUSES.map((t) => (
-                              <option key={t.status} value={t.status}>
-                                {t.label}
-                              </option>
-                            ))}
-                          </select>
+                            options={STATUS_OPTIONS}
+                            onChange={(value) => void move(entry, value as ListStatus)}
+                            className="rounded-xl text-sm"
+                          />
                           <button
                             type="button"
                             onClick={() => setRemoving(entry)}

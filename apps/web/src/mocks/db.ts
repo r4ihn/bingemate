@@ -1,7 +1,7 @@
 import { ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { AdminUser } from '../types/admin.js';
 import type { ListItem } from '../types/list.js';
-import type { Author, Comment, Review, ReviewFields } from '../types/review.js';
+import type { Author, Reply, Review, ReviewFields } from '../types/review.js';
 import type { TitleDetail } from '../types/title.js';
 import { mockTitles } from './titles.js';
 
@@ -14,7 +14,7 @@ export interface StoredTitle extends TitleDetail {
 export interface Db {
   titles: StoredTitle[];
   reviews: Review[];
-  comments: Comment[];
+  replies: Reply[];
   lists: ListItem[];
   users: AdminUser[];
 }
@@ -122,7 +122,7 @@ function seedTitles(): StoredTitle[] {
     if (t) Object.assign(t, p);
   };
   // The mock creator owns four titles in different states; one more pending title belongs to someone else
-  // u-studio wrote the mock comment 'Thank you for watching!', so it gets the Creator badge there
+  // u-studio wrote the mock reply 'Thank you for watching!', so it gets the Creator badge there
   patch('mock-1', { createdBy: 'u-studio' });
   patch('mock-24', { createdBy: MOCK_USER });
   patch('mock-25', { createdBy: MOCK_USER, status: TitleStatus.PENDING });
@@ -152,21 +152,20 @@ function seedReviews(titles: StoredTitle[]): Review[] {
   });
 }
 
-function seedComments(): Comment[] {
-  const c = (id: string, parentId: string | null, a: number, body: string): Comment => ({
+function seedReplies(): Reply[] {
+  const rows: [id: string, author: number, body: string][] = [
+    ['rp1', 0, 'Great pacing in the second half.'],
+    ['rp2', 1, 'Thank you for watching!'],
+    ['rp3', 2, 'Agreed, the ending landed.'],
+    ['rp4', 2, 'Did anyone else cry at the finale?'],
+  ];
+  return rows.map(([id, author, body], i) => ({
     id,
     reviewId: 'r-mock-1-0',
-    parentId,
-    author: AUTHORS[a] as Author,
+    author: AUTHORS[author] as Author,
     body,
-    createdAt: new Date(Date.UTC(2026, 9, 17, 10, Number(id.slice(1)))).toISOString(),
-  });
-  return [
-    c('c1', null, 0, 'Great pacing in the second half.'),
-    c('c2', 'c1', 1, 'Thank you for watching!'),
-    c('c3', 'c1', 2, 'Agreed, the ending landed.'),
-    c('c4', null, 2, 'Did anyone else cry at the finale?'),
-  ];
+    createdAt: new Date(Date.UTC(2026, 9, 17, 10, i + 1)).toISOString(),
+  }));
 }
 
 function seedLists(titles: StoredTitle[]): ListItem[] {
@@ -192,7 +191,7 @@ function seed(): Db {
   return {
     titles,
     reviews: seedReviews(titles),
-    comments: seedComments(),
+    replies: seedReplies(),
     lists: seedLists(titles),
     users: seedUsers(),
   };

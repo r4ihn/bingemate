@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { Role } from '@bingemate/shared';
 import { db, resetDb, setMockActor } from '../mocks/db.js';
 import { ApiError } from './client.js';
-import { commentsApi, reviewsApi } from './reviews.js';
+import { repliesApi, reviewsApi } from './reviews.js';
 
 const input = { rating: 4, body: 'Fine', fields: { runtimeMinutes: 90 } };
 const asRole = (role: Role, id = 'actor-1') =>
@@ -22,14 +22,13 @@ describe('admins read and moderate but do not write', () => {
     await refused(reviewsApi.update(REVIEW, input), 403);
   });
 
-  it('cannot post a comment or a reply', async () => {
-    await refused(commentsApi.reply(REVIEW, null, 'hello'), 403);
+  it('cannot reply to a review', async () => {
+    await refused(repliesApi.create(REVIEW, 'hello'), 403);
   });
 
-  it('can still delete a review and a comment', async () => {
-    await commentsApi.reply(REVIEW, null, 'x').catch(() => undefined);
+  it('can still delete a review and a reply', async () => {
+    await expect(repliesApi.remove('rp1')).resolves.toBeUndefined();
     await expect(reviewsApi.remove(REVIEW)).resolves.toBeUndefined();
-    await expect(commentsApi.remove('c1')).resolves.toBeUndefined();
   });
 });
 
@@ -53,8 +52,8 @@ describe('the creator of a title', () => {
   });
 
   it('can reply to a review on their own title', async () => {
-    const c = await commentsApi.reply(REVIEW, null, 'Thanks for watching');
-    expect(c.author.id).toBe('creator-1');
+    const reply = await repliesApi.create(REVIEW, 'Thanks for watching');
+    expect(reply.author.id).toBe('creator-1');
   });
 
   it('can review a title someone else created', async () => {

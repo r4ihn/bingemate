@@ -19,7 +19,7 @@ interface AuthContextValue {
 
 export const AuthContext = createContext<AuthContextValue | null>(null);
 
-/** Mock API writes (reviews, comments, submissions) are attributed to whoever is signed in. */
+/** Mock API writes (reviews, replies, submissions) are attributed to whoever is signed in. */
 function useMockActor(user: AuthUser | null) {
   useEffect(() => {
     setMockActor(user);

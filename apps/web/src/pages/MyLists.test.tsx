@@ -5,7 +5,7 @@ import { ListStatus, MediaType, Role } from '@bingemate/shared';
 import { ApiError } from '../api/client.js';
 import { listsApi } from '../api/lists.js';
 import { db, resetDb } from '../mocks/db.js';
-import { renderWithProviders } from '../test/utils.js';
+import { renderWithProviders, choose } from '../test/utils.js';
 import { MyLists } from './MyLists.js';
 
 function setup() {
@@ -13,7 +13,7 @@ function setup() {
   return userEvent.setup();
 }
 
-const firstStatusSelect = () => screen.getAllByRole('combobox')[0] as HTMLSelectElement;
+const firstStatusSelect = () => screen.getAllByRole('combobox')[0] as HTMLElement;
 
 beforeEach(() => resetDb());
 afterEach(() => vi.restoreAllMocks());
@@ -74,7 +74,7 @@ describe('MyLists', () => {
     const setStatus = vi.spyOn(listsApi, 'setStatus');
     const u = setup();
     await screen.findByRole('link', { name: /Last Light/ });
-    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await choose(u, firstStatusSelect(), 'In progress');
     expect(screen.queryByRole('link', { name: /^2016/ })).not.toBeInTheDocument();
     expect(setStatus).toHaveBeenCalledWith('l-1', ListStatus.IN_PROGRESS);
   });
@@ -85,7 +85,7 @@ describe('MyLists', () => {
     const u = setup();
     await screen.findByRole('link', { name: /Last Light/ });
     const label = firstStatusSelect().getAttribute('aria-label') as string;
-    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await choose(u, firstStatusSelect(), 'In progress');
     expect(screen.queryByLabelText(label)).not.toBeInTheDocument(); // optimistic: gone at once
 
     reject(new ApiError(500, 'boom'));
@@ -142,7 +142,7 @@ describe('MyLists regressions from the final review', () => {
   it('clicking the already-active tab does not bring a moved entry back', async () => {
     const u = setup();
     await screen.findByRole('link', { name: /Last Light/ });
-    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await choose(u, firstStatusSelect(), 'In progress');
     await vi.waitFor(() =>
       expect(db.lists.find((e) => e.id === 'l-1')?.status).toBe(ListStatus.IN_PROGRESS),
     );
@@ -187,7 +187,7 @@ describe('MyLists late responses', () => {
     vi.spyOn(listsApi, 'setStatus').mockImplementation(() => new Promise((_, r) => (reject = r)));
     const u = setup();
     await screen.findByRole('link', { name: new RegExp((db.titles[0] as { name: string }).name) });
-    await u.selectOptions(firstStatusSelect(), ListStatus.IN_PROGRESS);
+    await choose(u, firstStatusSelect(), 'In progress');
     await u.click(screen.getByRole('button', { name: 'Plan to' }));
     await screen.findByLabelText(/^Status for /);
 
