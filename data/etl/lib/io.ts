@@ -23,8 +23,8 @@ export function writeProcessed(
   writeFileSync(PROCESSED_DIR + name, toCsv(columns, rows));
 }
 
-export function readJsonLines<T>(name: string): T[] {
-  return readFileSync(RAW_DIR + name, 'utf8')
+export function readJsonLines<T>(name: string, dir: string = RAW_DIR): T[] {
+  return readFileSync(dir + name, 'utf8')
     .split('\n')
     .filter((line) => line.trim() !== '')
     .map((line) => JSON.parse(line) as T);

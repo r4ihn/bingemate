@@ -37,12 +37,12 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Initial ER diagram (Users, Titles, Genres, Reviews, Lists, junction tables)
 - [x] Basic CRUD for Titles and Users in PostgreSQL
 - [ ] Finalise the ER diagram: `users`, `titles` (with `media_type` MOVIE/BOOK/TV_SHOW, `status` PENDING/APPROVED/REJECTED, `created_by` → users), `genres`, `title_genres`, `people`, `title_people` (role: author/director/actor/showrunner), `list_entries`, `reviews` (header row only). All of these tables are in `schema.prisma`; the diagram itself still needs redrawing to match
-- [x] Write `prisma/schema.prisma` and generate the first migration. Migration `20261019011516_initial_bingemate_migration` exists locally but is **not committed yet**
-- [ ] Constraints: unique email, FKs with explicit `onDelete`, unique `(user_id, title_id)` on `list_entries` and on `reviews` (one review per user per title), `CHECK` on the rating range. Everything is in except the **`CHECK (rating BETWEEN 1 AND 5)`** (Prisma can't express it; add it as raw SQL in a migration)
+- [x] Write `prisma/schema.prisma` and generate the first migration. Committed on branch `feat/db-load` as `20261027075529_initial_bingemate` (JW's local `20261019011516_...` was never committed, so drop it before pulling)
+- [x] Constraints: unique email, FKs with explicit `onDelete`, unique `(user_id, title_id)` on `list_entries` and on `reviews` (one review per user per title), `CHECK` on the rating range. The `CHECK (rating BETWEEN 1 AND 5)` is in migration `20261027075538_rating_check_and_views`
 - [x] Indexes for browse/search: `titles(media_type)`, `titles(name)`, `titles(status)`, `title_genres(genre_id)`, `titles(avg_rating)`, `reviews(title_id)`
-- [ ] Rating aggregates (`avg_rating`, `review_count` on `titles`) recomputed in the same transaction as a `reviews` insert/update/delete
-- [ ] Imported dataset titles get `status = APPROVED` and `created_by = NULL`
-- [ ] ETL scripts: clean nulls/duplicates, normalise genre names across the three datasets, dedupe people, keep a dataset-ID → DB-ID mapping
+- [ ] Rating aggregates (`avg_rating`, `review_count` on `titles`) recomputed in the same transaction as a `reviews` insert/update/delete. The bulk load fills them from the `title_rating_stats` view; the API write path is still to do
+- [x] Imported dataset titles get `status = APPROVED` and `created_by = NULL` (`data/etl/load-postgres.ts`)
+- [x] ETL scripts: clean nulls/duplicates, normalise genre names across the three datasets, dedupe people, keep a dataset-ID → DB-ID mapping. See `data/etl/README.md` (cleaners, loaders for PostgreSQL and MongoDB, `id-map.json`, verifiers)
 - [x] `prisma/seed.ts`: one admin, one creator, one consumer, plus a small sample of titles (3 approved + 1 pending creator title)
 - [ ] Turn the CRUD into `titles` and `users` API modules with validation
 - [ ] Creator title endpoints: create (→ `PENDING`), edit/delete own; editing an `APPROVED` title resets it to `PENDING`; store `rejection_reason` on `titles`. The `rejectionReason` column exists; endpoints not started
@@ -75,7 +75,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Comment threads, one reply level: embedded in the review vs. a separate `comments` collection with `reviewId` + `parentId` (watch the 16 MB document limit on popular reviews). Went with the separate `comments` collection (`comment.model.ts`, with `isOfficial`)
 - [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job *(HS, SJ support — SJ owns the trending queries in §6)*. The model is done; `jobs/refreshTrending.ts` is still a stub that throws
 - [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`. The first two are done. `{rating}` doesn't apply any more since ratings live in PostgreSQL (option B); confirm with the team and drop it
-- [ ] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets
+- [x] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets (`load-postgres.ts` + `load-mongo-reviews.ts`; the 0 to 10 scores are converted to 1 to 5 stars in `clean-reviews.ts`)
 - [ ] Review endpoints: list by title, create, update, delete
 - [ ] Comment endpoints: list, reply, delete
 - [ ] Creator official reply: one per review, only by the creator who owns the title; stored with `isOfficial: true` and returned pinned first

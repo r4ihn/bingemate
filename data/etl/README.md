@@ -8,10 +8,22 @@ npx tsx data/etl/clean-all.ts      # run every step in order, then verify.ts
 npx tsx data/etl/clean-reviews.ts  # or any single step (clean-lists needs clean-reviews first)
 ```
 
+To load the cleaned data (Docker running, `apps/api/.env` copied from `.env.example`):
+
+```
+docker compose up -d
+npm run prisma:migrate                           # tables, CHECK constraint, views
+npx tsx data/etl/clean-all.ts                    # data/raw -> data/processed
+npx tsx data/etl/load-postgres.ts                # add --reset to wipe and reload
+npx tsx data/etl/load-mongo-reviews.ts           # run after load-postgres; add --reset to reload
+npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
+```
+
+Skip `npm run seed`: the dataset already contains `admin@bingemate.dev` and `creator@bingemate.dev`
+(password `Password123!`, same as the seed), and the loaders refuse a non-empty database without `--reset`.
+
 No dependencies were added: a small CSV reader/writer lives in `lib/csv.ts`. Each step is
 idempotent and reads only `../raw/` (except `clean-lists`, which reads the reviews that survived).
-
-Still to write: `load-postgres.ts`, `load-mongo-reviews.ts`, `id-mapping.ts` (dataset id -> `titles.id`).
 
 ## What each script does
 
@@ -105,6 +117,26 @@ per user per title, Postgres and Mongo ids identical, no orphans). The outputs w
 against the raw files with separate code: rating mapping 0 mismatches, no dropped duplicate newer
 than its survivor, title ids identical, no text left untrimmed.
 
+## Loading
+
+- Ids: the loaders generate UUIDs (`crypto.randomUUID`, no dependency) and keep the dataset-id map in
+  `id-map.json`, which the Mongo loader needs.
+- Everyone gets the dev password `Password123!` (one bcrypt hash, cost 12). Dataset users have placeholder emails.
+- Imported titles are `APPROVED` with `createdById` NULL. Undated reviews get the load time as `createdAt`.
+- `Title.avgRating` / `reviewCount` are filled from the `title_rating_stats` view at the end of the load.
+- Mongo body: `body` = cleaned text, `mediaType` = discriminator, `details` = the media-specific extras
+  (a new `Mixed` field on `ReviewBody`), `createdAt` = the Postgres review date. Comments stay in their own collection.
+- Last load (3 seconds for Postgres): 5,478 users, 1,500 titles, 178 genres, 3,060 title_genres, 12,758 people,
+  15,798 title_people, 13,490 reviews, 13,490 list entries, 13,490 Mongo bodies. `verify-load.ts`: 17 checks, 0 failed.
+
+## Schema changes made for the data (migrations `20261027075529_initial_bingemate`, `20261027075538_rating_check_and_views`)
+
+- `PersonRole.WRITER`, `Title.description` (Text), `User.username` (optional).
+- `CHECK ("rating" BETWEEN 1 AND 5)` on `Review`.
+- Views: `title_rating_stats` (recomputed aggregates), `genre_filter_options` (genres on at least 5 approved
+  titles, per media type), `trending_titles` (weighted rating, `m = 10`), `creator_title_stats` (for `/creator/stats`).
+- The `detail` columns (runtime, tagline, publisher, price ...) are still not loaded anywhere.
+
 ## Logs
 
 Every run writes to `../processed/logs/`:
@@ -115,13 +147,11 @@ Every run writes to `../processed/logs/`:
 
 ## Open decisions for the team (the data does not fit the schema)
 
-1. **`WRITER` role**: 2,810 `title_people` rows are writers; `PersonRole` has no `WRITER`. Add it or skip them. (JW)
-2. **`Title.description`**: the schema has no description column; 1,399 titles have one. Add it or drop it. (JW)
-3. **`User.username`**: the schema has no username column (reviewer display names), and the dataset has no
-   emails. `users.csv` has a placeholder `user<id>@seed.bingemate.local` email; the loader must set `passwordHash`. (JW, RA)
-4. **Detail columns** (runtime, tagline, ratings, publisher, price, ...) have no Postgres column. Put them in
-   Mongo or drop them. (JW, HS)
+1. ~~`WRITER` role~~ added to the schema. ~~`Title.description`~~, ~~`User.username`~~ added.
+2. **Emails and passwords**: dataset users have placeholder emails and share the dev password. (RA)
+3. **Detail columns** (runtime, tagline, ratings, publisher, price, ...) are not stored. Put them in Mongo or drop them. (JW, HS)
+4. **Mongo discriminator fields**: `runtimeMinutes`, `chaptersRead`, `season`, `episodes` on `ReviewBody` are not in the data; the imported extras live in `details`. (HS)
 5. **Genre filter**: all genres are in the data; decide the view/query that limits the browse filter to common ones. (SJ)
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star
    were my calls; confirm with the team.
-7. `reviews.avg_rating` / `review_count` on `titles` are not in the data: the loader must compute them.
+7. Aggregates are computed by the loader through the view; keep that in sync when reviews are written through the API. (HS)

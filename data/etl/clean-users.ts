@@ -2,6 +2,12 @@ import { cleanText, toInt } from './lib/clean.js';
 import { readRaw, runIfMain, writeProcessed } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
+// The two dataset accounts map onto the seed.ts logins so one set of credentials works everywhere.
+const EMAIL_OVERRIDES: Record<string, string> = {
+  admin: 'admin@bingemate.dev',
+  demo_creator: 'creator@bingemate.dev',
+};
+
 const ROLE_BY_ID: Record<string, string> = { '1': 'CONSUMER', '2': 'CREATOR', '3': 'ADMIN' };
 
 export function main(): void {
@@ -26,7 +32,12 @@ export function main(): void {
     const lower = username.toLowerCase();
     if (seenNames.has(lower)) log.bump('username repeats an earlier one (kept)');
     seenNames.add(lower);
-    out.push({ user_id: id, username, role, email: `user${id}@seed.bingemate.local` });
+    out.push({
+      user_id: id,
+      username,
+      role,
+      email: EMAIL_OVERRIDES[username] ?? `user${id}@seed.bingemate.local`,
+    });
   }
 
   log.warn(

@@ -40,11 +40,13 @@ enum PersonRole {
   DIRECTOR
   ACTOR
   SHOWRUNNER
+  WRITER
 }
 
 model User {
   id           String        @id @default(cuid())
   email        String        @unique
+  username     String? // display name; the imported dataset's reviewers have one, signed-up users may not
   passwordHash String
   role         Role          @default(CONSUMER)
   createdAt    DateTime      @default(now())
@@ -62,6 +64,7 @@ model Title {
   status          TitleStatus   @default(PENDING)
   rejectionReason String?
   releaseYear     Int?
+  description     String?       @db.Text
   posterUrl       String?
   avgRating       Float         @default(0)
   reviewCount     Int           @default(0)
