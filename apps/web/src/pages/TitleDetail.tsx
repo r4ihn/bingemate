@@ -69,7 +69,12 @@ export function TitleDetail() {
             }}
           />
         </div>
-        <ReviewList key={reviewsVersion} titleId={title.id} onDeleted={reviewsChanged} />
+        <ReviewList
+          key={reviewsVersion}
+          titleId={title.id}
+          titleOwnerId={title.createdById ?? null}
+          onDeleted={reviewsChanged}
+        />
       </section>
     </>
   );

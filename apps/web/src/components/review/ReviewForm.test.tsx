@@ -162,4 +162,102 @@ describe('ReviewForm', () => {
     mount();
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
   });
+  it('keeps only digits in the media fields, typed or pasted', async () => {
+    const { user } = await setup();
+    const runtime = screen.getByLabelText('Runtime watched (minutes)');
+    await user.type(runtime, '1a2.b-3 e');
+    expect(runtime).toHaveValue('123');
+    await user.clear(runtime);
+    await user.click(runtime);
+    await user.paste('9x0 min');
+    expect(runtime).toHaveValue('90');
+  });
+
+  it('shows admins nothing: no form and no login prompt', async () => {
+    const { container } = renderWithProviders(<ReviewForm title={movie} onSubmitted={vi.fn()} />, {
+      role: Role.ADMIN,
+    });
+    expect(container).toBeEmptyDOMElement();
+    expect(screen.queryByText('Log in to review')).not.toBeInTheDocument();
+  });
+
+  it('tells the creator of the title they can reply but not review, with no form', async () => {
+    renderWithProviders(
+      <ReviewForm title={{ ...movie, createdById: 'test-user' }} onSubmitted={vi.fn()} />,
+      { role: Role.CREATOR },
+    );
+    expect(await screen.findByText(/You created this title/)).toBeInTheDocument();
+    expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
+  });
+
+  it('still shows the form to a creator on a title someone else created', async () => {
+    renderWithProviders(
+      <ReviewForm title={{ ...movie, createdById: 'someone-else' }} onSubmitted={vi.fn()} />,
+      { role: Role.CREATOR },
+    );
+    expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
+  });
+
+  describe('editing', () => {
+    const mine = { ...fake, author: { id: 'test-user', name: 'You', role: Role.CONSUMER } };
+
+    async function edit() {
+      db.reviews.push({ ...mine });
+      const view = mount();
+      await view.user.click(await screen.findByRole('button', { name: 'Edit review' }));
+      return view;
+    }
+
+    it('opens the form filled with the current review', async () => {
+      await edit();
+      expect(screen.getByRole('heading', { name: 'Edit your review' })).toBeInTheDocument();
+      expect(screen.getByLabelText('Your review')).toHaveValue('Great');
+      expect(screen.getByLabelText('Runtime watched (minutes)')).toHaveValue('100');
+      expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
+    });
+
+    it('saves over the same review, keeps the date and moves the average', async () => {
+      db.titles.find((t) => t.id === 'mock-20')!.avgRating = 4;
+      db.titles.find((t) => t.id === 'mock-20')!.reviewCount = 1;
+      const { user, onSubmitted } = await edit();
+      await rate(user, 2);
+      const body = screen.getByLabelText('Your review');
+      await user.clear(body);
+      await user.type(body, 'Changed my mind');
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      await vi.waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
+      expect(db.reviews.filter((r) => r.id === 'r1')).toHaveLength(1);
+      expect(db.reviews.find((r) => r.id === 'r1')).toMatchObject({
+        id: 'r1',
+        rating: 2,
+        body: 'Changed my mind',
+        createdAt: mine.createdAt,
+      });
+      expect(db.titles.find((t) => t.id === 'mock-20')?.avgRating).toBe(2);
+    });
+
+    it('still checks the fields before saving', async () => {
+      const { user } = await edit();
+      await user.clear(screen.getByLabelText('Your review'));
+      const update = vi.spyOn(reviewsApi, 'update');
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      expect(await screen.findByText(/Write something/)).toBeInTheDocument();
+      expect(update).not.toHaveBeenCalled();
+    });
+
+    it('cancel leaves the review untouched', async () => {
+      const { user } = await edit();
+      await user.type(screen.getByLabelText('Your review'), ' extra');
+      await user.click(screen.getByRole('button', { name: 'Cancel' }));
+      expect(screen.getByText(/You have already reviewed this title/)).toBeInTheDocument();
+      expect(db.reviews.find((r) => r.id === 'r1')?.body).toBe('Great');
+    });
+
+    it('shows the server message when the save is refused', async () => {
+      const { user } = await edit();
+      vi.spyOn(reviewsApi, 'update').mockRejectedValue(new ApiError(403, 'Not yours'));
+      await user.click(screen.getByRole('button', { name: 'Save changes' }));
+      expect(await screen.findByRole('alert')).toHaveTextContent('Not yours');
+    });
+  });
 });

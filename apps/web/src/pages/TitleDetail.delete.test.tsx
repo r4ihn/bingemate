@@ -64,7 +64,6 @@ describe('delete controls', () => {
       parentId: null,
       author: me,
       body: 'My own comment',
-      isOfficial: false,
       createdAt: new Date().toISOString(),
     });
     renderTitle('mock-1', Role.CONSUMER);
@@ -112,7 +111,6 @@ describe('delete controls', () => {
       parentId: null,
       author: me,
       body: 'My own comment',
-      isOfficial: false,
       createdAt: new Date().toISOString(),
     });
     const remove = vi.spyOn(commentsApi, 'remove');

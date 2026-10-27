@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Role } from '@bingemate/shared';
 import { useAuth } from '../../auth/AuthContext.js';
 import { canDelete } from '../../auth/permissions.js';
 import { reviewsApi } from '../../api/reviews.js';
@@ -22,7 +21,15 @@ function describeFields(fields: ReviewFields | undefined): string {
   return '';
 }
 
-function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => void }) {
+function ReviewCard({
+  review,
+  titleOwnerId,
+  onDeleted,
+}: {
+  review: Review;
+  titleOwnerId: string | null;
+  onDeleted: () => void;
+}) {
   const { user } = useAuth();
   const [confirming, setConfirming] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
@@ -44,7 +51,9 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
     <article className="rounded-2xl border border-line bg-surface p-6">
       <header className="flex flex-wrap items-center gap-3">
         <strong className="font-semibold">{review.author.name}</strong>
-        {review.author.role === Role.CREATOR && <Badge tone="creator">Creator</Badge>}
+        {titleOwnerId !== null && review.author.id === titleOwnerId && (
+          <Badge tone="creator">Creator</Badge>
+        )}
         <StarsDisplay value={review.rating} />
         <time dateTime={review.createdAt} className="ml-auto text-sm text-muted">
           {new Date(review.createdAt).toLocaleDateString()}
@@ -67,7 +76,7 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
           Delete
         </button>
       )}
-      <CommentThread reviewId={review.id} />
+      <CommentThread reviewId={review.id} titleOwnerId={titleOwnerId} />
       <ConfirmDialog
         open={confirming}
         title="Delete review?"
@@ -83,9 +92,12 @@ function ReviewCard({ review, onDeleted }: { review: Review; onDeleted: () => vo
 
 export function ReviewList({
   titleId,
+  titleOwnerId = null,
   onDeleted,
 }: {
   titleId: string;
+  /** Creator of the title: their reviews and comments get the Creator badge, only on this title. */
+  titleOwnerId?: string | null;
   /** Called after a review is deleted, so the page can refresh the totals and the review form. */
   onDeleted?: () => void;
 }) {
@@ -113,6 +125,7 @@ export function ReviewList({
           <li key={r.id}>
             <ReviewCard
               review={r}
+              titleOwnerId={titleOwnerId}
               onDeleted={() => {
                 if (data.length === 1 && page > 1) setPage(page - 1);
                 else reload();

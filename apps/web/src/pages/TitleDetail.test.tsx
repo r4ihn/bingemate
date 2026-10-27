@@ -60,49 +60,27 @@ describe('TitleDetail', () => {
     expect(screen.getAllByRole('button', { name: 'Reply' })).toHaveLength(2);
   });
 
-  it('renders an official reply, which the API returns pinned first, with its badges', async () => {
-    const at = (m: number) => new Date(Date.UTC(2026, 9, 17, 10, m)).toISOString();
-    const author = { id: 'a', name: 'someone', role: Role.CONSUMER };
-    const creator = { id: 'b', name: 'studio_north', role: Role.CREATOR };
-    const thread: Comment[] = [
-      {
-        id: 'x1',
-        reviewId: 'r-mock-1-0',
-        parentId: null,
-        author,
-        body: 'Top comment',
-        isOfficial: false,
-        createdAt: at(1),
-      },
-      {
-        id: 'x3',
-        reviewId: 'r-mock-1-0',
-        parentId: 'x1',
-        author: creator,
-        body: 'Official words',
-        isOfficial: true,
-        createdAt: at(3),
-      },
-      {
-        id: 'x2',
-        reviewId: 'r-mock-1-0',
-        parentId: 'x1',
-        author,
-        body: 'Plain reply',
-        isOfficial: false,
-        createdAt: at(2),
-      },
-    ];
+  it('badges the creator of this title in the thread, but not the same account on another title', async () => {
+    const studio = { id: 'u-studio', name: 'studio_north', role: Role.CREATOR };
+    const comment = (reviewId: string): Comment => ({
+      id: `x-${reviewId}`,
+      reviewId,
+      parentId: null,
+      author: studio,
+      body: `Studio words on ${reviewId}`,
+      createdAt: new Date(Date.UTC(2026, 9, 17, 10, 1)).toISOString(),
+    });
     vi.spyOn(commentsApi, 'list').mockImplementation((id) =>
-      Promise.resolve(id === 'r-mock-1-0' ? thread : []),
+      Promise.resolve(id === 'r-mock-1-0' || id === 'r-mock-2-0' ? [comment(id)] : []),
     );
-    renderTitle('mock-1');
-    const official = await screen.findByText('Official words');
-    const plain = screen.getByText('Plain reply');
-    expect(official.compareDocumentPosition(plain) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    const row = official.closest('li') as HTMLElement;
-    expect(within(row).getByText('Official reply')).toBeInTheDocument();
-    expect(within(row).getByText('Creator')).toBeInTheDocument();
+    // mock-1 was created by u-studio; mock-2 was not
+    const own = renderTitle('mock-1');
+    const ownRow = (await screen.findByText('Studio words on r-mock-1-0')).parentElement;
+    expect(within(ownRow as HTMLElement).getByText('Creator')).toBeInTheDocument();
+    own.unmount();
+    renderTitle('mock-2');
+    const otherRow = (await screen.findByText('Studio words on r-mock-2-0')).parentElement;
+    expect(within(otherRow as HTMLElement).queryByText('Creator')).not.toBeInTheDocument();
   });
 
   it('posting a comment adds it to the thread', async () => {

@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { FormEvent } from 'react';
-import { Role } from '@bingemate/shared';
 import { commentsApi } from '../../api/reviews.js';
 import { ApiError } from '../../api/client.js';
 import { useAuth } from '../../auth/AuthContext.js';
@@ -67,13 +66,21 @@ function CommentForm({
   );
 }
 
-function CommentView({ comment, onDelete }: { comment: Comment; onDelete?: () => void }) {
+function CommentView({
+  comment,
+  byTitleCreator,
+  onDelete,
+}: {
+  comment: Comment;
+  /** The author created the title being reviewed. */
+  byTitleCreator: boolean;
+  onDelete?: () => void;
+}) {
   return (
     <div className="grid gap-1">
       <p className="flex flex-wrap items-center gap-2 text-sm">
         <strong className="font-semibold">{comment.author.name}</strong>
-        {comment.author.role === Role.CREATOR && <Badge tone="creator">Creator</Badge>}
-        {comment.isOfficial && <Badge tone="neutral">Official reply</Badge>}
+        {byTitleCreator && <Badge tone="creator">Creator</Badge>}
       </p>
       <p className="max-w-[65ch]">{comment.body}</p>
       {onDelete && (
@@ -91,7 +98,14 @@ function CommentView({ comment, onDelete }: { comment: Comment; onDelete?: () =>
 }
 
 /** One level of replies: top-level comments can be replied to, replies cannot (TASKS.md section 0). */
-export function CommentThread({ reviewId }: { reviewId: string }) {
+export function CommentThread({
+  reviewId,
+  titleOwnerId = null,
+}: {
+  reviewId: string;
+  /** Creator of the title being reviewed; their comments get the Creator badge, nobody else's. */
+  titleOwnerId?: string | null;
+}) {
   const { user } = useAuth();
   const canPost = useCanWrite(reviewId);
   const { state, reload } = useAsync(() => commentsApi.list(reviewId), [reviewId]);
@@ -115,7 +129,7 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
     );
   }
 
-  // The API returns official replies first, then oldest first; keep that order and only group by parent
+  // The API returns oldest first; keep that order and only group by parent
   const tops: Comment[] = [];
   const replies = new Map<string, Comment[]>();
   for (const c of state.data) {
@@ -123,6 +137,7 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
     else replies.set(c.parentId, [...(replies.get(c.parentId) ?? []), c]);
   }
   const repliesOf = (id: string) => replies.get(id) ?? [];
+  const isCreator = (c: Comment) => titleOwnerId !== null && c.author.id === titleOwnerId;
 
   const deleteHandler = (c: Comment) =>
     canDelete(user, c.author.id) ? () => setDeleting(c) : undefined;
@@ -157,11 +172,15 @@ export function CommentThread({ reviewId }: { reviewId: string }) {
       <ul className="grid gap-4">
         {tops.map((c) => (
           <li key={c.id}>
-            <CommentView comment={c} onDelete={deleteHandler(c)} />
+            <CommentView comment={c} byTitleCreator={isCreator(c)} onDelete={deleteHandler(c)} />
             <ul className="mt-3 ml-6 grid gap-3 border-l border-line pl-4">
               {repliesOf(c.id).map((r) => (
                 <li key={r.id}>
-                  <CommentView comment={r} onDelete={deleteHandler(r)} />
+                  <CommentView
+                    comment={r}
+                    byTitleCreator={isCreator(r)}
+                    onDelete={deleteHandler(r)}
+                  />
                 </li>
               ))}
             </ul>

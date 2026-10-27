@@ -41,6 +41,5 @@ export interface Comment {
   parentId: string | null;
   author: Author;
   body: string;
-  isOfficial: boolean;
   createdAt: string;
 }

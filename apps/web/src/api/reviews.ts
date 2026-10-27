@@ -1,11 +1,19 @@
 import type { Paginated } from '@bingemate/shared';
-import { db, getMockActor, newId } from '../mocks/db.js';
+import { Role } from '@bingemate/shared';
+import { db, getMockActor, newId, ownerId } from '../mocks/db.js';
 import { MAX_RATING } from '../rating.js';
 import type { Comment, Review, ReviewInput } from '../types/review.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 5;
+
+/** Admins read and moderate (delete); they never write reviews or comments. */
+function assertCanWrite(): void {
+  if (getMockActor().role === Role.ADMIN) {
+    throw new ApiError(403, 'Admins cannot write reviews or comments');
+  }
+}
 
 /**
  * Moves a title's running average and count by one review (`sign` +1 adds, -1 removes), like the real
@@ -17,6 +25,14 @@ function applyToAggregates(titleId: string, rating: number, sign: 1 | -1) {
   const count = Math.max(0, title.reviewCount + sign);
   title.avgRating = count === 0 ? 0 : (title.avgRating * title.reviewCount + sign * rating) / count;
   title.reviewCount = count;
+}
+
+/** A creator replies to reviews of their own title but does not review it. */
+function assertNotOwnTitle(titleId: string): void {
+  const title = db.titles.find((t) => t.id === titleId);
+  if (title && ownerId(title) === getMockActor().id) {
+    throw new ApiError(403, 'You cannot review a title you created');
+  }
 }
 
 export const reviewsApi = {
@@ -48,10 +64,12 @@ export const reviewsApi = {
   async create(titleId: string, input: ReviewInput): Promise<Review> {
     if (!useMock) notWired('review endpoints (HS)');
     await delay();
+    assertCanWrite();
     if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) {
       throw new ApiError(400, `Rating must be a whole number from 1 to ${MAX_RATING}`);
     }
     if (!db.titles.some((t) => t.id === titleId)) throw new ApiError(404, 'Title not found');
+    assertNotOwnTitle(titleId);
     if (db.reviews.some((r) => r.titleId === titleId && r.author.id === getMockActor().id)) {
       throw new ApiError(409, 'You have already reviewed this title');
     }
@@ -69,6 +87,28 @@ export const reviewsApi = {
     return clone(review);
   },
 
+  /** Owner only. Keeps the original date and moves the title's average by the change in rating. */
+  async update(id: string, input: ReviewInput): Promise<Review> {
+    if (!useMock) notWired('review endpoints (HS)');
+    await delay();
+    assertCanWrite();
+    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) {
+      throw new ApiError(400, `Rating must be a whole number from 1 to ${MAX_RATING}`);
+    }
+    const review = db.reviews.find((r) => r.id === id);
+    if (!review) throw new ApiError(404, 'Review not found');
+    if (review.author.id !== getMockActor().id) {
+      throw new ApiError(403, 'You can only edit your own review');
+    }
+    assertNotOwnTitle(review.titleId);
+    applyToAggregates(review.titleId, review.rating, -1);
+    review.rating = input.rating;
+    review.body = input.body;
+    review.fields = input.fields;
+    applyToAggregates(review.titleId, review.rating, 1);
+    return clone(review);
+  },
+
   async remove(id: string): Promise<void> {
     if (!useMock) notWired('review endpoints (HS)');
     await delay();
@@ -80,23 +120,22 @@ export const reviewsApi = {
 };
 
 export const commentsApi = {
-  /** Official replies first, then oldest first. */
+  /** Oldest first. */
   async list(reviewId: string): Promise<Comment[]> {
     if (!useMock) notWired('comment endpoints (HS)');
     await delay();
     return clone(
       db.comments
         .filter((c) => c.reviewId === reviewId)
-        .sort(
-          (a, b) =>
-            Number(b.isOfficial) - Number(a.isOfficial) || a.createdAt.localeCompare(b.createdAt),
-        ),
+        .sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
     );
   },
 
+  /** Any signed-in user except an admin may comment or reply, one level deep. */
   async reply(reviewId: string, parentId: string | null, body: string): Promise<Comment> {
     if (!useMock) notWired('comment endpoints (HS)');
     await delay();
+    assertCanWrite();
     const parent = parentId
       ? db.comments.find((c) => c.id === parentId && c.reviewId === reviewId)
       : undefined;
@@ -108,7 +147,6 @@ export const commentsApi = {
       parentId,
       author: { ...getMockActor() },
       body,
-      isOfficial: false,
       createdAt: new Date().toISOString(),
     };
     db.comments.push(comment);

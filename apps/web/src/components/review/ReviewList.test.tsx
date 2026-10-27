@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import { Role } from '@bingemate/shared';
 import { reviewsApi } from '../../api/reviews.js';
 import { renderWithProviders } from '../../test/utils.js';
@@ -50,5 +50,27 @@ describe('ReviewList with unexpected data', () => {
     await screen.findByText('Four stars');
     expect(screen.getByRole('img', { name: '4 out of 5 stars' })).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/\d\/10(?!\/)/);
+  });
+  it('badges a review by the creator of this title only', async () => {
+    const review = (id: string, authorId: string, name: string): Review => ({
+      id,
+      titleId: 't1',
+      author: { id: authorId, name, role: Role.CREATOR },
+      rating: 4,
+      body: `Review by ${name}`,
+      fields: { runtimeMinutes: 90 },
+      createdAt: new Date().toISOString(),
+    });
+    vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({
+      data: [review('r1', 'studio', 'studio_north'), review('r2', 'other', 'other_studio')],
+      page: 1,
+      pageSize: 5,
+      total: 2,
+    });
+    renderWithProviders(<ReviewList titleId="t1" titleOwnerId="studio" />);
+    await screen.findByText('Review by studio_north');
+    expect(screen.getAllByText('Creator')).toHaveLength(1);
+    const card = screen.getByText('Review by studio_north').closest('article') as HTMLElement;
+    expect(within(card).getByText('Creator')).toBeInTheDocument();
   });
 });

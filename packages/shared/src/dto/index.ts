@@ -26,6 +26,8 @@ export interface TitleSummary {
   avgRating: number;
   reviewCount: number;
   posterUrl?: string;
+  /** Owner of a creator-submitted title; null for imported ones. Lets the UI show creator-only actions. */
+  createdById?: string | null;
 }
 
 export interface Paginated<T> {

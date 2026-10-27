@@ -116,22 +116,21 @@ describe('reviewsApi', () => {
 });
 
 describe('commentsApi', () => {
-  it('list pins an official reply before an older plain one', async () => {
+  it('list returns comments oldest first', async () => {
     const top = db.comments.find((c) => c.id === 'c4')!; // no replies yet
-    db.comments.push({
-      id: 'c-late-official',
-      reviewId: 'r-mock-1-0',
-      parentId: top.id,
-      author: { id: 'studio', name: 'studio', role: Role.CREATOR },
-      body: 'Late but official',
-      isOfficial: true,
-      createdAt: new Date(Date.UTC(2026, 9, 18)).toISOString(),
-    });
-    db.comments.push({ ...db.comments[0]!, id: 'c-plain', parentId: top.id, isOfficial: false });
+    const reply = (id: string, day: number) =>
+      db.comments.push({
+        ...db.comments[0]!,
+        id,
+        parentId: top.id,
+        createdAt: new Date(Date.UTC(2026, 9, day)).toISOString(),
+      });
+    reply('c-newer', 19);
+    reply('c-older', 18);
     const ids = (await commentsApi.list('r-mock-1-0'))
       .filter((c) => c.parentId === top.id)
       .map((c) => c.id);
-    expect(ids).toEqual(['c-late-official', 'c-plain']);
+    expect(ids).toEqual(['c-older', 'c-newer']);
   });
 
   it('reply rejects a parent comment that belongs to another review', async () => {
