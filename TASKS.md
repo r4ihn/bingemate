@@ -77,7 +77,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`. The first two are done. `{rating}` doesn't apply any more since ratings live in PostgreSQL (option B); confirm with the team and drop it
 - [x] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets (`load-postgres.ts` + `load-mongo-reviews.ts`; the 0 to 10 scores are converted to 1 to 5 stars in `clean-reviews.ts`)
 - [ ] Review endpoints: list by title, create, update, delete
-- [ ] Reply endpoints *(HS)*: `GET /reviews/:id/replies` (oldest first), `POST /reviews/:id/replies` (not admins, review must exist), `DELETE /replies/:id` (author or admin)
+- [ ] Reply endpoints *(HS)*: `GET /reviews/:id/replies` (oldest first), `POST /reviews/:id/replies` (not admins, review must exist), `PATCH /replies/:id` (writer only, never an admin, text not empty, keeps `createdAt`, sets `editedAt`), `DELETE /replies/:id` (author or admin)
 - [ ] Creator badge: a reply or review whose author created the title shows "Creator" beside the name. Not by role: the same account on another creator's title gets no badge. Needs `createdById` on the title response *(JW)*. No `isOfficial`, no pinning, no separate reply
   - [ ] The replies list endpoint returns oldest first and the UI does not re-sort it *(HS)*
 - [ ] Return the author's id with reviews/replies; the UI compares it with the title's `createdById` to show the Creator badge (the role alone is no longer enough)

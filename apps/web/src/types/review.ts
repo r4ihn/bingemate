@@ -42,4 +42,6 @@ export interface Reply {
   author: Author;
   body: string;
   createdAt: string;
+  /** Set once the writer has changed the text; createdAt stays as it was. */
+  editedAt?: string;
 }

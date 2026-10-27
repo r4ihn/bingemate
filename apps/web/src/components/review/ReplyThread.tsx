@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { repliesApi } from '../../api/reviews.js';
 import { ApiError } from '../../api/client.js';
 import { useAuth } from '../../auth/AuthContext.js';
 import { useCanWrite } from '../../auth/useCanWrite.js';
 import { canDelete } from '../../auth/permissions.js';
+import { timeAgo } from '../../format.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import type { Reply } from '../../types/review.js';
 import { ConfirmDialog } from '../ConfirmDialog.js';
@@ -12,20 +13,39 @@ import { Badge } from '../ui/Badge.js';
 import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
 import { inputClass } from '../ui/inputClass.js';
+import { actionClass, dangerActionClass } from './actionStyles.js';
 
+/** A thread longer than this folds down to its first few replies behind "View more". */
+const COLLAPSE_OVER = 3;
+const SHOWN_WHEN_FOLDED = 2;
+
+function errorText(err: unknown, fallback: string): string {
+  if (err instanceof ApiError && err.status === 401) {
+    return 'Your session has expired. Log in again to post.';
+  }
+  return err instanceof ApiError ? err.message : fallback;
+}
+
+/** A box with Save/Cancel, used both to write a new reply and to edit one. */
 function ReplyForm({
-  onPost,
+  label,
+  submitLabel,
+  initial = '',
+  onSave,
   onCancel,
 }: {
-  onPost: (body: string) => Promise<void>;
+  label: string;
+  submitLabel: string;
+  initial?: string;
+  onSave: (body: string) => Promise<void>;
   onCancel: () => void;
 }) {
-  const [body, setBody] = useState('');
+  const [body, setBody] = useState(initial);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const box = useRef<HTMLTextAreaElement>(null);
 
-  // The Reply button that opened this form is gone, so move focus into the box
+  // The button that opened this form is gone or behind it, so move focus into the box
   useEffect(() => box.current?.focus(), []);
 
   async function onSubmit(e: FormEvent) {
@@ -34,22 +54,16 @@ function ReplyForm({
     setPending(true);
     setError(null);
     try {
-      await onPost(body.trim());
+      await onSave(body.trim());
     } catch (err) {
-      setError(
-        err instanceof ApiError && err.status === 401
-          ? 'Your session has expired. Log in again to post.'
-          : err instanceof ApiError
-            ? err.message
-            : 'Could not post. Try again.',
-      );
+      setError(errorText(err, 'Could not save. Try again.'));
       setPending(false);
     }
   }
 
   return (
     <form onSubmit={(e) => void onSubmit(e)} className="mt-3 grid gap-2">
-      <Field label="Write a reply" error={error ?? undefined}>
+      <Field label={label} error={error ?? undefined}>
         <textarea
           ref={box}
           rows={2}
@@ -60,7 +74,7 @@ function ReplyForm({
       </Field>
       <div className="flex flex-wrap gap-3">
         <Button type="submit" loading={pending} className="px-5 py-2 text-sm">
-          Post reply
+          {submitLabel}
         </Button>
         <Button
           type="button"
@@ -76,53 +90,120 @@ function ReplyForm({
   );
 }
 
-function ReplyView({
+function ReplyItem({
   reply,
   byTitleCreator,
+  mine,
+  canRemove,
   onDelete,
+  onChanged,
 }: {
   reply: Reply;
   /** The author created the title being reviewed. */
   byTitleCreator: boolean;
-  onDelete?: () => void;
+  /** The signed-in user wrote this reply. */
+  mine: boolean;
+  canRemove: boolean;
+  onDelete: () => void;
+  onChanged: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const editButton = useRef<HTMLButtonElement>(null);
+  const wasEditing = useRef(false);
+
+  // Closing the editor removes it: hand focus back to this reply's Edit button
+  useEffect(() => {
+    if (wasEditing.current && !editing) editButton.current?.focus();
+    wasEditing.current = editing;
+  }, [editing]);
+
+  async function save(body: string) {
+    await repliesApi.update(reply.id, body);
+    setEditing(false);
+    onChanged();
+  }
+
   return (
     <div className="grid gap-1">
-      <p className="flex flex-wrap items-center gap-2 text-sm">
+      <p className="flex flex-wrap items-center gap-x-2 text-sm">
         <strong className="font-semibold">{reply.author.name}</strong>
+        {mine && <span className="text-muted">You</span>}
         {byTitleCreator && <Badge tone="creator">Creator</Badge>}
-      </p>
-      <p className="max-w-[65ch]">{reply.body}</p>
-      {onDelete && (
-        <button
-          type="button"
-          onClick={onDelete}
-          aria-label={`Delete reply by ${reply.author.name}`}
-          className="inline-flex min-h-11 items-center justify-self-start text-sm text-muted underline"
+        <time
+          dateTime={reply.createdAt}
+          title={new Date(reply.createdAt).toLocaleString()}
+          className="ml-auto text-muted"
         >
-          Delete
-        </button>
+          {timeAgo(reply.createdAt)}
+          {reply.editedAt && ' · edited'}
+        </time>
+      </p>
+      {editing ? (
+        <ReplyForm
+          label="Edit your reply"
+          submitLabel="Save changes"
+          initial={reply.body}
+          onSave={save}
+          onCancel={() => setEditing(false)}
+        />
+      ) : (
+        <>
+          <p className="max-w-[65ch]">{reply.body}</p>
+          {(mine || canRemove) && (
+            <div className="flex gap-5">
+              {mine && (
+                <button
+                  ref={editButton}
+                  type="button"
+                  onClick={() => setEditing(true)}
+                  aria-label={`Edit reply by ${reply.author.name}`}
+                  className={actionClass}
+                >
+                  Edit
+                </button>
+              )}
+              {canRemove && (
+                <button
+                  type="button"
+                  onClick={onDelete}
+                  aria-label={`Delete reply by ${reply.author.name}`}
+                  className={dangerActionClass}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-/** The replies under one review: a flat list, oldest first, and one Reply button for anyone who may write. */
+/**
+ * The action row and the replies under one review. The row holds Reply (for anyone who may write)
+ * and whatever the review card hands in as `actions` (its Edit and Delete), so a review and a reply
+ * always show their actions in the same place. Replies are one flat list, oldest first.
+ */
 export function ReplyThread({
   reviewId,
   reviewAuthor,
   titleOwnerId = null,
+  actions = null,
 }: {
   reviewId: string;
-  /** Name of the review's author, so each Reply button says whose review it answers. */
+  /** Name of the review's author, so the Reply button says whose review it answers. */
   reviewAuthor: string;
   /** Creator of the title being reviewed; their replies get the Creator badge, nobody else's. */
   titleOwnerId?: string | null;
+  /** The review's own Edit and Delete buttons, shown in the same row as Reply. */
+  actions?: ReactNode;
 }) {
   const { user } = useAuth();
   const canPost = useCanWrite(reviewId);
   const { state, reload } = useAsync(() => repliesApi.list(reviewId), [reviewId]);
   const [writing, setWriting] = useState(false);
+  const [expanded, setExpanded] = useState(false);
   const [deleting, setDeleting] = useState<Reply | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const replyButton = useRef<HTMLButtonElement>(null);
@@ -134,27 +215,14 @@ export function ReplyThread({
     wasWriting.current = writing;
   }, [writing]);
 
-  if (state.status === 'loading') return <p className="text-sm text-muted">Loading replies…</p>;
-  if (state.status === 'error') {
-    return (
-      <p role="alert" className="text-sm text-danger">
-        Could not load replies.{' '}
-        <button
-          type="button"
-          onClick={reload}
-          className="inline-flex min-h-11 items-center underline"
-        >
-          Retry
-        </button>
-      </p>
-    );
-  }
-
-  const replies = state.data;
-  // Nothing to read and nobody who may write: show no empty box under the review
-  if (replies.length === 0 && !canPost) return null;
+  const replies = state.status === 'ready' ? state.data : [];
+  const hasRow = canPost || Boolean(actions);
+  // Nothing to read and nothing anyone here may do: no empty box under the review
+  if (state.status === 'ready' && replies.length === 0 && !hasRow) return null;
 
   const isCreator = (r: Reply) => titleOwnerId !== null && r.author.id === titleOwnerId;
+  const folded = replies.length > COLLAPSE_OVER && !expanded;
+  const visible = folded ? replies.slice(0, SHOWN_WHEN_FOLDED) : replies;
 
   async function confirmDelete() {
     if (!deleting) return;
@@ -173,42 +241,90 @@ export function ReplyThread({
   async function post(body: string) {
     await repliesApi.create(reviewId, body);
     setWriting(false);
+    setExpanded(true); // oldest first, so a folded thread would hide the reply just written
     reload();
   }
 
   return (
-    <div className="mt-4 border-t border-line pt-4">
+    <div className="mt-3">
+      {hasRow && (
+        <div className="flex flex-wrap items-center gap-x-5">
+          {canPost && (
+            <button
+              ref={replyButton}
+              type="button"
+              aria-expanded={writing}
+              onClick={() => setWriting((w) => !w)}
+              className={actionClass}
+            >
+              Reply <span className="sr-only">to review by {reviewAuthor}</span>
+              {replies.length > 0 && (
+                <>
+                  <span aria-hidden="true">&nbsp;· {replies.length}</span>
+                  <span className="sr-only">
+                    , {replies.length} {replies.length === 1 ? 'reply' : 'replies'}
+                  </span>
+                </>
+              )}
+            </button>
+          )}
+          {actions}
+        </div>
+      )}
+      {writing && (
+        <ReplyForm
+          label="Write a reply"
+          submitLabel="Post reply"
+          onSave={post}
+          onCancel={() => setWriting(false)}
+        />
+      )}
       {deleteError && (
-        <p role="alert" className="mb-3 text-sm text-danger">
+        <p role="alert" className="mt-2 text-sm text-danger">
           {deleteError}
         </p>
       )}
+      {state.status === 'loading' && <p className="mt-2 text-sm text-muted">Loading replies…</p>}
+      {state.status === 'error' && (
+        <p role="alert" className="mt-2 text-sm text-danger">
+          Could not load replies.{' '}
+          <button
+            type="button"
+            onClick={reload}
+            className="inline-flex min-h-11 items-center underline"
+          >
+            Retry
+          </button>
+        </p>
+      )}
       {replies.length > 0 && (
-        <ul className="ml-3 grid gap-4 border-l border-line pl-4">
-          {replies.map((r) => (
+        <ul className="mt-2 ml-3 grid gap-4 border-l border-line pl-4">
+          {visible.map((r) => (
             <li key={r.id}>
-              <ReplyView
+              <ReplyItem
                 reply={r}
                 byTitleCreator={isCreator(r)}
-                onDelete={canDelete(user, r.author.id) ? () => setDeleting(r) : undefined}
+                mine={user?.id === r.author.id}
+                canRemove={canDelete(user, r.author.id)}
+                onDelete={() => setDeleting(r)}
+                onChanged={reload}
               />
             </li>
           ))}
         </ul>
       )}
-      {canPost &&
-        (writing ? (
-          <ReplyForm onPost={post} onCancel={() => setWriting(false)} />
-        ) : (
-          <button
-            ref={replyButton}
-            type="button"
-            onClick={() => setWriting(true)}
-            className="mt-2 inline-flex min-h-11 cursor-pointer items-center text-sm text-muted underline"
-          >
-            Reply <span className="sr-only">to review by {reviewAuthor}</span>
-          </button>
-        ))}
+      {replies.length > COLLAPSE_OVER && (
+        <button
+          type="button"
+          aria-expanded={expanded}
+          onClick={() => setExpanded((e) => !e)}
+          className={`${actionClass} ml-3 pl-4`}
+        >
+          {expanded
+            ? 'Show fewer replies'
+            : `View ${replies.length - SHOWN_WHEN_FOLDED} more replies`}
+        </button>
+      )}
       <ConfirmDialog
         open={deleting !== null}
         title="Delete reply?"

@@ -250,3 +250,6 @@ export function ReviewForm({
   // If the check fails, show the form anyway: the 409 on submit is still the backstop
   return <Form title={title} onSubmitted={onSubmitted} />;
 }
+
+/** The review form without the "already reviewed?" check, for editing a review in place on its card. */
+export { Form as ReviewEditForm };

@@ -148,6 +148,22 @@ export const repliesApi = {
     return clone(reply);
   },
 
+  /** Writer only: an admin never edits, and nobody edits another user's reply. */
+  async update(id: string, body: string): Promise<Reply> {
+    if (!useMock) notWired('reply endpoints (HS)');
+    await delay();
+    assertCanWrite();
+    const reply = db.replies.find((r) => r.id === id);
+    if (!reply) throw new ApiError(404, 'Reply not found');
+    if (reply.author.id !== getMockActor().id) {
+      throw new ApiError(403, 'You can only edit your own reply');
+    }
+    if (!body.trim()) throw new ApiError(400, 'Write something before saving');
+    reply.body = body.trim();
+    reply.editedAt = new Date().toISOString();
+    return clone(reply);
+  },
+
   async remove(id: string): Promise<void> {
     if (!useMock) notWired('reply endpoints (HS)');
     await delay();

@@ -65,16 +65,19 @@ describe('delete controls', () => {
       body: 'My own reply',
       createdAt: new Date().toISOString(),
     });
-    renderTitle('mock-1', Role.CONSUMER);
+    const u = renderTitle('mock-1', Role.CONSUMER);
+    await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
     await screen.findByText('My own reply');
     expect(deleteButtons('reply')).toHaveLength(1);
     expect(deleteButtons('review')).toHaveLength(0);
   });
 
   it('show on every review and reply for an admin', async () => {
-    renderTitle('mock-1', Role.ADMIN);
+    const u = renderTitle('mock-1', Role.ADMIN);
     await screen.findByText('Great pacing in the second half.');
     expect(deleteButtons('review')).toHaveLength(5); // page 1
+    expect(deleteButtons('reply')).toHaveLength(2); // the thread folds to its first two replies
+    await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
     expect(deleteButtons('reply')).toHaveLength(4); // rp1..rp4 on the first review
   });
 
@@ -113,6 +116,7 @@ describe('delete controls', () => {
     });
     const remove = vi.spyOn(repliesApi, 'remove');
     const u = renderTitle('mock-1', Role.CONSUMER);
+    await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
     await screen.findByText('My own reply');
     await u.click(deleteButtons('reply')[0] as HTMLElement);
     await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));

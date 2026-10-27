@@ -26,6 +26,10 @@ describe('admins read and moderate but do not write', () => {
     await refused(repliesApi.create(REVIEW, 'hello'), 403);
   });
 
+  it('cannot edit a reply', async () => {
+    await refused(repliesApi.update('rp1', 'changed'), 403);
+  });
+
   it('can still delete a review and a reply', async () => {
     await expect(repliesApi.remove('rp1')).resolves.toBeUndefined();
     await expect(reviewsApi.remove(REVIEW)).resolves.toBeUndefined();
@@ -58,5 +62,33 @@ describe('the creator of a title', () => {
 
   it('can review a title someone else created', async () => {
     await expect(reviewsApi.create('mock-20', input)).resolves.toMatchObject({ rating: 4 });
+  });
+});
+
+describe('editing a reply', () => {
+  // rp1 was written by AUTHORS[0] ('u-maya')
+  const asWriter = () => asRole(Role.CONSUMER, 'u-maya');
+
+  it('lets the writer change the text, keeps the date and marks it edited', async () => {
+    asWriter();
+    const before = db.replies.find((r) => r.id === 'rp1')!.createdAt;
+    const edited = await repliesApi.update('rp1', '  better words  ');
+    expect(edited).toMatchObject({ id: 'rp1', body: 'better words', createdAt: before });
+    expect(edited.editedAt).toBeDefined();
+    expect(db.replies.find((r) => r.id === 'rp1')?.body).toBe('better words');
+  });
+
+  it('refuses everyone else, including a creator and the title creator', async () => {
+    asRole(Role.CONSUMER, 'someone-else');
+    await refused(repliesApi.update('rp1', 'hijack'), 403);
+    asRole(Role.CREATOR, 'creator-1');
+    await refused(repliesApi.update('rp1', 'hijack'), 403);
+    expect(db.replies.find((r) => r.id === 'rp1')?.body).toBe('Great pacing in the second half.');
+  });
+
+  it('refuses an empty text and an unknown reply', async () => {
+    asWriter();
+    await refused(repliesApi.update('rp1', '   '), 400);
+    await refused(repliesApi.update('rp-nope', 'x'), 404);
   });
 });
