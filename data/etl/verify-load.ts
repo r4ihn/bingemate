@@ -5,6 +5,9 @@ import { loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
+/** Thrown inside the probe transaction to force a rollback when the UPDATE was (wrongly) accepted. */
+class RollbackProbe extends Error {}
+
 /**
  * Checks the loaded databases against data/processed/ and against each other: row counts,
  * the rating CHECK, Postgres/Mongo review ids, stored vs recomputed aggregates, and that the
@@ -48,15 +51,23 @@ export async function main(): Promise<void> {
       check(`${name} count = ${want}`, actual === want, `got ${actual}`);
     }
 
-    // The CHECK constraint must refuse an out-of-range rating.
+    // The CHECK constraint must refuse an out-of-range rating. The probe runs in a transaction
+    // that is always rolled back, so a missing constraint cannot leave a bad row behind.
     const anyReview = await prisma.review.findFirst({ select: { id: true } });
-    let rejected = false;
-    try {
-      await prisma.$executeRaw`UPDATE "Review" SET "rating" = 6 WHERE "id" = ${anyReview?.id ?? ''}`;
-    } catch {
-      rejected = true;
+    if (!anyReview) {
+      check('there is a review to probe the CHECK constraint with', false);
+    } else {
+      let rejected = false;
+      try {
+        await prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`UPDATE "Review" SET "rating" = 6 WHERE "id" = ${anyReview.id}`;
+          throw new RollbackProbe();
+        });
+      } catch (err) {
+        rejected = !(err instanceof RollbackProbe);
+      }
+      check('CHECK constraint rejects rating 6', rejected);
     }
-    check('CHECK constraint rejects rating 6', rejected);
 
     // Same review ids in both stores.
     const pgIds = new Set(

@@ -42,7 +42,7 @@ export function main(): void {
 
   log.warn(
     'email is a PLACEHOLDER (user<id>@seed.bingemate.local): the dataset has no emails. ' +
-      'The loader must set passwordHash itself, and schema.prisma User has no username column.',
+      'The loader must set passwordHash itself.',
   );
   writeProcessed('users.csv', ['user_id', 'username', 'role', 'email'], out);
   log.count('users out', out.length);

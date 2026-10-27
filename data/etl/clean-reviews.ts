@@ -35,6 +35,7 @@ export function main(): void {
   log.count('review bodies in (raw json)', bodies.size);
 
   const headers: Header[] = [];
+  const seenIds = new Set<number>();
   for (const r of raw) {
     const id = toInt(r['review_id']);
     const userId = toInt(r['user_id']);
@@ -44,6 +45,11 @@ export function main(): void {
       log.reject('bad id', r);
       continue;
     }
+    if (seenIds.has(id)) {
+      log.reject('duplicate review_id', r);
+      continue;
+    }
+    seenIds.add(id);
     if (!userIds.has(String(userId)) || !titleIds.has(String(titleId))) {
       log.reject('user or title not found', r);
       continue;

@@ -19,6 +19,9 @@ npx tsx data/etl/load-mongo-reviews.ts           # run after load-postgres; add 
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
 
+Both loaders refuse a database that is not on this machine (`DATABASE_URL`/`MONGO_URI` host other than
+localhost) unless you pass `--allow-remote`.
+
 Skip `npm run seed`: the dataset already contains `admin@bingemate.dev` and `creator@bingemate.dev`
 (password `Password123!`, same as the seed), and the loaders refuse a non-empty database without `--reset`.
 
@@ -70,6 +73,7 @@ loader's job.
 **People**
 
 - Names cleaned as above and de-duplicated on a case- and accent-insensitive key (none found in this data).
+  Caveat: name is the only key, so two different people with the same name would be merged.
 - Roles upper-cased to enum values. Dataset roles are `actor`, `writer`, `director`, `author`.
 - Duplicate `(title, person, role)` rows collapsed; people with no title link dropped (none).
 
@@ -134,7 +138,7 @@ than its survivor, title ids identical, no text left untrimmed.
 - `PersonRole.WRITER`, `Title.description` (Text), `User.username` (optional).
 - `CHECK ("rating" BETWEEN 1 AND 5)` on `Review`.
 - Views: `title_rating_stats` (recomputed aggregates), `genre_filter_options` (genres on at least 5 approved
-  titles, per media type), `trending_titles` (weighted rating, `m = 10`), `creator_title_stats` (for `/creator/stats`).
+  titles, per media type), `trending_titles` (weighted rating, `m = 10`, titles with no reviews excluded), `creator_title_stats` (for `/creator/stats`).
 - The `detail` columns (runtime, tagline, publisher, price ...) are still not loaded anywhere.
 
 ## Logs

@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
 import { loadIdMap, lookup } from './id-mapping.js';
-import { loadApiEnv } from './lib/env.js';
+import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { PROCESSED_DIR, readJsonLines, readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
@@ -25,6 +25,7 @@ export async function main(): Promise<void> {
   const reset = process.argv.includes('--reset');
 
   try {
+    assertLocalDatabases();
     const uri = process.env['MONGO_URI'];
     if (!uri) throw new Error('MONGO_URI is not set (apps/api/.env)');
     await mongoose.connect(uri);

@@ -154,13 +154,10 @@ export function main(): void {
     bodies.every((b) => b.text.length > 0 && /^(MOVIE|TV_SHOW|BOOK)$/.test(b.media_type)),
   );
   const mediaOf = new Map(titles.map((t) => [t['title_id'], t['media_type']]));
+  const bodyMedia = new Map(bodies.map((b) => [String(b.review_id), b.media_type]));
   check(
     'body media type matches its title',
-    reviews.every(
-      (r) =>
-        bodies.find((b) => String(b.review_id) === r['review_id'])?.media_type ===
-        mediaOf.get(r['title_id']),
-    ),
+    reviews.every((r) => bodyMedia.get(r['review_id'] ?? '') === mediaOf.get(r['title_id'])),
   );
 
   // Lists

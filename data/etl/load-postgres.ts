@@ -2,7 +2,7 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { emptyIdMap, lookup, newId, saveIdMap } from './id-mapping.js';
 import { toInt } from './lib/clean.js';
-import { loadApiEnv } from './lib/env.js';
+import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
@@ -42,6 +42,7 @@ export async function main(): Promise<void> {
   const reset = process.argv.includes('--reset');
 
   try {
+    assertLocalDatabases();
     const existing = (await prisma.user.count()) + (await prisma.title.count());
     if (existing > 0 && !reset) {
       throw new Error(

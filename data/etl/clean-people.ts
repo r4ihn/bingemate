@@ -2,7 +2,7 @@ import { cleanText, toInt } from './lib/clean.js';
 import { readRaw, runIfMain, writeProcessed } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
-/** Prisma `PersonRole` plus WRITER, which the dataset has (2.8k rows) and the schema does not. */
+/** Prisma `PersonRole`; WRITER was added to the schema for this dataset (2.8k rows). */
 const ROLES = new Set(['AUTHOR', 'DIRECTOR', 'ACTOR', 'SHOWRUNNER', 'WRITER']);
 
 export function main(): void {
@@ -68,12 +68,6 @@ export function main(): void {
     log.warn(`${kept.length - keptUsed.length} people have no title link and were dropped`);
   }
 
-  const writers = out.filter((l) => l.role === 'WRITER').length;
-  if (writers > 0) {
-    log.warn(
-      `${writers} WRITER rows kept; schema.prisma PersonRole has no WRITER (JW to decide: add it or skip them)`,
-    );
-  }
   if (!out.some((l) => l.role === 'SHOWRUNNER')) log.info('no SHOWRUNNER rows in the dataset');
 
   writeProcessed('people.csv', ['person_id', 'name'], keptUsed);

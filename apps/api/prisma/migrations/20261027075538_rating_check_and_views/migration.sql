@@ -30,7 +30,7 @@ SELECT t."id", t."name", t."mediaType", s."review_count", s."avg_rating",
         + (10.0 / (s."review_count" + 10)) * (SELECT "c" FROM "global"))::float8 AS "trending_score"
 FROM "Title" t
 JOIN "title_rating_stats" s ON s."title_id" = t."id"
-WHERE t."status" = 'APPROVED';
+WHERE t."status" = 'APPROVED' AND s."review_count" > 0;  -- unreviewed titles would score the global average
 
 -- Creator stats (TASKS.md section 6, GET /creator/stats): one row per title a creator owns.
 CREATE VIEW "creator_title_stats" AS
