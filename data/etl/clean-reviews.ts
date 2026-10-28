@@ -1,5 +1,13 @@
 import { cleanMultiline, cleanText, toInt, toIsoDate, toNumber, toStars } from './lib/clean.js';
-import { readJsonLines, readRaw, runIfMain, writeJsonLines, writeProcessed } from './lib/io.js';
+import {
+  readJsonLines,
+  readProcessed,
+  readProcessedTitles,
+  readRaw,
+  runIfMain,
+  writeJsonLines,
+  writeProcessed,
+} from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
 type RawBody = {
@@ -29,8 +37,9 @@ export function main(): void {
   const log = new StepLog('clean-reviews');
   const raw = readRaw('reviews.csv');
   const bodies = new Map(readJsonLines<RawBody>('reviews_mongo.json').map((b) => [b.review_id, b]));
-  const titleIds = new Set(readRaw('titles.csv').map((t) => t['title_id']));
-  const userIds = new Set(readRaw('users.csv').map((u) => u['user_id']));
+  // Ids come from the cleaned output, so a title or user dropped upstream orphans its reviews here.
+  const titleIds = new Set(readProcessedTitles().map((t) => t['title_id']));
+  const userIds = new Set(readProcessed('users.csv').map((u) => u['user_id']));
   log.count('reviews in (raw csv)', raw.length);
   log.count('review bodies in (raw json)', bodies.size);
 

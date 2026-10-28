@@ -1,5 +1,11 @@
 import { toInt } from './lib/clean.js';
-import { readProcessed, readRaw, runIfMain, writeProcessed } from './lib/io.js';
+import {
+  readProcessed,
+  readProcessedTitles,
+  readRaw,
+  runIfMain,
+  writeProcessed,
+} from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
 /**
@@ -10,8 +16,8 @@ import { StepLog } from './lib/log.js';
 export function main(): void {
   const log = new StepLog('clean-lists');
   const raw = readRaw('user_lists.csv');
-  const userIds = new Set(readRaw('users.csv').map((u) => u['user_id']));
-  const titleIds = new Set(readRaw('titles.csv').map((t) => t['title_id']));
+  const userIds = new Set(readProcessed('users.csv').map((u) => u['user_id']));
+  const titleIds = new Set(readProcessedTitles().map((t) => t['title_id']));
   const reviewed = new Set(
     readProcessed('reviews.csv').map((r) => `${r['user_id']}|${r['title_id']}`),
   );

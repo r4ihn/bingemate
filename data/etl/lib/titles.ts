@@ -49,7 +49,12 @@ export function cleanMediaTitles(spec: MediaSpec): void {
 
   const detailsById = new Map<string, Row>();
   for (const d of rawDetails) {
-    const id = d['title_id'] ?? '';
+    const detailId = toInt(d['title_id']);
+    if (detailId === null) {
+      log.reject('detail row with a bad title_id', d);
+      continue;
+    }
+    const id = String(detailId);
     if (detailsById.has(id)) log.reject('duplicate detail row (kept first)', d);
     else detailsById.set(id, d);
   }

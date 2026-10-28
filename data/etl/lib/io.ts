@@ -14,6 +14,11 @@ export function readProcessed(name: string): Row[] {
   return parseCsv(readFileSync(PROCESSED_DIR + name, 'utf8'));
 }
 
+/** Cleaned titles of every media type, so later steps only accept ids that survived cleaning. */
+export function readProcessedTitles(): Row[] {
+  return ['movies.csv', 'tv_shows.csv', 'books.csv'].flatMap(readProcessed);
+}
+
 export function writeProcessed(
   name: string,
   columns: readonly string[],

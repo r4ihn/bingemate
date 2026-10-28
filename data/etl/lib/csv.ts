@@ -21,7 +21,8 @@ export function parseCsv(input: string): Row[] {
       } else {
         field += ch;
       }
-    } else if (ch === '"') {
+    } else if (ch === '"' && field === '') {
+      // A quote inside an unquoted field (5" Floppy) is a literal character (RFC 4180).
       quoted = true;
     } else if (ch === ',') {
       record.push(field);

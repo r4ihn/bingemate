@@ -1,5 +1,5 @@
 import { cleanText, toInt } from './lib/clean.js';
-import { readRaw, runIfMain, writeProcessed } from './lib/io.js';
+import { readProcessedTitles, readRaw, runIfMain, writeProcessed } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
 /** Prisma `PersonRole`; WRITER was added to the schema for this dataset (2.8k rows). */
@@ -9,7 +9,7 @@ export function main(): void {
   const log = new StepLog('clean-people');
   const people = readRaw('people.csv');
   const links = readRaw('title_people.csv');
-  const titleIds = new Set(readRaw('titles.csv').map((t) => t['title_id']));
+  const titleIds = new Set(readProcessedTitles().map((t) => t['title_id']));
   log.count('people in (raw)', people.length);
   log.count('title_people in (raw)', links.length);
 

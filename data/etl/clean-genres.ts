@@ -1,5 +1,5 @@
 import { cleanText, toInt } from './lib/clean.js';
-import { readRaw, runIfMain, writeProcessed } from './lib/io.js';
+import { readProcessedTitles, readRaw, runIfMain, writeProcessed } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 
 /** Genre names merged into one canonical name (compared case-insensitively). */
@@ -14,7 +14,7 @@ export function main(): void {
   const genres = readRaw('genres.csv');
   const links = readRaw('title_genres.csv');
   const mediaById = new Map(
-    readRaw('titles.csv').map((t) => [t['title_id'] ?? '', t['media_type'] ?? '']),
+    readProcessedTitles().map((t) => [t['title_id'] ?? '', t['media_type'] ?? '']),
   );
   log.count('genres in (raw)', genres.length);
   log.count('title_genres in (raw)', links.length);
@@ -28,10 +28,12 @@ export function main(): void {
   }
   const usage = new Map<string, { titles: number; media: Set<string> }>();
   for (const l of links) {
+    const media = mediaById.get(String(toInt(l['title_id'])));
+    if (media === undefined) continue;
     const id = l['genre_id'] ?? '';
     const u = usage.get(id) ?? { titles: 0, media: new Set<string>() };
     u.titles++;
-    u.media.add(mediaById.get(l['title_id'] ?? '') ?? '');
+    u.media.add(media);
     usage.set(id, u);
   }
 
@@ -74,7 +76,11 @@ export function main(): void {
   for (const l of links) {
     const titleId = toInt(l['title_id']);
     const canonical = canonicalIdByRawId.get(l['genre_id'] ?? '');
-    if (titleId === null || canonical === undefined) {
+    if (titleId === null || !mediaById.has(String(titleId))) {
+      log.reject('title_genres link to a title that was not kept', l);
+      continue;
+    }
+    if (canonical === undefined) {
       log.bump('title_genres link dropped with its genre');
       continue;
     }
