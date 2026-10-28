@@ -10,6 +10,9 @@ const reviewBodySchema = new Schema(
     titleId: { type: String, required: true, index: true },
     userId: { type: String, required: true, index: true },
     body: { type: String, required: true },
+    // Media-specific extras from the imported dataset (movie review_year; TV review_type and
+    // publication_name; book summary, amazon_id, helpfulness).
+    details: { type: Schema.Types.Mixed, default: {} },
   },
   { discriminatorKey: 'mediaType', timestamps: true, _id: false },
 );
