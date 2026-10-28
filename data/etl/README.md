@@ -14,10 +14,14 @@ To load the cleaned data (Docker running, `apps/api/.env` copied from `.env.exam
 docker compose up -d
 npm run prisma:migrate                           # tables, CHECK constraint, views
 npx tsx data/etl/clean-all.ts                    # data/raw -> data/processed
-npx tsx data/etl/load-postgres.ts                # add --reset to wipe and reload
-npx tsx data/etl/load-mongo-reviews.ts           # run after load-postgres; add --reset to reload
+npx tsx data/etl/load-all.ts                     # both stores in order; add --reset to wipe and reload
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
+
+Ids are random per run and the Mongo bodies are keyed by the PostgreSQL review ids, so always load (and
+`--reset`) both stores together with `load-all.ts`. Running `load-postgres.ts --reset` alone orphans the Mongo bodies until
+`load-mongo-reviews.ts --reset` is run too. `load-postgres` runs in one transaction: a failed load leaves the database as it was and writes no
+`id-map.json`.
 
 Both loaders refuse a database that is not on this machine (`DATABASE_URL`/`MONGO_URI` host other than
 localhost) unless you pass `--allow-remote`.
@@ -84,9 +88,11 @@ loader's job.
 
 **Reviews (split across the two stores, TASKS.md section 0 option B)**
 
-- **Rating 0 to 10 -> whole stars 1 to 5**: `ceil(score / 2)`, floored at 1 (so 0 to 2 -> 1, 2.1 to 4 -> 2,
-  ..., 8.1 to 10 -> 5). The original is kept in `original_score`. 155 scores of 0 became 1 star.
-  Distribution: 1★ 600, 2★ 1,234, 3★ 2,625, 4★ 4,366, 5★ 4,665.
+- **Rating 0 to 10 -> whole stars 1 to 5**: `round(score / 2)`, clamped to 1..5 (so below 3 -> 1, 3 to <5 -> 2,
+  5 to <7 -> 3, 7 to <9 -> 4, 9 and above -> 5). Rounding rather than `ceil` keeps 8.1 at 4 stars, so 5 stars still means a score of
+  9 or more. The original is kept in `original_score`. 155 scores of 0 became 1 star.
+  Distribution: 1★ 719, 2★ 1,515, 3★ 3,107, 4★ 4,190, 5★ 3,959. The range comes from
+  `RATING_MIN`/`RATING_MAX` in `@bingemate/shared`, which `verify-load` also uses to probe the CHECK.
 - **One review per (user, title)**: 322 duplicate pairs; the newest by `review_date` is kept (undated counts
   as oldest, then highest id). The dropped ones are listed in `clean-reviews.rejects.csv`.
 - `review_date` must be a real `YYYY-MM-DD`. 965 TV reviews have none and stay empty (`created_at` blank);

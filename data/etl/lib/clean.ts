@@ -1,3 +1,5 @@
+import { RATING_MAX, RATING_MIN } from '@bingemate/shared/rating';
+
 /** Single-line text: NFC, NBSP and zero-width characters out, whitespace collapsed, empty -> null. */
 export function cleanText(value: string | null | undefined): string | null {
   if (value === null || value === undefined) return null;
@@ -50,7 +52,10 @@ export function toIsoDate(value: string | null | undefined): string | null {
   return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s ? null : s;
 }
 
-/** Whole stars 1 to 5 from the datasets' 0 to 10 scores: ceil(score / 2), floored at 1. */
+/**
+ * Whole stars from the datasets' 0 to 10 scores: round(score / 2), clamped to the rating range.
+ * Rounding (not ceil) keeps 8.1 at 4 stars, so 5 stars still means a near-perfect score.
+ */
 export function toStars(score: number): number {
-  return Math.min(5, Math.max(1, Math.ceil(score / 2)));
+  return Math.min(RATING_MAX, Math.max(RATING_MIN, Math.round(score / 2)));
 }

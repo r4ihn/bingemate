@@ -1,3 +1,4 @@
+import { RATING_MAX } from '@bingemate/shared/rating';
 import { PrismaClient } from '@prisma/client';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
@@ -60,13 +61,13 @@ export async function main(): Promise<void> {
       let rejected = false;
       try {
         await prisma.$transaction(async (tx) => {
-          await tx.$executeRaw`UPDATE "Review" SET "rating" = 6 WHERE "id" = ${anyReview.id}`;
+          await tx.$executeRaw`UPDATE "Review" SET "rating" = ${RATING_MAX + 1} WHERE "id" = ${anyReview.id}`;
           throw new RollbackProbe();
         });
       } catch (err) {
         rejected = !(err instanceof RollbackProbe);
       }
-      check('CHECK constraint rejects rating 6', rejected);
+      check(`CHECK constraint rejects rating ${RATING_MAX + 1}`, rejected);
     }
 
     // Same review ids in both stores.
