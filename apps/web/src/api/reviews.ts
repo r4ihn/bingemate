@@ -130,10 +130,17 @@ export const repliesApi = {
   /** Oldest first. */
   async list(reviewId: string): Promise<Reply[]> {
     if (!useMock) {
-      const res = await apiFetch<Paginated<ReplyDTO>>(
-        `/reviews/${encodeURIComponent(reviewId)}/replies?pageSize=200`,
-      );
-      return res.data.map(mapReply);
+      // 200 is the most the API gives per page; keep asking until every reply is in, so a long
+      // thread is never cut off without a word (the mock always returned all of them).
+      const all: ReplyDTO[] = [];
+      for (let page = 1; ; page++) {
+        const res = await apiFetch<Paginated<ReplyDTO>>(
+          `/reviews/${encodeURIComponent(reviewId)}/replies?page=${page}&pageSize=200`,
+        );
+        all.push(...res.data);
+        if (res.data.length === 0 || all.length >= res.total) break;
+      }
+      return all.map(mapReply);
     }
     await delay();
     return clone(
