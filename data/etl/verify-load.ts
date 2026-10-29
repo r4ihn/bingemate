@@ -2,6 +2,7 @@ import { RATING_MAX } from '@bingemate/shared/rating';
 import { PrismaClient } from '@prisma/client';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
+import { UNDATED_REVIEW_DATE, reviewCreatedAt } from './lib/dates.js';
 import { loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
@@ -80,6 +81,22 @@ export async function main(): Promise<void> {
       mongoIds.every((id) => pgIds.has(id)),
     );
     check('every Postgres review has a Mongo body', pgIds.size === mongoIds.length);
+
+    // Undated reviews carry the one fixed old date in both stores, never the load time.
+    const undated = readProcessed('reviews.csv').filter((r) => !r['created_at']).length;
+    const stamp = reviewCreatedAt(null);
+    const undatedPg = await prisma.review.count({ where: { createdAt: stamp } });
+    const undatedMongo = await ReviewBody.countDocuments({ createdAt: stamp });
+    check(
+      `${undated} undated reviews have ${UNDATED_REVIEW_DATE} in PostgreSQL`,
+      undatedPg === undated,
+      `got ${undatedPg}`,
+    );
+    check(
+      `${undated} undated reviews have ${UNDATED_REVIEW_DATE} in MongoDB`,
+      undatedMongo === undated,
+      `got ${undatedMongo}`,
+    );
 
     // Stored aggregates must equal what the view recomputes.
     const drift = await prisma.$queryRaw<{ n: bigint }[]>`

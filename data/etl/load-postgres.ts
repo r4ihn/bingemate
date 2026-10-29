@@ -2,6 +2,7 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { emptyIdMap, lookup, newId, saveIdMap } from './id-mapping.js';
 import { toInt } from './lib/clean.js';
+import { reviewCreatedAt } from './lib/dates.js';
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
@@ -131,9 +132,9 @@ export async function main(): Promise<void> {
             userId: lookup(ids.users, r['user_id'], 'user'),
             titleId: lookup(ids.titles, r['title_id'], 'title'),
             rating: Number(r['rating']),
+            // Undated reviews get one fixed old date, not the load time.
+            createdAt: reviewCreatedAt(r['created_at']),
           };
-          // Undated reviews keep the column default (load time).
-          if (r['created_at']) row.createdAt = new Date(`${r['created_at']}T00:00:00Z`);
           return row;
         });
         await insertAll(log, 'reviews', reviews, (data) => tx.review.createMany({ data }));

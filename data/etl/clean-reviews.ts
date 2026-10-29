@@ -74,7 +74,7 @@ export function main(): void {
     if (score === 0) log.bump('score 0 mapped to 1 star');
     const date = toIsoDate(r['review_date']);
     if (date === null)
-      log.bump('review_date missing or invalid (left null, loader uses load time)');
+      log.bump('review_date missing or invalid (left blank, loaders use the fixed undated date)');
     headers.push({
       review_id: id,
       user_id: userId,
