@@ -12,6 +12,8 @@ export interface TvFields {
   episodes: number;
 }
 export type ReviewFields = MovieFields | BookFields | TvFields;
+/** Imported reviews carry no media-specific extras; the API sends `{}` for them. */
+export type NoFields = Record<string, never>;
 
 export interface Author {
   id: string;
@@ -25,7 +27,7 @@ export interface Review {
   author: Author;
   rating: number;
   body: string;
-  fields: ReviewFields;
+  fields: ReviewFields | NoFields;
   createdAt: string;
 }
 
