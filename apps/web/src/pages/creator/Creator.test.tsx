@@ -215,6 +215,79 @@ describe('SubmissionForm (poster image)', () => {
     expect(title('mock-25').posterUrl).toMatch(/^data:image\/jpeg;base64,/);
   });
 
+  it('removing a replacement keeps the current image; a second press removes that', async () => {
+    title('mock-25').posterUrl = 'data:image/png;base64,AAAA';
+    const update = vi.spyOn(creatorApi, 'update');
+    const user = renderCreator('/creator/mock-25/edit');
+    await screen.findByRole('img', { name: 'Current poster' });
+    await user.upload(screen.getByLabelText(/Poster image/), picture());
+    await screen.findByRole('img', { name: 'Preview of the chosen poster' });
+
+    await user.click(screen.getByRole('button', { name: 'Remove image' }));
+
+    expect(screen.getByRole('img', { name: 'Current poster' })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('img', { name: 'Preview of the chosen poster' }),
+    ).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await screen.findByText('Your submissions', { exact: false });
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('removePoster');
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('poster');
+    expect(title('mock-25').posterUrl).toBe('data:image/png;base64,AAAA');
+  });
+
+  it('keeps the last image picked when an earlier one finishes preparing later', async () => {
+    const blobA = new Blob(['A'], { type: 'image/jpeg' });
+    const blobB = new Blob(['B'], { type: 'image/jpeg' });
+    let finishA: (b: Blob) => void = () => undefined;
+    let finishB: (b: Blob) => void = () => undefined;
+    vi.mocked(image.shrinkPoster)
+      .mockReturnValueOnce(new Promise((done) => (finishA = done)))
+      .mockReturnValueOnce(new Promise((done) => (finishB = done)));
+    const submit = vi.spyOn(creatorApi, 'submit');
+    const user = renderCreator('/creator/new');
+    await fillTitle(user);
+    const input = await screen.findByLabelText(/Poster image/);
+
+    await user.upload(input, picture('image/png', 'big.png'));
+    await user.upload(input, picture('image/png', 'small.png'));
+    finishB(blobB);
+    await screen.findByRole('img', { name: 'Preview of the chosen poster' });
+    finishA(blobA); // the slower, older pick arrives last
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1);
+    expect(URL.createObjectURL).toHaveBeenCalledWith(blobB);
+    await user.click(screen.getByRole('button', { name: 'Submit for approval' }));
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0]?.[0].poster).toBe(blobB);
+  });
+
+  it('removing while a replacement is still being prepared cancels it and keeps the current image', async () => {
+    title('mock-25').posterUrl = 'data:image/png;base64,AAAA';
+    let finish: (b: Blob) => void = () => undefined;
+    vi.mocked(image.shrinkPoster).mockReturnValueOnce(new Promise((done) => (finish = done)));
+    const update = vi.spyOn(creatorApi, 'update');
+    const user = renderCreator('/creator/mock-25/edit');
+    await screen.findByRole('img', { name: 'Current poster' });
+    await user.upload(screen.getByLabelText(/Poster image/), picture());
+    await screen.findByText('Preparing the image…');
+
+    await user.click(screen.getByRole('button', { name: 'Remove image' }));
+    finish(new Blob(['late'], { type: 'image/jpeg' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    expect(screen.queryByText('Preparing the image…')).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('img', { name: 'Preview of the chosen poster' }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Current poster' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await screen.findByText('Your submissions', { exact: false });
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('poster');
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('removePoster');
+  });
+
   it('can take the current image away when editing', async () => {
     title('mock-25').posterUrl = 'data:image/png;base64,AAAA';
     const update = vi.spyOn(creatorApi, 'update');

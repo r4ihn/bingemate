@@ -47,6 +47,9 @@ function Form({
   const [posterError, setPosterError] = useState<string>();
   const [preparing, setPreparing] = useState(false);
   const inFlight = useRef(false);
+  // Counts picks and removals. An image still being prepared when a newer one is picked, or when
+  // the creator removes it, belongs to an older number and its result is dropped.
+  const latestPick = useRef(0);
   const helpId = useId();
   // Release the preview's local address when it is replaced and when the form closes
   const previewUrl = useRef<string | null>(null);
@@ -61,31 +64,42 @@ function Form({
     const file = e.target.files?.[0];
     e.target.value = ''; // lets the same file be chosen again after it was removed
     if (!file) return;
+    const pick = ++latestPick.current;
     const problem = checkPosterFile(file);
     if (problem) {
       setPosterError(problem);
+      setPreparing(false); // an older pick, if any, is now stale
       return;
     }
     setPosterError(undefined);
     setPreparing(true);
     try {
       const blob = await shrinkPoster(file);
+      if (pick !== latestPick.current) return;
       if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
       previewUrl.current = URL.createObjectURL(blob);
       setPoster({ blob, previewUrl: previewUrl.current });
       setRemoveCurrent(false);
     } catch (err) {
-      setPosterError(err instanceof Error ? err.message : 'That image could not be used');
+      if (pick === latestPick.current) {
+        setPosterError(err instanceof Error ? err.message : 'That image could not be used');
+      }
     } finally {
-      setPreparing(false);
+      if (pick === latestPick.current) setPreparing(false);
     }
   }
 
+  /** Throws away a chosen replacement first; only a second press removes the title's current image. */
   function onRemovePoster() {
-    if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
-    previewUrl.current = null;
-    setPoster(null);
+    latestPick.current++;
     setPosterError(undefined);
+    if (poster || preparing) {
+      if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
+      previewUrl.current = null;
+      setPoster(null);
+      setPreparing(false);
+      return;
+    }
     if (initialPosterUrl) setRemoveCurrent(true);
   }
 
