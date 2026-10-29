@@ -1,10 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
 import { creatorApi } from '../../api/creator.js';
+import * as image from '../../image.js';
 import { MOCK_USER, db, resetDb } from '../../mocks/db.js';
 import { renderWithProviders } from '../../test/utils.js';
 import { CreatorDashboard } from './CreatorDashboard.js';
@@ -26,8 +27,26 @@ function renderCreator(route: string) {
 
 const title = (id: string) => db.titles.find((t) => t.id === id)!;
 
-beforeEach(() => resetDb());
+vi.mock('../../image.js', async (original) => ({
+  ...(await original<typeof image>()),
+  shrinkPoster: vi.fn(),
+}));
+
+beforeEach(() => {
+  resetDb();
+  vi.mocked(image.shrinkPoster).mockResolvedValue(new Blob(['shrunk'], { type: 'image/jpeg' }));
+  URL.createObjectURL = vi.fn(() => 'blob:preview');
+  URL.revokeObjectURL = vi.fn();
+});
 afterEach(() => vi.restoreAllMocks());
+
+const picture = (type = 'image/png', name = 'poster.png') => new File(['pixels'], name, { type });
+/** A real 9 MB file would slow the suite; the size is all the check looks at. */
+const hugePicture = () => {
+  const file = picture();
+  Object.defineProperty(file, 'size', { value: 9 * 1024 * 1024 });
+  return file;
+};
 
 describe('CreatorDashboard', () => {
   it('lists own submissions with their status', async () => {
@@ -84,6 +103,151 @@ describe('SubmissionForm (new)', () => {
     await u.click(screen.getByRole('button', { name: 'Submit for approval' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('Server exploded');
     expect(screen.getByLabelText('Title')).toHaveValue('Doomed');
+  });
+});
+
+describe('SubmissionForm (poster image)', () => {
+  const fillTitle = async (user: ReturnType<typeof userEvent.setup>) =>
+    user.type(screen.getByLabelText('Title'), 'Night Train');
+
+  it('shows a preview of the chosen image and stores it on the new title', async () => {
+    const user = renderCreator('/creator/new');
+    await fillTitle(user);
+
+    await user.upload(await screen.findByLabelText(/Poster image/), picture());
+
+    expect(
+      await screen.findByRole('img', { name: 'Preview of the chosen poster' }),
+    ).toHaveAttribute('src', 'blob:preview');
+    expect(image.shrinkPoster).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Submit for approval' }));
+    await screen.findByText('Your submissions', { exact: false });
+    const saved = db.titles.find((t) => t.name === 'Night Train')!;
+    expect(saved.posterUrl).toMatch(/^data:image\/jpeg;base64,/);
+  });
+
+  it('submits with no image at all when none was chosen', async () => {
+    const submit = vi.spyOn(creatorApi, 'submit');
+    const user = renderCreator('/creator/new');
+    await fillTitle(user);
+
+    await user.click(await screen.findByRole('button', { name: 'Submit for approval' }));
+
+    await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+    expect(submit.mock.calls[0]?.[0]).not.toHaveProperty('poster');
+    expect(submit.mock.calls[0]?.[0]).not.toHaveProperty('removePoster');
+  });
+
+  it.each([
+    ['a GIF', picture('image/gif', 'loop.gif'), 'Choose a JPEG, PNG or WebP image'],
+    ['a file over 8 MB', hugePicture(), 'Choose an image under 8 MB'],
+  ])('refuses %s with a message and shows no preview', async (_label, file, message) => {
+    renderCreator('/creator/new');
+    // fireEvent skips the browser's own accept filter, which is what a determined user can do
+    fireEvent.change(await screen.findByLabelText(/Poster image/), { target: { files: [file] } });
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    expect(screen.queryByRole('img', { name: /poster/i })).not.toBeInTheDocument();
+    expect(image.shrinkPoster).not.toHaveBeenCalled();
+  });
+
+  it('tells the creator when the image cannot be read, and still lets them submit without it', async () => {
+    vi.mocked(image.shrinkPoster).mockRejectedValue(new Error('That image could not be read'));
+    const user = renderCreator('/creator/new');
+    await fillTitle(user);
+
+    await user.upload(await screen.findByLabelText(/Poster image/), picture());
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('That image could not be read');
+    await user.click(screen.getByRole('button', { name: 'Submit for approval' }));
+    await screen.findByText('Your submissions', { exact: false });
+    expect(db.titles.find((t) => t.name === 'Night Train')?.posterUrl).toBeUndefined();
+  });
+
+  it('waits for the image to be prepared before it submits', async () => {
+    let finish: (b: Blob) => void = () => undefined;
+    vi.mocked(image.shrinkPoster).mockReturnValue(new Promise((done) => (finish = done)));
+    const submit = vi.spyOn(creatorApi, 'submit');
+    const user = renderCreator('/creator/new');
+    await fillTitle(user);
+
+    await user.upload(await screen.findByLabelText(/Poster image/), picture());
+
+    expect(await screen.findByText('Preparing the image…')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Submit for approval' })).toBeDisabled();
+    finish(new Blob(['shrunk'], { type: 'image/jpeg' }));
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'Submit for approval' })).toBeEnabled(),
+    );
+    expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('removes a chosen image before it is saved', async () => {
+    const user = renderCreator('/creator/new');
+    await fillTitle(user);
+    await user.upload(await screen.findByLabelText(/Poster image/), picture());
+    await screen.findByRole('img', { name: 'Preview of the chosen poster' });
+
+    await user.click(screen.getByRole('button', { name: 'Remove image' }));
+
+    expect(screen.queryByRole('img', { name: /poster/i })).not.toBeInTheDocument();
+    expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:preview');
+    await user.click(screen.getByRole('button', { name: 'Submit for approval' }));
+    await screen.findByText('Your submissions', { exact: false });
+    expect(db.titles.find((t) => t.name === 'Night Train')?.posterUrl).toBeUndefined();
+  });
+
+  it('shows the current image when editing and can replace it', async () => {
+    title('mock-25').posterUrl = 'data:image/png;base64,AAAA';
+    const user = renderCreator('/creator/mock-25/edit');
+
+    expect(await screen.findByRole('img', { name: 'Current poster' })).toHaveAttribute(
+      'src',
+      'data:image/png;base64,AAAA',
+    );
+    await user.upload(screen.getByLabelText(/Poster image/), picture());
+    expect(
+      await screen.findByRole('img', { name: 'Preview of the chosen poster' }),
+    ).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await screen.findByText('Your submissions', { exact: false });
+    expect(title('mock-25').posterUrl).toMatch(/^data:image\/jpeg;base64,/);
+  });
+
+  it('can take the current image away when editing', async () => {
+    title('mock-25').posterUrl = 'data:image/png;base64,AAAA';
+    const update = vi.spyOn(creatorApi, 'update');
+    const user = renderCreator('/creator/mock-25/edit');
+    await screen.findByRole('img', { name: 'Current poster' });
+
+    await user.click(screen.getByRole('button', { name: 'Remove image' }));
+    expect(screen.queryByRole('img', { name: /poster/i })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await screen.findByText('Your submissions', { exact: false });
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ removePoster: true });
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('poster');
+    expect(title('mock-25').posterUrl).toBeUndefined();
+  });
+
+  it('leaves the current image alone when editing something else', async () => {
+    title('mock-25').posterUrl = 'data:image/png;base64,AAAA';
+    const user = renderCreator('/creator/mock-25/edit');
+    await screen.findByRole('img', { name: 'Current poster' });
+
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+
+    await screen.findByText('Your submissions', { exact: false });
+    expect(title('mock-25').posterUrl).toBe('data:image/png;base64,AAAA');
+  });
+
+  it('names the picker in a way a screen reader can use', async () => {
+    renderCreator('/creator/new');
+
+    const picker = await screen.findByLabelText('Poster image (optional)');
+    expect(picker).toHaveAttribute('type', 'file');
+    expect(picker).toHaveAccessibleDescription(/JPEG, PNG or WebP/);
   });
 });
 
