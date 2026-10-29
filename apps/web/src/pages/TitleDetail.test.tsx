@@ -219,6 +219,30 @@ describe('TitleDetail layout', () => {
     expect(screen.getByText(/\d+ reviews?/)).toBeInTheDocument();
   });
 
+  it('leaves out country, studio and runtime when a title has none of them', async () => {
+    const title = db.titles.find((t) => t.id === 'mock-1')!;
+    title.countries = [];
+    title.studio = '';
+    title.runtime = '';
+    renderTitle('mock-1');
+    await screen.findByRole('heading', { level: 1, name: 'Last Light' });
+    expect(screen.queryByText('Country')).not.toBeInTheDocument();
+    expect(screen.queryByText('Studio')).not.toBeInTheDocument();
+    expect(screen.queryByText('Runtime')).not.toBeInTheDocument();
+    expect(document.querySelector('dl')).toBeNull();
+  });
+
+  it('shows only the facts a title has', async () => {
+    const title = db.titles.find((t) => t.id === 'mock-1')!;
+    title.countries = [];
+    title.studio = '';
+    renderTitle('mock-1');
+    await screen.findByRole('heading', { level: 1, name: 'Last Light' });
+    const facts = screen.getByText('Runtime').closest('dl') as HTMLElement;
+    expect(within(facts).queryByText('Country')).not.toBeInTheDocument();
+    expect(within(facts).queryByText('Studio')).not.toBeInTheDocument();
+  });
+
   it('offers Add to list to signed-in users and a sign-in link to visitors', async () => {
     const view = renderTitle('mock-20', Role.CONSUMER);
     expect(await screen.findByRole('combobox', { name: 'Add to list' })).toBeInTheDocument();
