@@ -91,3 +91,8 @@ export interface ReplyDTO {
   /** Set once the writer has changed the text; createdAt stays as it was. */
   editedAt?: string;
 }
+
+/** One title on the signed-in user's list, with enough of the title to draw a card. */
+export interface ListItemDTO extends ListEntryDTO {
+  title: TitleSummary;
+}
