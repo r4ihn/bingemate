@@ -30,7 +30,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Branch protection on `main`: require a PR and passing CI, 0 approvals, no direct pushes *(RA)*
 - [x] Dev seed uses a dataset subset; full load only for benchmarks *(JW)*. The cleaned dev set is 1,500 titles (500 movies, 500 books, 500 TV shows) with 13,490 reviews, loaded by `data/etl/load-all.ts`. Skip `prisma/seed.ts`: the load already holds the admin and creator accounts. The full 950k set is for SJ's benchmarks only
 - [ ] Move the existing prototype code (Titles/Users CRUD, browse page) into the new structure *(JW, WH)*
-- [ ] `npm run dev` for the API exits with "Invalid environment variables": nothing loads `apps/api/.env` (Prisma reads it, the API does not). Load it in the `dev` script, e.g. `tsx watch --env-file=.env src/server.ts` (Node 20.6+), so everyone can start the API *(RA)*
+- [x] `npm run dev` for the API exits with "Invalid environment variables": nothing loads `apps/api/.env` (Prisma reads it, the API does not). Load it in the `dev` script, e.g. `tsx watch --env-file=.env src/server.ts` (Node 20.6+), so everyone can start the API *(RA)*. Fixed in PR #8
 
 ## 2. Data & relational schema (JW, Week 6)
 
@@ -51,16 +51,16 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 
 ## 3. Authentication & RBAC (RA, Week 7–8)
 
-- [ ] `POST /auth/register`: validate email and password strength, hash with bcrypt (cost ≥ 12), default role `CONSUMER`. Helper `utils/password.ts` (cost 12) is ready; route not built
-- [ ] `POST /auth/login`: bcrypt compare, sign a JWT (`sub`, `role`, `exp` = 2h) and set it as an httpOnly, `SameSite=Lax` cookie (`Secure` in prod); return the same generic error for a wrong email or a wrong password. Helpers `utils/jwt.ts` and `utils/authCookie.ts` are ready; route not built
-- [ ] `GET /auth/me` (frontend calls it on load to restore the session), `POST /auth/logout` (clears the cookie)
+- [x] `POST /auth/register`: validate email and password strength, hash with bcrypt (cost ≥ 12), default role `CONSUMER`. Done in `modules/auth`; the password rule (8+ characters, a letter and a digit) matches the web client
+- [x] `POST /auth/login`: bcrypt compare, sign a JWT (`sub`, `role`, `exp` = 2h) and set it as an httpOnly, `SameSite=Lax` cookie (`Secure` in prod); return the same generic error for a wrong email or a wrong password. Done; the JWT also carries `email`
+- [x] `GET /auth/me` (frontend calls it on load to restore the session), `POST /auth/logout` (clears the cookie)
 - [x] `cookie-parser` + CORS with `credentials: true` restricted to the web origin (`app.ts`, origin from `WEB_ORIGIN`)
 - [x] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
-  - [ ] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401
+  - [x] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401. Fixed in `authenticate.ts`
 - [ ] Ownership checks: users edit/delete only their own reviews and replies, creators edit/delete only their own titles (`titles.created_by`), admins override all
 - [ ] Reply permission: `CONSUMER` and `CREATOR` can reply to a review; `ADMIN` can delete any reply but never writes one
-- [ ] Rate-limit login/register; keep the JWT secret in env only. `authLimiter` exists and `JWT_SECRET` is env-only (Zod-validated); the limiter just needs applying to the auth routes
-- [ ] Tests for every role × protected route
+- [x] Rate-limit login/register; keep the JWT secret in env only. `authLimiter` is applied to both routes; `JWT_SECRET` is env-only (Zod-validated)
+- [ ] Tests for every role × protected route. Auth routes and `authorize` (every role) are covered in `tests/`; add a role test for each protected route as the other modules land
 
 ## 4. Admin moderation (RA, Week 11)
 
@@ -108,7 +108,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 
 - [x] Browse and search page connected to the backend
 - [x] Router, layout, typed API client, `AuthContext`, protected routes *(WH)*. Done; `AuthContext` calls the real `/auth/*` once RA ships them
-- [x] Login and register pages *(WH)*. Done; the password rule (8+ characters, a letter and a digit) is client-side only, RA to confirm it matches the API
+- [x] Login and register pages *(WH)*. Done; the password rule (8+ characters, a letter and a digit) is client-side only; RA confirmed the API enforces the same rule
 - [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*. WH built the layout (hero, poster strip, Movies/TV/Books rails) on the titles API; swap in SJ's trending data
 - [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*. WH built the shell: `?q`, `?type`, `?page` in the URL, type pills and pagination, plus the nav search with quick matches. Genre and rating filters are still SJ's, and the real `GET /titles?q=&type=&page=` needs wiring
 - [x] Title detail page: info, reviews, replies *(WH)*. Done against mock data; waiting on HS's review and reply shapes

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authRouter } from './modules/auth/auth.routes.js';
 import { titlesRouter } from './modules/titles/titles.routes.js';
 
 /**
@@ -12,7 +13,7 @@ router.get('/', (_req, res) => {
   res.json({ service: 'bingemate-api', version: '0.1.0' });
 });
 
+router.use('/auth', authRouter);
 router.use('/titles', titlesRouter);
-// router.use('/auth', authRouter);
 // router.use('/reviews', reviewsRouter);
 // ...
