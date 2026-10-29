@@ -1,4 +1,4 @@
-import type { ListStatus, MediaType, Role, TitleStatus } from '../enums.js';
+import type { ListStatus, MediaType, PersonRole, Role, TitleStatus } from '../enums.js';
 
 /** Request/response shapes shared across the API boundary. */
 
@@ -41,4 +41,18 @@ export interface ListEntryDTO {
   id: string;
   titleId: string;
   status: ListStatus;
+}
+
+export interface TitlePersonDTO {
+  id: string;
+  name: string;
+  role: PersonRole;
+}
+
+/** One title with the fields only the detail page needs. */
+export interface TitleDetailDTO extends TitleSummary {
+  description: string | null;
+  releaseYear: number | null;
+  genres: string[];
+  people: TitlePersonDTO[];
 }
