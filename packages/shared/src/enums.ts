@@ -27,3 +27,12 @@ export const ListStatus = {
   PLAN_TO: 'PLAN_TO',
 } as const;
 export type ListStatus = (typeof ListStatus)[keyof typeof ListStatus];
+
+export const PersonRole = {
+  AUTHOR: 'AUTHOR',
+  DIRECTOR: 'DIRECTOR',
+  ACTOR: 'ACTOR',
+  SHOWRUNNER: 'SHOWRUNNER',
+  WRITER: 'WRITER',
+} as const;
+export type PersonRole = (typeof PersonRole)[keyof typeof PersonRole];

@@ -28,7 +28,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] `.env.example` for `apps/api` and `apps/web`; add `.env` and `data/raw/` to `.gitignore` *(RA)*
 - [x] CI (GitHub Actions or similar): lint, typecheck and test on every PR *(RA)*
 - [x] Branch protection on `main`: require a PR and passing CI, 0 approvals, no direct pushes *(RA)*
-- [ ] Dev seed uses a dataset subset (e.g. 10–20k films); full load only for benchmarks *(JW)*
+- [x] Dev seed uses a dataset subset; full load only for benchmarks *(JW)*. The cleaned dev set is 1,500 titles (500 movies, 500 books, 500 TV shows) with 13,490 reviews, loaded by `data/etl/load-all.ts`. Skip `prisma/seed.ts`: the load already holds the admin and creator accounts. The full 950k set is for SJ's benchmarks only
 - [ ] Move the existing prototype code (Titles/Users CRUD, browse page) into the new structure *(JW, WH)*
 
 ## 2. Data & relational schema (JW, Week 6)
@@ -44,7 +44,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Imported dataset titles get `status = APPROVED` and `created_by = NULL` (`data/etl/load-postgres.ts`)
 - [x] ETL scripts: clean nulls/duplicates, normalise genre names across the three datasets, dedupe people, keep a dataset-ID → DB-ID mapping. See `data/etl/README.md` (cleaners, loaders for PostgreSQL and MongoDB, `id-map.json`, verifiers)
 - [x] `prisma/seed.ts`: one admin, one creator, one consumer, plus a small sample of titles (3 approved + 1 pending creator title)
-- [ ] Turn the CRUD into `titles` and `users` API modules with validation
+- [ ] Turn the CRUD into `titles` and `users` API modules with validation. Done: `modules/titles` with `GET /api/titles/:id` (APPROVED only, 404 otherwise; genres, people, `createdById`) and zod query validation. Still to do: the `users` module (every route needs auth, so it waits for RA) and the write endpoints (see the creator item below)
 - [ ] Creator title endpoints: create (→ `PENDING`), edit/delete own; editing an `APPROVED` title resets it to `PENDING`; store `rejection_reason` on `titles`. The `rejectionReason` column exists; endpoints not started
 
 ## 3. Authentication & RBAC (RA, Week 7–8)
@@ -86,11 +86,11 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 
 ## 6. Search, filtering, trending queries (SJ, Week 9–10)
 
-- [ ] `GET /titles?q=&type=&genre=&minRating=&year=&sort=&page=` (returns `APPROVED` titles only)
-- [ ] Text search: `ILIKE` first, then `pg_trgm` or full-text search if it is too slow on 950k rows
+- [x] `GET /titles?q=&type=&genre=&minRating=&year=&sort=&page=&pageSize=` (returns `APPROVED` titles only). `sort` is `name` (default), `rating`, `year` or `reviews`, every order ends on `id` so pages are stable; `genre` is a name (case-insensitive) and `year` an exact match. Bad values answer 400
+- [ ] Text search: `ILIKE` is in (`q` matches the title name, ~5 ms on the 1,500-title dev set); move to `pg_trgm` or full-text search only if it is too slow on 950k rows
 - [ ] Trending/popular aggregate queries (e.g. rating weighted by review count, recent time window)
 - [ ] Run `EXPLAIN ANALYZE` on every heavy query and add indexes; record before/after numbers for the report
-- [ ] Pagination everywhere (no unbounded queries)
+- [ ] Pagination everywhere (no unbounded queries). `GET /titles` is paginated (max 100 per page); the other list endpoints still need it
 - [ ] `GET /creator/stats`: avg rating, review count and list adds per title the creator owns
 
 ## 7. Personal lists (JW backend + WH UI; RA support on the transaction) — now assigned
