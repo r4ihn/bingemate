@@ -30,6 +30,19 @@ export interface TitleSummary {
   createdById?: string | null;
 }
 
+export interface Paginated<T> {
+  data: T[];
+  page: number;
+  pageSize: number;
+  total: number;
+}
+
+export interface ListEntryDTO {
+  id: string;
+  titleId: string;
+  status: ListStatus;
+}
+
 export interface TitlePersonDTO {
   id: string;
   name: string;
@@ -42,17 +55,4 @@ export interface TitleDetailDTO extends TitleSummary {
   releaseYear: number | null;
   genres: string[];
   people: TitlePersonDTO[];
-}
-
-export interface Paginated<T> {
-  data: T[];
-  page: number;
-  pageSize: number;
-  total: number;
-}
-
-export interface ListEntryDTO {
-  id: string;
-  titleId: string;
-  status: ListStatus;
 }
