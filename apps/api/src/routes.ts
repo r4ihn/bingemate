@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { titlesRouter } from './modules/titles/titles.routes.js';
 
 /**
  * Mounts all module routers under /api.
@@ -11,7 +12,7 @@ router.get('/', (_req, res) => {
   res.json({ service: 'bingemate-api', version: '0.1.0' });
 });
 
+router.use('/titles', titlesRouter);
 // router.use('/auth', authRouter);
-// router.use('/titles', titlesRouter);
 // router.use('/reviews', reviewsRouter);
 // ...
