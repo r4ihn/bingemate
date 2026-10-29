@@ -1,13 +1,14 @@
 // Express routes for auth endpoints
 
-import { authenticate } from "../../middleware/authenticate";
-import { authLimiter } from "../../middleware/rateLimit";
-import { validate } from "../../middleware/validate";
-import { asyncHandler } from "../../utils/asyncHandler";
-import { registerSchema, loginSchema } from "./auth.schemas";
-import { authService } from "./auth.service";
-import { signToken } from "../../utils/jwt";
-import { setAuthCookie ,clearAuthCookie } from "../../utils/authCookie";
+// IMPORRRRRRRRTTTTSSSSSSSS
+import { authenticate } from "../../middleware/authenticate.js";
+import { authLimiter } from "../../middleware/rateLimit.js";
+import { validate } from "../../middleware/validate.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
+import { registerSchema, loginSchema } from "./auth.schemas.js";
+import { authService } from "./auth.service.js";
+import { signToken } from "../../utils/jwt.js";
+import { setAuthCookie ,clearAuthCookie } from "../../utils/authCookie.js";
 import { Router } from "express";
 
 // INIT the router for auth endpoints

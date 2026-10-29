@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authRouter } from './modules/auth/auth.routes.ts';
+import { authRouter } from './modules/auth/auth.routes.js';
 
 /**
  * Mounts all module routers under /api.

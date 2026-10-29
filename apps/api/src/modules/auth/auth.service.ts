@@ -3,7 +3,8 @@
 
 // import statements and dependencies
 import { PrismaClient } from '@prisma/client';
-import { hashPassword, comparePassword } from '../../utils/password';
+import { hashPassword, comparePassword } from '../../utils/password.js';
+import { HttpError } from '../../middleware/errorHandler.js';
 
 // GLOBUL INITZZ
 const prisma = new PrismaClient();
@@ -20,7 +21,7 @@ export class authService {
 
         // what to do if user already exist
         if (existingUser) {
-            throw new Error('Email already in use');
+            throw new HttpError(409,'Email already in use');
         }
 
         // Hash password using the function from utils/password.ts
@@ -47,11 +48,11 @@ export class authService {
 
         // what to do if user no exist or password compare fails
         if (!user) {
-            throw new Error ('Invalid email or password');
+            throw new HttpError(401,'Invalid email or password');
         }
         const passwordMatch = await comparePassword(password, user.passwordHash);
         if (!passwordMatch) {
-            throw new Error ('Invalid email or password');
+            throw new HttpError(401,'Invalid email or password');
         }
         return {id: user.id, email: user.email, role: user.role};
     }
@@ -65,7 +66,7 @@ export class authService {
         });
 
         if (!user) { // If user is not found?
-            throw new Error('User not found');
+            throw new HttpError(401,'User not found');
         }
         // select only the stuff we want to return to client, no password tho!
         return {id: user.id, email: user.email, role: user.role};
