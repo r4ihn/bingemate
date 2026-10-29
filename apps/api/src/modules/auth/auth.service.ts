@@ -10,7 +10,7 @@ const prisma = new PrismaClient();
 
 
 // register logic 
-class authService {
+export class authService {
     // register method
     static async register(email: string, password: string) {
         // Check if user already exists using email via prisma
@@ -56,9 +56,9 @@ class authService {
         return {id: user.id, email: user.email, role: user.role};
     }
 
-    // me method, this is for making sure user is still logged in and can acces their own data
+    // getUserById method, this is for making sure user is still logged in and can acces their own data
     // when page is refreshed
-    static async me(userId: string) {
+    static async getUserById(userId: string) {
         // find user by it's id
         const user = await prisma.user.findUnique({
             where: { id: userId }

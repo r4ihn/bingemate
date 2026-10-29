@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { authRouter } from './modules/auth/auth.routes.ts';
 
 /**
  * Mounts all module routers under /api.
@@ -11,7 +12,7 @@ router.get('/', (_req, res) => {
   res.json({ service: 'bingemate-api', version: '0.1.0' });
 });
 
-// router.use('/auth', authRouter);
+router.use('/auth', authRouter);
 // router.use('/titles', titlesRouter);
 // router.use('/reviews', reviewsRouter);
 // ...

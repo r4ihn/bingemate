@@ -18,6 +18,11 @@ export function authenticate(req: Request, _res: Response, next: NextFunction): 
   if (!token) {
     throw new HttpError(401, 'Not authenticated');
   }
-  req.user = verifyToken(token);
+  try {
+    req.user = verifyToken(token);
+  } catch {
+    throw new HttpError(401, 'Invalid or expired token');
+  }
   next();
 }
+

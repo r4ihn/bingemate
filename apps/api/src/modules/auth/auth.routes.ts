@@ -1,10 +1,38 @@
 // Express routes for auth endpoints
 
 import { authenticate } from "../../middleware/authenticate";
+import { authLimiter } from "../../middleware/rateLimit";
+import { validate } from "../../middleware/validate";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { registerSchema, loginSchema } from "./auth.schemas";
+import { authService } from "./auth.service";
+import { signToken } from "../../utils/jwt";
+import { setAuthCookie ,clearAuthCookie } from "../../utils/authCookie";
+import { Router } from "express";
 
-// me route, making sure user is still logged in when page refreshes
+// INIT the router for auth endpoints
+export const authRouter: Router = Router();
+
+// get user by ID route, making sure user is still logged in when page refreshes
 authRouter.get('/me', authenticate, asyncHandler(async (req, res) => {
     // Get the user by their ID
-    const user = await AuthService.getUserById(req.user!.id);
+    const user = await authService.getUserById(req.user!.id);
     res.json(user);
+}));
+
+authRouter.post('/register', authLimiter, validate(registerSchema), asyncHandler(async (req, res) => {
+    const user = await authService.register(req.body.email, req.body.password);
+    setAuthCookie(res, signToken(user));
+    res.status(201).json(user);
+}));
+
+authRouter.post('/login', authLimiter, validate(loginSchema), asyncHandler(async (req, res) => {
+    const user = await authService.login(req.body.email, req.body.password);
+    setAuthCookie(res, signToken(user));
+    res.status(200).json(user);
+}));
+
+authRouter.post ('/logout', authenticate, asyncHandler(async (_req, res) => {
+    clearAuthCookie(res);
+    res.status(204).json({ message: 'Logged out successfully' }).end();
 }));

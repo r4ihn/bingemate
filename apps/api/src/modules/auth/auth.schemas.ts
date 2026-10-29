@@ -17,3 +17,4 @@ export const loginSchema = z.object({
     // password should not be empty, that's why use min(1)
     password: z.string().min(1)
 });
+
