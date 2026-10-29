@@ -1,9 +1,10 @@
-import type { Paginated } from '@bingemate/shared';
+import type { Paginated, ReplyDTO, ReviewDTO } from '@bingemate/shared';
 import { Role } from '@bingemate/shared';
 import { db, getMockActor, newId, ownerId } from '../mocks/db.js';
 import { RATING_MAX, RATING_MIN } from '../rating.js';
 import type { Reply, Review, ReviewInput } from '../types/review.js';
-import { ApiError } from './client.js';
+import { ApiError, apiFetch } from './client.js';
+import { mapReply, mapReview } from './mappers.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 5;
@@ -37,7 +38,13 @@ function assertNotOwnTitle(titleId: string): void {
 
 export const reviewsApi = {
   async listByTitle(titleId: string, page: number): Promise<Paginated<Review>> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const params = new URLSearchParams({ page: String(page), pageSize: String(PAGE_SIZE) });
+      const res = await apiFetch<Paginated<ReviewDTO>>(
+        `/titles/${encodeURIComponent(titleId)}/reviews?${params}`,
+      );
+      return { ...res, data: res.data.map(mapReview) };
+    }
     await delay();
     const all = db.reviews
       .filter((r) => r.titleId === titleId)
@@ -122,7 +129,12 @@ export const reviewsApi = {
 export const repliesApi = {
   /** Oldest first. */
   async list(reviewId: string): Promise<Reply[]> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      const res = await apiFetch<Paginated<ReplyDTO>>(
+        `/reviews/${encodeURIComponent(reviewId)}/replies?pageSize=200`,
+      );
+      return res.data.map(mapReply);
+    }
     await delay();
     return clone(
       db.replies
