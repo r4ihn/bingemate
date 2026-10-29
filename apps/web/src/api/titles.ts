@@ -6,6 +6,9 @@ import { ApiError, apiFetch } from './client.js';
 import { detailToTitle, summaryToTitle } from './mappers.js';
 import { clone, delay, useMock } from './mockMode.js';
 
+/** The longest search text the API accepts. */
+const MAX_QUERY_LENGTH = 100;
+
 export interface TitleQuery {
   q?: string;
   type?: MediaType;
@@ -33,7 +36,9 @@ export const titlesApi = {
   async search({ q = '', type, page = 1, pageSize = 20 }: TitleQuery): Promise<TitlePage> {
     if (!useMock) {
       const params = new URLSearchParams();
-      if (q.trim()) params.set('q', q.trim());
+      // The API answers 400 to a query over 100 characters, which no retry could fix.
+      const needle = q.trim().slice(0, MAX_QUERY_LENGTH);
+      if (needle) params.set('q', needle);
       if (type) params.set('type', type);
       params.set('page', String(page));
       params.set('pageSize', String(pageSize));
