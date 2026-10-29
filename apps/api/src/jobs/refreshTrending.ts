@@ -93,8 +93,18 @@ async function runAsScript(): Promise<void> {
   }
 }
 
-const entry = process.argv[1];
-if (entry && realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url))) {
+/** True only when this file is the script being run. Any trouble resolving the paths means it is not. */
+function isRunDirectly(): boolean {
+  const entry = process.argv[1];
+  if (!entry) return false;
+  try {
+    return realpathSync(entry) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+}
+
+if (isRunDirectly()) {
   runAsScript().catch((err) => {
     console.error('refreshTrending failed:', err);
     process.exit(1);
