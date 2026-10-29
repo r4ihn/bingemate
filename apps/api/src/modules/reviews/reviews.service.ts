@@ -244,13 +244,15 @@ export async function updateReview(
       }
     }
     try {
-      await BODY_MODEL[type].updateOne(
+      const result = await BODY_MODEL[type].updateOne(
         { _id: id },
         {
           ...(Object.keys($set).length ? { $set } : {}),
           ...(Object.keys($unset).length ? { $unset } : {}),
         },
       );
+      // A review whose body is missing would otherwise answer 200 and lose the edit without a trace.
+      if (result.matchedCount === 0) throw new Error(`review ${id} has no body in MongoDB`);
     } catch (err) {
       console.error('Review body update failed, restoring the rating:', err);
       if (ratingChanged) {

@@ -7,7 +7,7 @@ process.env.MONGO_URI ??= 'mongodb://localhost:27017/bingemate';
 process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 
 // No databases in CI: both stores are replaced and the tests check what the module asks of them.
-const prisma = { review: { findUnique: vi.fn() }, user: { findMany: vi.fn() } };
+const prisma = { review: { findFirst: vi.fn() }, user: { findMany: vi.fn() } };
 const reply = {
   find: vi.fn(),
   countDocuments: vi.fn(),
@@ -53,7 +53,7 @@ const finder = (docs: unknown[]) => {
 const leaning = (value: unknown) => ({ lean: async () => value });
 
 beforeEach(() => {
-  prisma.review.findUnique.mockReset().mockResolvedValue({ id: 'r1' });
+  prisma.review.findFirst.mockReset().mockResolvedValue({ id: 'r1' });
   prisma.user.findMany
     .mockReset()
     .mockResolvedValue([{ id: 'u1', username: 'maya_r', role: 'CONSUMER' }]);
@@ -63,12 +63,24 @@ beforeEach(() => {
 
 describe('GET /api/reviews/:reviewId/replies', () => {
   it('answers 404 for a review that does not exist', async () => {
-    prisma.review.findUnique.mockResolvedValue(null);
+    prisma.review.findFirst.mockResolvedValue(null);
 
     const res = await request(app).get('/api/reviews/nope/replies');
 
     expect(res.status).toBe(404);
     expect(reply.find).not.toHaveBeenCalled();
+  });
+
+  it('only finds reviews of approved titles, like the reviews themselves', async () => {
+    prisma.review.findFirst.mockResolvedValue(null);
+
+    const res = await request(app).get('/api/reviews/r1/replies');
+
+    expect(res.status).toBe(404);
+    expect(prisma.review.findFirst.mock.calls[0]?.[0].where).toEqual({
+      id: 'r1',
+      title: { status: 'APPROVED' },
+    });
   });
 
   it('lists oldest first with the id as tie-break, one page at a time', async () => {
@@ -162,9 +174,25 @@ describe('POST /api/reviews/:reviewId/replies', () => {
   });
 
   it('answers 404 for a review that does not exist', async () => {
-    prisma.review.findUnique.mockResolvedValue(null);
+    prisma.review.findFirst.mockResolvedValue(null);
 
     expect((await post({ body: 'x' })).status).toBe(404);
+    expect(reply.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses a reply under a review of a title that is not approved', async () => {
+    prisma.review.findFirst.mockResolvedValue(null);
+
+    const res = await request(app)
+      .post('/api/reviews/r1/replies')
+      .set(as())
+      .send({ body: 'Hello' });
+
+    expect(res.status).toBe(404);
+    expect(prisma.review.findFirst.mock.calls[0]?.[0].where).toEqual({
+      id: 'r1',
+      title: { status: 'APPROVED' },
+    });
     expect(reply.create).not.toHaveBeenCalled();
   });
 

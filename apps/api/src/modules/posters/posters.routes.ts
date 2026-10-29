@@ -42,12 +42,15 @@ posterRouter.get(
   '/',
   validate(titleIdParamSchema, 'params'),
   route(async (req, res) => {
-    const { contentType, data } = await getPoster(req.params['titleId'] as string);
+    const { contentType, data, version } = await getPoster(req.params['titleId'] as string);
+    // The link a title hands out carries ?v=<version>. Only a request for exactly that version may
+    // be kept for a year; a missing or old ?v= must be asked again, or a replaced image could stay
+    // pinned under an old address.
+    const current = req.query['v'] === String(version);
     res
       .set({
         'Content-Type': contentType,
-        // the URL carries ?v=<version>, so a changed image is a new URL and this copy never goes stale
-        'Cache-Control': 'public, max-age=31536000, immutable',
+        'Cache-Control': current ? 'public, max-age=31536000, immutable' : 'no-cache',
         'X-Content-Type-Options': 'nosniff',
       })
       .send(data);

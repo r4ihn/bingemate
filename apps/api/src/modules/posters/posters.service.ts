@@ -36,13 +36,15 @@ export async function putPoster(
   const contentType = sniffImage(image);
   if (!contentType) throw new HttpError(415, 'Use a JPEG, PNG or WebP image');
 
-  const version = Date.now();
-  await TitlePoster.findOneAndUpdate(
+  // Two uploads at once both end up pointing at whichever bytes MongoDB kept, because the URL
+  // takes its version from the stored document, not from this request's own clock.
+  const stored = (await TitlePoster.findOneAndUpdate(
     { _id: titleId },
-    { $set: { contentType, data: image, version } },
-    { upsert: true },
-  );
-  const posterUrl = `/api/titles/${titleId}/poster?v=${version}`;
+    { $set: { contentType, data: image, version: Date.now() } },
+    { upsert: true, new: true },
+  ).lean()) as { version: number } | null;
+  if (!stored) throw new HttpError(502, 'Could not save the image, please try again');
+  const posterUrl = `/api/titles/${titleId}/poster?v=${stored.version}`;
   await prisma.title.update({ where: { id: titleId }, data: { posterUrl } });
   return { posterUrl };
 }
@@ -50,7 +52,7 @@ export async function putPoster(
 /** Public, and only for approved titles, like the rest of the title pages. */
 export async function getPoster(
   titleId: string,
-): Promise<{ contentType: ImageType; data: Buffer }> {
+): Promise<{ contentType: ImageType; data: Buffer; version: number }> {
   const title = await prisma.title.findFirst({
     where: { id: titleId, status: 'APPROVED' },
     select: { id: true },
@@ -59,12 +61,13 @@ export async function getPoster(
     ? ((await TitlePoster.findById(titleId).lean()) as {
         contentType: ImageType;
         data: Buffer | { buffer: Uint8Array };
+        version: number;
       } | null)
     : null;
   if (!doc) throw new HttpError(404, 'No image for this title');
   // lean() can hand back the driver's Binary wrapper instead of a Buffer
   const data = Buffer.isBuffer(doc.data) ? doc.data : Buffer.from(doc.data.buffer);
-  return { contentType: doc.contentType, data };
+  return { contentType: doc.contentType, data, version: doc.version };
 }
 
 /** Clears the link first so nothing points at the image, then removes the bytes. */

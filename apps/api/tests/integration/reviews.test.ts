@@ -332,7 +332,10 @@ describe('PATCH /api/reviews/:id', () => {
       .mockResolvedValueOnce(stored())
       .mockResolvedValue(reviewRow({ rating: 2 }));
     prisma.review.update.mockImplementation(async () => calls.push('pg-update'));
-    mongo.movieUpdate.mockImplementation(async () => calls.push('mongo-update'));
+    mongo.movieUpdate.mockImplementation(async () => {
+      calls.push('mongo-update');
+      return { matchedCount: 1 };
+    });
   });
 
   it('needs a signed-in user', async () => {
@@ -429,6 +432,17 @@ describe('PATCH /api/reviews/:id', () => {
     expect(res.status).toBe(502);
     // totals rebuilt once for our own write, not again for an undo that did not happen
     expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+  });
+
+  it('treats a review with no body in MongoDB as a failed edit, not a silent success', async () => {
+    mongo.movieUpdate.mockResolvedValue({ matchedCount: 0 });
+
+    const res = await patch({ rating: 2, body: 'Edited.' });
+
+    expect(res.status).toBe(502);
+    expect(res.body.error).toMatch(/Nothing was changed/);
+    // the rating that was already moved goes back
+    expect(prisma.review.update.mock.calls.map((c) => c[0].data.rating)).toEqual([2, 4]);
   });
 
   it('does not touch the rating back when it never changed', async () => {

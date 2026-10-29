@@ -22,6 +22,8 @@ const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
   Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
 });
 
+const STORED_VERSION = 1700000000001;
+
 // Only the first bytes matter: the server never decodes the image.
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
 const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 1, 2, 3]);
@@ -40,7 +42,10 @@ beforeEach(() => {
   Object.values(poster).forEach((fn) => fn.mockReset());
   prisma.title.findUnique.mockResolvedValue({ createdById: 'c1' });
   prisma.title.update.mockImplementation(async () => calls.push('pg-update'));
-  poster.findOneAndUpdate.mockImplementation(async () => calls.push('mongo-save'));
+  poster.findOneAndUpdate.mockImplementation(() => {
+    calls.push('mongo-save');
+    return { lean: async () => ({ version: STORED_VERSION }) };
+  });
   poster.deleteOne.mockImplementation(async () => calls.push('mongo-delete'));
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
@@ -115,13 +120,34 @@ describe('PUT /api/titles/:titleId/poster', () => {
     const [filter, update, options] = poster.findOneAndUpdate.mock.calls[0] ?? [];
     expect(filter).toEqual({ _id: 't1' });
     expect(update.$set.data.equals(PNG)).toBe(true);
-    expect(options).toEqual({ upsert: true });
-    const version = update.$set.version;
-    expect(res.body).toEqual({ posterUrl: `/api/titles/t1/poster?v=${version}` });
+    expect(options).toEqual({ upsert: true, new: true });
+    expect(update.$set.version).toEqual(expect.any(Number));
+    expect(res.body).toEqual({ posterUrl: `/api/titles/t1/poster?v=${STORED_VERSION}` });
     expect(prisma.title.update.mock.calls[0]?.[0]).toEqual({
       where: { id: 't1' },
       data: { posterUrl: res.body.posterUrl },
     });
+  });
+
+  it('hands out the version MongoDB kept, not this request’s own clock, when uploads overlap', async () => {
+    // another upload landed after ours: the stored document carries its version
+    poster.findOneAndUpdate.mockImplementation(() => ({ lean: async () => ({ version: 42 }) }));
+
+    const res = await put(PNG);
+
+    expect(res.body.posterUrl).toBe('/api/titles/t1/poster?v=42');
+    expect(prisma.title.update.mock.calls[0]?.[0].data.posterUrl).toBe(
+      '/api/titles/t1/poster?v=42',
+    );
+  });
+
+  it('answers 502 and leaves the title alone when MongoDB returns nothing', async () => {
+    poster.findOneAndUpdate.mockImplementation(() => ({ lean: async () => null }));
+
+    const res = await put(PNG);
+
+    expect(res.status).toBe(502);
+    expect(prisma.title.update).not.toHaveBeenCalled();
   });
 
   it('goes by the bytes, not by the Content-Type the sender typed', async () => {
@@ -194,25 +220,45 @@ describe('GET /api/titles/:titleId/poster', () => {
     expect((await request(app).get('/api/titles/t1/poster')).status).toBe(404);
   });
 
-  it('serves the bytes with their real type, a long cache and no sniffing', async () => {
+  it('serves the bytes with their real type and no sniffing', async () => {
     prisma.title.findFirst.mockResolvedValue({ id: 't1' });
     poster.findById.mockReturnValue({
-      lean: async () => ({ contentType: 'image/png', data: PNG }),
+      lean: async () => ({ contentType: 'image/png', data: PNG, version: STORED_VERSION }),
     });
 
-    const res = await request(app).get('/api/titles/t1/poster').buffer(true);
+    const res = await request(app).get(`/api/titles/t1/poster?v=${STORED_VERSION}`).buffer(true);
 
     expect(res.status).toBe(200);
     expect(res.headers['content-type']).toBe('image/png');
-    expect(res.headers['cache-control']).toBe('public, max-age=31536000, immutable');
     expect(res.headers['x-content-type-options']).toBe('nosniff');
     expect(Buffer.from(res.body).equals(PNG)).toBe(true);
+  });
+
+  it.each([
+    ['the current version', `?v=${STORED_VERSION}`, 'public, max-age=31536000, immutable'],
+    ['no version', '', 'no-cache'],
+    ['an old version', '?v=1', 'no-cache'],
+    ['a version that is not a number', '?v=abc', 'no-cache'],
+  ])('caches for a year only when asked for the current version: %s', async (_label, qs, cache) => {
+    prisma.title.findFirst.mockResolvedValue({ id: 't1' });
+    poster.findById.mockReturnValue({
+      lean: async () => ({ contentType: 'image/png', data: PNG, version: STORED_VERSION }),
+    });
+
+    const res = await request(app).get(`/api/titles/t1/poster${qs}`);
+
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe(cache);
   });
 
   it('copes with the driver handing back its Binary wrapper', async () => {
     prisma.title.findFirst.mockResolvedValue({ id: 't1' });
     poster.findById.mockReturnValue({
-      lean: async () => ({ contentType: 'image/jpeg', data: { buffer: new Uint8Array(JPEG) } }),
+      lean: async () => ({
+        contentType: 'image/jpeg',
+        data: { buffer: new Uint8Array(JPEG) },
+        version: STORED_VERSION,
+      }),
     });
 
     const res = await request(app).get('/api/titles/t1/poster').buffer(true);
