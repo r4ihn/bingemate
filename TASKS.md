@@ -122,7 +122,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login *(WH)*. Done; forms keep their drafts when a 401 arrives
 - [ ] Admin dashboard: users/roles, title approval queue, review/reply moderation *(WH UI + RA endpoints — Week 11)*. WH UI done against mock data; RA's endpoints still to build and wire
 - [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*. States and automated a11y checks are done, focus returns to the right button after edit, reply and the dropdown, and the code-level audit is done. A manual keyboard-only pass on a real browser is still to do (the browser tool needs Chrome remote debugging switched on)
-- [ ] **Phone layout, one site-wide pass (parked by WH, 2026-10-27).** The menu bar (`MainLayout` header) is about 485px wide at phone sizes and overflows below roughly 500px; the title overview's rating pill and grid do not fit at 320px; Home and the rails use fixed widths. Aim for no sideways scroll at 320 CSS px (WCAG reflow) *(WH)*
+- [ ] **Phone layout, one site-wide pass (parked by WH, 2026-10-27).** Aim for no sideways scroll at 320 CSS px (WCAG reflow) *(WH)*. PR #6 resizes the header dock (smaller logo, 46px buttons and tighter gaps below `sm`) and the title overview (104px poster, long titles break). Both were sized by hand and have not been seen on a device. Still to do: check those two at 320px in a real browser, then the Home strip and rails (fixed widths) and every other page
 
 ## 9. Performance & SQL vs NoSQL comparison (SJ lead; HS co-owns the Mongo side, Week 12)
 
