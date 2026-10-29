@@ -17,19 +17,29 @@ interface FakeUser {
 
 const db = vi.hoisted(() => ({ users: [] as FakeUser[] }));
 
-vi.mock('@prisma/client', () => ({
-  PrismaClient: class {
-    user = {
-      findUnique: async ({ where }: { where: { id?: string; email?: string } }) =>
-        db.users.find((u) => (where.id ? u.id === where.id : u.email === where.email)) ?? null,
-      create: async ({ data }: { data: { email: string; passwordHash: string } }) => {
-        const user = { id: `user_${db.users.length + 1}`, role: 'CONSUMER', ...data };
-        db.users.push(user);
-        return user;
+vi.mock('../../src/db/prisma.js', async () => {
+  const { Prisma } = await import('@prisma/client');
+  return {
+    prisma: {
+      user: {
+        findUnique: async ({ where }: { where: { id?: string; email?: string } }) =>
+          db.users.find((u) => (where.id ? u.id === where.id : u.email === where.email)) ?? null,
+        create: async ({ data }: { data: { email: string; passwordHash: string } }) => {
+          // Like the real unique email column
+          if (db.users.some((u) => u.email === data.email)) {
+            throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+              code: 'P2002',
+              clientVersion: 'test',
+            });
+          }
+          const user = { id: `user_${db.users.length + 1}`, role: 'CONSUMER', ...data };
+          db.users.push(user);
+          return user;
+        },
       },
-    };
-  },
-}));
+    },
+  };
+});
 
 const { createApp } = await import('../../src/app.js');
 
@@ -67,6 +77,25 @@ describe('POST /api/auth/register', () => {
     const res = await request(app).post('/api/auth/register').send(credentials);
 
     expect(res.status).toBe(409);
+  });
+
+  it('returns 409, not 500, when two registers for one email arrive together', async () => {
+    const [a, b] = await Promise.all([
+      request(app).post('/api/auth/register').send(credentials),
+      request(app).post('/api/auth/register').send(credentials),
+    ]);
+
+    expect([a.status, b.status].sort()).toEqual([201, 409]);
+  });
+
+  it('treats emails as case-insensitive', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, email: '  Me@Test.COM ' });
+
+    expect(res.body.email).toBe('me@test.com');
+    const again = await request(app).post('/api/auth/register').send(credentials);
+    expect(again.status).toBe(409);
   });
 
   it('returns 400 for a weak password', async () => {
@@ -141,5 +170,12 @@ describe('POST /api/auth/logout', () => {
 
     const me = await agent.get('/api/auth/me');
     expect(me.status).toBe(401);
+  });
+
+  it('still clears an expired or broken cookie', async () => {
+    const res = await request(app).post('/api/auth/logout').set('Cookie', 'token=junk');
+
+    expect(res.status).toBe(204);
+    expect(String(res.headers['set-cookie'])).toMatch(/token=;.*Expires=Thu, 01 Jan 1970/);
   });
 });

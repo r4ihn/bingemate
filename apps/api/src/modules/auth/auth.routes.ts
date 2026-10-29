@@ -34,7 +34,9 @@ authRouter.post('/login', authLimiter, validate(loginSchema), asyncHandler(async
     res.status(200).json(user);
 }));
 
-authRouter.post ('/logout', authenticate, asyncHandler(async (_req, res) => {
+// No authenticate here: an expired or broken cookie must still be clearable
+authRouter.post('/logout', (_req, res) => {
     clearAuthCookie(res);
-    res.status(204).json({ message: 'Logged out successfully' }).end();
-}));
+    // 204 = No Content, so no body
+    res.status(204).end();
+});
