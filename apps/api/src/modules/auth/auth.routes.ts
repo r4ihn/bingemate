@@ -14,6 +14,7 @@ import { Router } from "express";
 // INIT the router for auth endpoints
 export const authRouter: Router = Router();
 
+// METHODS!!!!!!!!
 // get user by ID route, making sure user is still logged in when page refreshes
 authRouter.get('/me', authenticate, asyncHandler(async (req, res) => {
     // Get the user by their ID

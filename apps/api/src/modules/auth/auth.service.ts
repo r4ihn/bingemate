@@ -12,6 +12,9 @@ const prisma = new PrismaClient();
 
 // register logic 
 export class authService {
+
+    // METHODS HEREEEE
+
     // register method
     static async register(email: string, password: string) {
         // Check if user already exists using email via prisma
