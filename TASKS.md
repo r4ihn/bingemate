@@ -4,17 +4,17 @@ Source: Group 29 INF2003 Progress Report (30 Sep 2026) + agreed tech stack
 (React + TS frontend, Node.js + TS backend, PostgreSQL/Prisma, MongoDB, bcrypt, JWT, email & password).
 
 Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop · **SJ** Shang Jay · **ALL** whole team
-`[x]` = done (progress report, or verified in the repo). Last checked against `main` + local working tree on 21 Oct 2026.
+`[x]` = done (progress report, or verified in the repo). Last checked against `main` on 29 Oct 2026 (after the data-load PR #5; the web review/reply branch is up for review).
 
 ---
 
 ## 0. Decisions to lock before coding (ALL, Week 6)
 
-- [x] **Where reviews live: split (option B).** PostgreSQL `reviews` holds the header row (`id`, `user_id`, `title_id`, `rating`, `created_at`, `updated_at`), so ratings and aggregates get ACID and FKs. MongoDB holds the body, the media-specific fields and the comments, keyed by the same `id`.
+- [x] **Where reviews live: split (option B).** PostgreSQL `reviews` holds the header row (`id`, `user_id`, `title_id`, `rating`, `created_at`, `updated_at`), so ratings and aggregates get ACID and FKs. MongoDB holds the body, the media-specific fields and the replies, keyed by the same `id`.
 - [x] **Creator privileges (baseline).** Creators create titles and can edit/delete **only their own** titles; admins can edit/delete any.
-  - [x] Extras locked: (a) submission status + rejection reason, (b) stats per own title, (c) editing an approved title sends it back to `PENDING`, (d) one pinned official reply per review on own titles, (e) "Creator" badge on their reviews/comments.
+  - [x] Extras locked: (a) submission status + rejection reason, (b) stats per own title, (c) editing an approved title sends it back to `PENDING`, (d) ~~one pinned official reply per review~~ dropped by WH on 2026-10-27: a creator replies like anyone else, (e) "Creator" badge beside the name on the creator's own reviews/replies, only on titles they created.
 - [x] **Creator-uploaded titles.** Saved as `PENDING`; hidden from browse/search until an admin sets them to `APPROVED` (or `REJECTED`).
-- [x] **Comments.** Consumers and creators can comment (admins can delete any). Assumed depth: one level of replies (review → comment → reply). Change it if you want deeper threads.
+- [x] **Replies, not comments (WH, 2026-10-27).** Nobody comments on a review. Anyone signed in except an admin, including the review's author, can reply under it. Replies are one flat list per review, oldest first, with no replies to replies and no `@name` for now. Admins can delete any reply.
 - [x] **JWT strategy.** One access token (2h) in an httpOnly cookie (`Secure` in prod, `SameSite=Lax`), no refresh tokens. Logout clears the cookie; on expiry the user logs in again.
 - [x] **Libraries.** Express, Mongoose, Vite, Zod, Vitest/Jest + Supertest.
 - [x] **Dev dataset size.** A subset of the 950k films for local dev; the full set for benchmarking only.
@@ -30,18 +30,20 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Branch protection on `main`: require a PR and passing CI, 0 approvals, no direct pushes *(RA)*
 - [x] Dev seed uses a dataset subset; full load only for benchmarks *(JW)*. The cleaned dev set is 1,500 titles (500 movies, 500 books, 500 TV shows) with 13,490 reviews, loaded by `data/etl/load-all.ts`. Skip `prisma/seed.ts`: the load already holds the admin and creator accounts. The full 950k set is for SJ's benchmarks only
 - [ ] Move the existing prototype code (Titles/Users CRUD, browse page) into the new structure *(JW, WH)*
+- [ ] `npm run dev` for the API exits with "Invalid environment variables": nothing loads `apps/api/.env` (Prisma reads it, the API does not). Load it in the `dev` script, e.g. `tsx watch --env-file=.env src/server.ts` (Node 20.6+), so everyone can start the API *(RA)*
 
 ## 2. Data & relational schema (JW, Week 6)
 
 - [x] Download datasets and load them into PostgreSQL and MongoDB
 - [x] Initial ER diagram (Users, Titles, Genres, Reviews, Lists, junction tables)
 - [x] Basic CRUD for Titles and Users in PostgreSQL
-- [ ] Finalise the ER diagram: `users`, `titles` (with `media_type` MOVIE/BOOK/TV_SHOW, `status` PENDING/APPROVED/REJECTED, `created_by` → users), `genres`, `title_genres`, `people`, `title_people` (role: author/director/actor/showrunner), `list_entries`, `reviews` (header row only). All of these tables are in `schema.prisma`; the diagram itself still needs redrawing to match
-- [x] Write `prisma/schema.prisma` and generate the first migration. Committed on branch `feat/db-load` as `20261027075529_initial_bingemate` (JW's local `20261019011516_...` was never committed, so drop it before pulling)
+- [ ] Finalise the ER diagram: `users`, `titles` (with `media_type` MOVIE/BOOK/TV_SHOW, `status` PENDING/APPROVED/REJECTED, `created_by` → users), `genres`, `title_genres`, `people`, `title_people` (role: author/director/actor/showrunner), `list_entries`, `reviews` (header row only). All of these tables are in `schema.prisma`; the Eraser diagrams were updated on 27 Oct for the load schema changes (`WRITER`, `username`, `description`, the rating CHECK, `details` in MongoDB; links in `docs/eraser-diagrams.md`). The SQL views are not drawn yet
+- [x] Write `prisma/schema.prisma` and generate the first migration. Merged to `main` in PR #5 as `20261027075529_initial_bingemate` (JW's local `20261019011516_...` was never committed: drop it, then run `prisma migrate dev`)
 - [x] Constraints: unique email, FKs with explicit `onDelete`, unique `(user_id, title_id)` on `list_entries` and on `reviews` (one review per user per title), `CHECK` on the rating range. The `CHECK (rating BETWEEN 1 AND 5)` is in migration `20261027075538_rating_check_and_views`
-- [x] Indexes for browse/search: `titles(media_type)`, `titles(name)`, `titles(status)`, `title_genres(genre_id)`, `titles(avg_rating)`, `reviews(title_id)`
+- [x] Indexes for browse/search: `titles(media_type)`, `titles(name)`, `titles(status)`, `title_genres(genre_id)`, `titles(avg_rating)`, `reviews(title_id)`, plus `list_entries(title_id)` and `titles(created_by)` (PR #5, for `/creator/stats` and delete cascades)
 - [ ] Rating aggregates (`avg_rating`, `review_count` on `titles`) recomputed in the same transaction as a `reviews` insert/update/delete. The bulk load fills them from the `title_rating_stats` view; the API write path is still to do
 - [x] Imported dataset titles get `status = APPROVED` and `created_by = NULL` (`data/etl/load-postgres.ts`)
+- [ ] 965 imported TV reviews have no date, so the loader gives them the load time: they show as "today" and sort above every real review. Give them one fixed old date in the loader instead *(JW/HS)*
 - [x] ETL scripts: clean nulls/duplicates, normalise genre names across the three datasets, dedupe people, keep a dataset-ID → DB-ID mapping. See `data/etl/README.md` (cleaners, loaders for PostgreSQL and MongoDB, `id-map.json`, verifiers)
 - [x] `prisma/seed.ts`: one admin, one creator, one consumer, plus a small sample of titles (3 approved + 1 pending creator title)
 - [ ] Turn the CRUD into `titles` and `users` API modules with validation. Done: `modules/titles` with `GET /api/titles/:id` (APPROVED only, 404 otherwise; genres, people, `createdById`) and zod query validation. Still to do: the `users` module (every route needs auth, so it waits for RA) and the write endpoints (see the creator item below)
@@ -55,33 +57,35 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] `cookie-parser` + CORS with `credentials: true` restricted to the web origin (`app.ts`, origin from `WEB_ORIGIN`)
 - [x] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
   - [ ] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401
-- [ ] Ownership checks: users edit/delete only their own reviews and comments, creators edit/delete only their own titles (`titles.created_by`), admins override all
-- [ ] Comment permission: `CONSUMER` and `CREATOR` can comment and reply; `ADMIN` can delete any comment
+- [ ] Ownership checks: users edit/delete only their own reviews and replies, creators edit/delete only their own titles (`titles.created_by`), admins override all
+- [ ] Reply permission: `CONSUMER` and `CREATOR` can reply to a review; `ADMIN` can delete any reply but never writes one
 - [ ] Rate-limit login/register; keep the JWT secret in env only. `authLimiter` exists and `JWT_SECRET` is env-only (Zod-validated); the limiter just needs applying to the auth routes
 - [ ] Tests for every role × protected route
 
 ## 4. Admin moderation (RA, Week 11)
 
-- [ ] Delete any review (PostgreSQL header + MongoDB body) or comment, and keep the PostgreSQL aggregates in sync
+- [ ] Delete any review (PostgreSQL header + MongoDB body) or reply, and keep the PostgreSQL aggregates in sync
 - [ ] `GET /admin/users` (paginated), `PATCH /admin/users/:id/role`
 - [ ] Title approval queue: `GET /admin/titles?status=PENDING`, `PATCH /admin/titles/:id/status` (APPROVED / REJECTED, optional rejection reason)
 - [x] Admin pages in the frontend *(with WH)*. UI done against mock data (branch `feat/web-shell`); real endpoints still to be wired
 
-## 5. MongoDB: reviews, comments, trending (HS lead; SJ co-owns trending)
+## 5. MongoDB: reviews, replies, trending (HS lead; SJ co-owns trending)
 
 - [x] Mongoose connection module (`db/mongo.ts`)
-- [x] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with discriminators per media type (movie: runtime, book: chapters, TV: season/episodes). No rating here; the rating lives in PostgreSQL
+- [x] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with discriminators per media type (movie: runtime, book: chapters, TV: season/episodes) and a `details` (Mixed) field for the dataset's extras. No rating here; the rating lives in PostgreSQL
+  - [ ] Decide what the review form's media fields should be. The form asks for minutes, chapters, season and episodes, but the imported reviews carry other extras (review year, publication name, summary, helpfulness), so they show no details line. Keep, replace or drop the discriminators *(HS, JW)*
 - [ ] Cross-store write order: insert the PostgreSQL row (transaction) → insert the Mongo body; if the Mongo write fails, delete the PostgreSQL row (compensating delete). Same idea for delete
-- [x] Comment threads, one reply level: embedded in the review vs. a separate `comments` collection with `reviewId` + `parentId` (watch the 16 MB document limit on popular reviews). Went with the separate `comments` collection (`comment.model.ts`, with `isOfficial`)
+- [x] Reply storage: embedded in the review vs. a separate collection with `reviewId` (watch the 16 MB document limit on popular reviews). Went with a separate collection (`comment.model.ts` today). **Now flat:** drop `parentId` and `isOfficial`, and rename the model, collection and endpoints to replies *(HS)*
 - [ ] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job *(HS, SJ support — SJ owns the trending queries in §6)*. The model is done; `jobs/refreshTrending.ts` is still a stub that throws
 - [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`. The first two are done. `{rating}` doesn't apply any more since ratings live in PostgreSQL (option B); confirm with the team and drop it
 - [x] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets (`load-postgres.ts` + `load-mongo-reviews.ts`; the 0 to 10 scores are converted to 1 to 5 stars in `clean-reviews.ts`)
-- [ ] Review endpoints: list by title, create, update, delete
-- [ ] Comment endpoints: list, reply, delete
-- [ ] Creator official reply: one per review, only by the creator who owns the title; stored with `isOfficial: true` and returned pinned first
-  - [ ] The comments list endpoint returns the final order itself: official replies first, then oldest first. The web UI only groups replies under their parent and does not re-sort *(HS)*
-- [ ] Return the author's role with reviews/comments so the UI can show the Creator badge
-- [ ] **Rating scale is whole stars, 1 to 5** (decided by WH, 2026-10-18; the UI and mock API already use it). `reviews.rating` needs a `CHECK (rating BETWEEN 1 AND 5)`, validation must reject anything else, and `avgRating` is on the same 1 to 5 scale. Convert the review datasets to 1 to 5 when loading them *(HS, SJ)*
+- [ ] Review endpoints: list by title (newest first, tie-break on id), create, update (`PATCH /reviews/:id`, owner only), delete
+  - [ ] Rules to enforce (WH, 2026-10-27): **admins never write** reviews or replies (403, they only delete); **the creator of a title cannot review it** (403) but can reply; one review per user per title (409)
+- [ ] Reply endpoints *(HS)*: `GET /reviews/:id/replies` (oldest first), `POST /reviews/:id/replies` (not admins, review must exist), `PATCH /replies/:id` (writer only, never an admin, text not empty, keeps `createdAt`, sets `editedAt`), `DELETE /replies/:id` (author or admin)
+- [ ] Creator badge: a reply or review whose author created the title shows "Creator" beside the name. Not by role: the same account on another creator's title gets no badge. Needs `createdById` on the title response *(JW)*. No `isOfficial`, no pinning, no separate reply
+  - [ ] The replies list endpoint returns oldest first and the UI does not re-sort it *(HS)*
+- [ ] Return the author's id with reviews/replies; the UI compares it with the title's `createdById` to show the Creator badge (the role alone is no longer enough)
+- [ ] **Rating scale is whole stars, 1 to 5** (decided by WH, 2026-10-18). Done: the `CHECK (rating BETWEEN 1 AND 5)`, the ETL conversion (`round(score / 2)`, clamped), and `RATING_MIN`/`RATING_MAX` in `@bingemate/shared` (the web app uses them). Still to do: the review endpoints validate with the same constants and reject anything else, and `avgRating` stays on the 1 to 5 scale *(HS, SJ)*
 - [ ] `GET /titles/:id/reviews/mine` returns the signed-in user's review of the title, or `null`. The review form calls it to show "You have already reviewed this title" instead of a form that would end in a 409; if it fails the form still shows *(HS)*
 
 ## 6. Search, filtering, trending queries (SJ, Week 9–10)
@@ -107,19 +111,22 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] Login and register pages *(WH)*. Done; the password rule (8+ characters, a letter and a digit) is client-side only, RA to confirm it matches the API
 - [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*. WH built the layout (hero, poster strip, Movies/TV/Books rails) on the titles API; swap in SJ's trending data
 - [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*. WH built the shell: `?q`, `?type`, `?page` in the URL, type pills and pagination, plus the nav search with quick matches. Genre and rating filters are still SJ's, and the real `GET /titles?q=&type=&page=` needs wiring
-- [x] Title detail page: info, reviews, comment threads *(WH)*. Done against mock data; waiting on HS's review and comment shapes
-- [ ] Write/edit/delete review form (media-specific fields) *(WH)*. Write and delete are done; **edit is not built** (needs an update call in the API plan)
+- [x] Title detail page: info, reviews, replies *(WH)*. Done against mock data; waiting on HS's review and reply shapes
+- [x] Write/edit/delete review form (media-specific fields) *(WH)*. Write, edit and delete are done against mock data; edit needs `PATCH /reviews/:id` (owner only, rating 1 to 5) from HS. Media fields accept digits only. Review text keeps its line breaks, wraps long strings and folds past 600 characters behind Read more. Edit is also available in place on the card. The rules the API must enforce are listed in §5
 - [x] My Lists page *(WH)*. Done against mock data (status tabs, media filter, move/remove with rollback)
+- [x] Replies UI *(WH)*. Done against mock data: one flat list per review, one action row (Reply with a count, Edit, Delete) on every review and reply, writer-only edit with an "edited" mark, relative dates, a "You" marker, threads over 3 replies fold to 2. Needs the reply endpoints in §5
+- [x] Site-styled `Dropdown` (combobox + listbox) replaces the native select for list status on the title page and My Lists *(WH)*. The role picker in the admin table and the media type in the submission form are still native selects
 - [x] Role-based controls (hide or disable actions the role cannot perform; the backend still enforces them) *(WH)*. Done: nav links, route guards, delete buttons, own-role select
 - [ ] Creator upload flow *(UI done against mock data, including the edit-resubmits warning; waiting on JW's endpoints)*: create, edit and delete own titles; "My submissions" list showing PENDING / APPROVED / REJECTED + rejection reason; warn that editing an approved title re-submits it *(WH UI + JW backend — Week 11; JW now owns the backend)*
-- [ ] Creator stats page; pinned official-reply UI on own titles; Creator badge on reviews/comments *(WH)*. Stats page, Creator badge and pin-first display are done; **a creator cannot yet post the official reply** (UI not built)
+- [x] Creator stats page; Creator badge on the creator's own reviews/replies *(WH)*. Done against mock data. The badge is by title ownership, not by role, and needs `createdById` on the title response (JW)
 - [x] API client sends cookies (`credentials: 'include'`); on 401 clear `AuthContext` and redirect to login *(WH)*. Done; forms keep their drafts when a 401 arrives
-- [ ] Admin dashboard: users/roles, title approval queue, review/comment moderation *(WH UI + RA endpoints — Week 11)*. WH UI done against mock data; RA's endpoints still to build and wire
-- [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*. States and automated a11y checks are done; a manual keyboard-only pass on a real browser is still to do
+- [ ] Admin dashboard: users/roles, title approval queue, review/reply moderation *(WH UI + RA endpoints — Week 11)*. WH UI done against mock data; RA's endpoints still to build and wire
+- [ ] Loading, empty and error states; keyboard/a11y pass *(WH)*. States and automated a11y checks are done, focus returns to the right button after edit, reply and the dropdown, and the code-level audit is done. A manual keyboard-only pass on a real browser is still to do (the browser tool needs Chrome remote debugging switched on)
+- [ ] **Phone layout, one site-wide pass (parked by WH, 2026-10-27).** Aim for no sideways scroll at 320 CSS px (WCAG reflow) *(WH)*. PR #6 resizes the header dock (smaller logo, 46px buttons and tighter gaps below `sm`) and the title overview (104px poster, long titles break). Both were sized by hand and have not been seen on a device. Still to do: check those two at 320px in a real browser, then the Home strip and rails (fixed widths) and every other page
 
 ## 9. Performance & SQL vs NoSQL comparison (SJ lead; HS co-owns the Mongo side, Week 12)
 
-- [ ] Define scenarios: fetch reviews for a title, top-N trending, insert a review, nested comment read, filtered browse
+- [ ] Define scenarios: fetch reviews for a title, top-N trending, insert a review, read the replies of a review (was "nested comment read"; replies are flat now, so confirm this still makes the case for MongoDB), filtered browse
 - [ ] Benchmark scripts that run the same workload against PostgreSQL and MongoDB
 - [ ] Load-test the API (e.g. autocannon or k6)
 - [ ] Tables and charts for the final report
@@ -132,7 +139,8 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 ## 11. Final deliverables (ALL, Week 13)
 
 - [ ] Final report: each member writes up their own component
-- [ ] Updated ER diagram + architecture diagram
+- [ ] Updated ER diagram + architecture diagram. `docs/architecture.svg` (in `main`) shows a global rate-limit and auth pipeline the code does not have; `docs/eraser-diagrams.md` holds anyone-can-edit Eraser links, so decide whether to keep it in the repo *(WH)*
+- [ ] User manual (the project spec asks for one with the submission) *(ALL)*
 - [ ] Slides
 - [ ] Video presentation and demo script
 - [x] README with setup steps (docker compose → migrate → seed → run). Update it if the local Postgres port change to `5433` (uncommitted) is kept

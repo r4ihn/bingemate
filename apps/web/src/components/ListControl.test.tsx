@@ -5,7 +5,7 @@ import { ListStatus, Role } from '@bingemate/shared';
 import { ApiError } from '../api/client.js';
 import { listsApi } from '../api/lists.js';
 import { resetDb } from '../mocks/db.js';
-import { renderWithProviders } from '../test/utils.js';
+import { choose, renderWithProviders } from '../test/utils.js';
 import { ListControl } from './ListControl.js';
 
 // mock-1 is on the seeded list (Completed); mock-20 is not
@@ -33,43 +33,46 @@ describe('ListControl', () => {
   it('offers to add a title that is not on the list, and saves the chosen status', async () => {
     const add = vi.spyOn(listsApi, 'add');
     const u = setup('mock-20');
-    const select = await screen.findByRole('combobox', { name: 'Add to list' });
-    expect(select).toHaveValue('');
-    await u.selectOptions(select, ListStatus.PLAN_TO);
+    const control = await screen.findByRole('combobox', { name: 'Add to list' });
+    expect(control).toHaveTextContent('Add to list');
+    await choose(u, control, 'Plan to');
     expect(add).toHaveBeenCalledWith('mock-20', ListStatus.PLAN_TO);
-    expect(await screen.findByRole('combobox', { name: 'List status for Some Title' })).toHaveValue(
-      ListStatus.PLAN_TO,
-    );
+    expect(
+      await screen.findByRole('combobox', { name: 'List status for Some Title' }),
+    ).toHaveTextContent('Plan to');
   });
 
   it('shows the current status of a listed title and changes it', async () => {
     const setStatus = vi.spyOn(listsApi, 'setStatus');
     const u = setup('mock-1');
-    const select = await screen.findByRole('combobox', { name: 'List status for Some Title' });
-    expect(select).toHaveValue(ListStatus.COMPLETED);
-    await u.selectOptions(select, ListStatus.IN_PROGRESS);
+    const control = await screen.findByRole('combobox', { name: 'List status for Some Title' });
+    expect(control).toHaveTextContent('Completed');
+    await choose(u, control, 'In progress');
     expect(setStatus).toHaveBeenCalledWith('l-1', ListStatus.IN_PROGRESS);
-    expect(select).toHaveValue(ListStatus.IN_PROGRESS);
+    expect(control).toHaveTextContent('In progress');
   });
 
   it('removes a listed title from the list', async () => {
     const remove = vi.spyOn(listsApi, 'remove');
     const u = setup('mock-1');
-    await u.selectOptions(
+    await choose(
+      u,
       await screen.findByRole('combobox', { name: 'List status for Some Title' }),
-      'REMOVE',
+      'Remove from list',
     );
     expect(remove).toHaveBeenCalledWith('l-1');
-    expect(await screen.findByRole('combobox', { name: 'Add to list' })).toHaveValue('');
+    expect(await screen.findByRole('combobox', { name: 'Add to list' })).toHaveTextContent(
+      'Add to list',
+    );
   });
 
   it('keeps the old status and shows an error when the change fails', async () => {
     vi.spyOn(listsApi, 'setStatus').mockRejectedValue(new ApiError(500, 'boom'));
     const u = setup('mock-1');
-    const select = await screen.findByRole('combobox', { name: 'List status for Some Title' });
-    await u.selectOptions(select, ListStatus.PLAN_TO);
+    const control = await screen.findByRole('combobox', { name: 'List status for Some Title' });
+    await choose(u, control, 'Plan to');
     expect(await screen.findByRole('alert')).toHaveTextContent(/Could not update your list/);
-    expect(select).toHaveValue(ListStatus.COMPLETED);
+    expect(control).toHaveTextContent('Completed');
   });
 
   it('shows an error when the list cannot be loaded', async () => {

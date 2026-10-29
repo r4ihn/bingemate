@@ -4,7 +4,7 @@ import { db, resetDb, setMockActor } from '../mocks/db.js';
 import { adminApi } from './admin.js';
 import { creatorApi } from './creator.js';
 import { listsApi } from './lists.js';
-import { reviewsApi, commentsApi } from './reviews.js';
+import { reviewsApi, repliesApi } from './reviews.js';
 import { titlesApi } from './titles.js';
 
 beforeEach(() => resetDb());
@@ -115,38 +115,34 @@ describe('reviewsApi', () => {
   });
 });
 
-describe('commentsApi', () => {
-  it('list pins an official reply before an older plain one', async () => {
-    const top = db.comments.find((c) => c.id === 'c4')!; // no replies yet
-    db.comments.push({
-      id: 'c-late-official',
-      reviewId: 'r-mock-1-0',
-      parentId: top.id,
-      author: { id: 'studio', name: 'studio', role: Role.CREATOR },
-      body: 'Late but official',
-      isOfficial: true,
-      createdAt: new Date(Date.UTC(2026, 9, 18)).toISOString(),
-    });
-    db.comments.push({ ...db.comments[0]!, id: 'c-plain', parentId: top.id, isOfficial: false });
-    const ids = (await commentsApi.list('r-mock-1-0'))
-      .filter((c) => c.parentId === top.id)
-      .map((c) => c.id);
-    expect(ids).toEqual(['c-late-official', 'c-plain']);
+describe('repliesApi', () => {
+  it('list returns the replies to a review, oldest first', async () => {
+    const at = (day: number) => new Date(Date.UTC(2026, 9, day)).toISOString();
+    db.replies.push({ ...db.replies[0]!, id: 'rp-newer', createdAt: at(19) });
+    db.replies.push({ ...db.replies[0]!, id: 'rp-older', createdAt: at(18) });
+    const ids = (await repliesApi.list('r-mock-1-0')).map((r) => r.id);
+    expect(ids).toEqual(['rp1', 'rp2', 'rp3', 'rp4', 'rp-older', 'rp-newer']);
   });
 
-  it('reply rejects a parent comment that belongs to another review', async () => {
-    const parent = db.comments.find((c) => c.parentId === null)!;
-    await expect(commentsApi.reply('r-mock-1-1', parent.id, 'wrong thread')).rejects.toMatchObject({
-      status: 404,
-    });
-    expect(db.comments.some((c) => c.body === 'wrong thread')).toBe(false);
+  it('list returns only the replies of that review', async () => {
+    expect(await repliesApi.list('r-mock-1-1')).toEqual([]);
   });
 
-  it('reply rejects a reply to a reply (one level only)', async () => {
-    const reply = db.comments.find((c) => c.parentId !== null)!;
-    await expect(commentsApi.reply(reply.reviewId, reply.id, 'nested')).rejects.toMatchObject({
-      status: 400,
-    });
+  it('create adds a reply by the signed-in user directly under the review', async () => {
+    const reply = await repliesApi.create('r-mock-1-1', 'First!');
+    expect(reply).toMatchObject({ reviewId: 'r-mock-1-1', body: 'First!' });
+    expect((await repliesApi.list('r-mock-1-1')).map((r) => r.id)).toEqual([reply.id]);
+  });
+
+  it('create rejects a review that does not exist', async () => {
+    await expect(repliesApi.create('r-nope', 'hello')).rejects.toMatchObject({ status: 404 });
+    expect(db.replies.some((r) => r.body === 'hello')).toBe(false);
+  });
+
+  it('remove deletes just that reply', async () => {
+    await repliesApi.remove('rp1');
+    expect(db.replies.some((r) => r.id === 'rp1')).toBe(false);
+    expect(db.replies).toHaveLength(3);
   });
 });
 
@@ -199,11 +195,11 @@ describe('titlesApi and adminApi', () => {
     expect(p1.data[0]!.createdAt >= p1.data[1]!.createdAt).toBe(true);
   });
 
-  it('adminApi.removeReview also removes the review comments', async () => {
-    expect(db.comments.some((c) => c.reviewId === 'r-mock-1-0')).toBe(true);
+  it('adminApi.removeReview also removes the review replies', async () => {
+    expect(db.replies.some((r) => r.reviewId === 'r-mock-1-0')).toBe(true);
     await adminApi.removeReview('r-mock-1-0');
     expect(db.reviews.some((r) => r.id === 'r-mock-1-0')).toBe(false);
-    expect(db.comments.some((c) => c.reviewId === 'r-mock-1-0')).toBe(false);
+    expect(db.replies.some((r) => r.reviewId === 'r-mock-1-0')).toBe(false);
   });
 
   it('adminApi.setRole changes a user role', async () => {
@@ -268,11 +264,11 @@ describe('mock writes follow the signed-in user', () => {
     await expect(reviewsApi.create('mock-20', input)).resolves.toBeDefined();
   });
 
-  it('a creator comment carries the CREATOR role', async () => {
+  it('a creator reply carries the CREATOR role', async () => {
     setMockActor(studio);
     const [review] = db.reviews;
-    const comment = await commentsApi.reply((review as { id: string }).id, null, 'Thanks!');
-    expect(comment.author).toMatchObject({ id: 'user-studio', role: Role.CREATOR });
+    const reply = await repliesApi.create((review as { id: string }).id, 'Thanks!');
+    expect(reply.author).toMatchObject({ id: 'user-studio', role: Role.CREATOR });
   });
 
   it("a creator sees their own submissions and the demo titles, not another creator's", async () => {

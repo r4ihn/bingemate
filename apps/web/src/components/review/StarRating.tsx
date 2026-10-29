@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
-import { MAX_RATING, RATING_WORDS } from '../../rating.js';
+import { RATING_MAX, RATING_WORDS } from '../../rating.js';
 
-const STARS = Array.from({ length: MAX_RATING }, (_, i) => i + 1);
+const STARS = Array.from({ length: RATING_MAX }, (_, i) => i + 1);
 const PATH = 'M12 2.5l2.9 6.2 6.8.8-5 4.7 1.3 6.7L12 17.5l-6 3.4 1.3-6.7-5-4.7 6.8-.8z';
 
 function Star({ on, className }: { on: boolean; className: string }) {
@@ -86,7 +86,7 @@ export function StarsDisplay({ value }: { value: number }) {
   return (
     <span
       role="img"
-      aria-label={`${value} out of ${MAX_RATING} stars`}
+      aria-label={`${value} out of ${RATING_MAX} stars`}
       className="inline-flex items-center gap-0.5"
     >
       {STARS.map((n) => (

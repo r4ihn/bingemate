@@ -56,7 +56,7 @@ export function TitleDetail() {
       />
       <section
         id="reviews"
-        className="mx-auto max-w-[1100px] border-t border-line px-6 py-12 sm:px-8"
+        className="mx-auto max-w-[1100px] border-t border-line px-6 py-8 sm:px-8 sm:py-12"
       >
         <h2 className="mb-6 text-2xl font-semibold tracking-tight">Reviews</h2>
         <div className="mb-8">
@@ -69,7 +69,14 @@ export function TitleDetail() {
             }}
           />
         </div>
-        <ReviewList key={reviewsVersion} titleId={title.id} onDeleted={reviewsChanged} />
+        <ReviewList
+          key={reviewsVersion}
+          titleId={title.id}
+          title={title}
+          titleOwnerId={title.createdById ?? null}
+          onDeleted={reviewsChanged}
+          onEdited={reviewsChanged}
+        />
       </section>
     </>
   );

@@ -6,8 +6,8 @@ import { MemoryRouter } from 'react-router-dom';
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { apiFetch } from '../api/client.js';
 import { authApi } from '../api/auth.js';
-import { commentsApi, reviewsApi } from '../api/reviews.js';
-import { CommentThread } from '../components/review/CommentThread.js';
+import { repliesApi, reviewsApi } from '../api/reviews.js';
+import { ReplyThread } from '../components/review/ReplyThread.js';
 import { ReviewForm } from '../components/review/ReviewForm.js';
 import { resetDb } from '../mocks/db.js';
 import { AuthProvider } from './AuthContext.js';
@@ -68,18 +68,18 @@ describe('a 401 while posting (real session-clearing path)', () => {
     expect(screen.getByRole('link', { name: 'Log in' })).toHaveAttribute('href', '/login');
   });
 
-  it('keeps the comment form, the typed text and shows a session message', async () => {
-    vi.spyOn(commentsApi, 'reply').mockImplementation(() =>
-      apiFetch('/comments', { method: 'POST' }),
+  it('keeps the reply form, the typed text and shows a session message', async () => {
+    vi.spyOn(repliesApi, 'create').mockImplementation(() =>
+      apiFetch('/replies', { method: 'POST' }),
     );
-    renderWithRealAuth(<CommentThread reviewId="r-mock-1-0" />);
+    renderWithRealAuth(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />);
     const u = userEvent.setup();
-    const box = await screen.findByLabelText('Add a comment');
-    await u.type(box, 'Almost posted this');
-    await u.click(screen.getByRole('button', { name: 'Post comment' }));
+    await u.click(await screen.findByRole('button', { name: /^Reply to review by / }));
+    await u.type(screen.getByLabelText('Write a reply'), 'Almost posted this');
+    await u.click(screen.getByRole('button', { name: 'Post reply' }));
 
     expect(await screen.findByRole('alert')).toHaveTextContent(/session has expired/i);
-    expect(screen.getByLabelText('Add a comment')).toHaveValue('Almost posted this');
+    expect(screen.getByLabelText('Write a reply')).toHaveValue('Almost posted this');
   });
 });
 
@@ -107,19 +107,22 @@ describe('after the session has expired', () => {
     expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument(); // the old draft is gone too
   });
 
-  it('comments on another review show no comment box', async () => {
-    vi.spyOn(commentsApi, 'reply').mockImplementation(() =>
-      apiFetch('/comments', { method: 'POST' }),
+  it('another review shows no way to reply', async () => {
+    vi.spyOn(repliesApi, 'create').mockImplementation(() =>
+      apiFetch('/replies', { method: 'POST' }),
     );
-    const { show } = renderWithRealAuth(<CommentThread reviewId="r-mock-1-0" />);
+    const { show } = renderWithRealAuth(
+      <ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />,
+    );
     const u = userEvent.setup();
-    await u.type(await screen.findByLabelText('Add a comment'), 'Almost posted this');
-    await u.click(screen.getByRole('button', { name: 'Post comment' }));
+    await u.click(await screen.findByRole('button', { name: /^Reply to review by / }));
+    await u.type(screen.getByLabelText('Write a reply'), 'Almost posted this');
+    await u.click(screen.getByRole('button', { name: 'Post reply' }));
     await screen.findByRole('alert');
 
-    show(<CommentThread reviewId="r-mock-1-1" />);
-    await screen.findByText('Loading comments…');
-    await vi.waitFor(() => expect(screen.queryByText('Loading comments…')).not.toBeInTheDocument());
-    expect(screen.queryByLabelText('Add a comment')).not.toBeInTheDocument();
+    show(<ReplyThread reviewId="r-mock-1-1" reviewAuthor="dev_k" />);
+    await vi.waitFor(() => expect(screen.queryByText('Loading replies…')).not.toBeInTheDocument());
+    expect(screen.queryByLabelText('Write a reply')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Reply to review by / })).not.toBeInTheDocument();
   });
 });

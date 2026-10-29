@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import type { RenderResult } from '@testing-library/react';
 import type userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
@@ -30,4 +30,14 @@ export function renderWithProviders(
 /** Clicks the n-star radio of the review form's star rating. */
 export async function rate(user: ReturnType<typeof userEvent.setup>, n: number): Promise<void> {
   await user.click(screen.getByRole('radio', { name: `${n} ${n === 1 ? 'star' : 'stars'}` }));
+}
+
+/** Opens a Dropdown (the site's custom select) and chooses the option with this name. */
+export async function choose(
+  user: ReturnType<typeof userEvent.setup>,
+  dropdown: HTMLElement,
+  optionName: string,
+): Promise<void> {
+  await user.click(dropdown);
+  await user.click(within(screen.getByRole('listbox')).getByRole('option', { name: optionName }));
 }

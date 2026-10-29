@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { MediaType, Role } from '@bingemate/shared';
-import { commentsApi, reviewsApi } from '../api/reviews.js';
+import { repliesApi, reviewsApi } from '../api/reviews.js';
 import { db, resetDb } from '../mocks/db.js';
 import { renderWithProviders } from '../test/utils.js';
 import { TitleDetail } from './TitleDetail.js';
@@ -20,7 +20,7 @@ function renderTitle(id: string, role?: Role) {
 
 // renderWithProviders signs in as { id: 'test-user' }
 const me = { id: 'test-user', name: 'You', role: Role.CONSUMER };
-const deleteButtons = (kind: 'review' | 'comment') =>
+const deleteButtons = (kind: 'review' | 'reply') =>
   screen.queryAllByRole('button', { name: new RegExp(`^Delete ${kind}`) });
 
 beforeEach(() => resetDb());
@@ -31,14 +31,14 @@ describe('delete controls', () => {
     renderTitle('mock-1');
     await screen.findByText('Great pacing in the second half.');
     expect(deleteButtons('review')).toHaveLength(0);
-    expect(deleteButtons('comment')).toHaveLength(0);
+    expect(deleteButtons('reply')).toHaveLength(0);
   });
 
   it('are hidden from a user who wrote none of the content', async () => {
     renderTitle('mock-1', Role.CONSUMER);
     await screen.findByText('Great pacing in the second half.');
     expect(deleteButtons('review')).toHaveLength(0);
-    expect(deleteButtons('comment')).toHaveLength(0);
+    expect(deleteButtons('reply')).toHaveLength(0);
   });
 
   it('show on a review only to its author', async () => {
@@ -57,27 +57,28 @@ describe('delete controls', () => {
     expect(screen.getByRole('button', { name: 'Delete review by You' })).toBeInTheDocument();
   });
 
-  it('show on a comment only to its author', async () => {
-    db.comments.push({
-      id: 'c-own',
+  it('show on a reply only to its author', async () => {
+    db.replies.push({
+      id: 'rp-own',
       reviewId: 'r-mock-1-0',
-      parentId: null,
       author: me,
-      body: 'My own comment',
-      isOfficial: false,
+      body: 'My own reply',
       createdAt: new Date().toISOString(),
     });
-    renderTitle('mock-1', Role.CONSUMER);
-    await screen.findByText('My own comment');
-    expect(deleteButtons('comment')).toHaveLength(1);
+    const u = renderTitle('mock-1', Role.CONSUMER);
+    await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
+    await screen.findByText('My own reply');
+    expect(deleteButtons('reply')).toHaveLength(1);
     expect(deleteButtons('review')).toHaveLength(0);
   });
 
-  it('show on every review and comment for an admin', async () => {
-    renderTitle('mock-1', Role.ADMIN);
+  it('show on every review and reply for an admin', async () => {
+    const u = renderTitle('mock-1', Role.ADMIN);
     await screen.findByText('Great pacing in the second half.');
     expect(deleteButtons('review')).toHaveLength(5); // page 1
-    expect(deleteButtons('comment')).toHaveLength(4); // c1..c4 on the first review
+    expect(deleteButtons('reply')).toHaveLength(2); // the thread folds to its first two replies
+    await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
+    expect(deleteButtons('reply')).toHaveLength(4); // rp1..rp4 on the first review
   });
 
   it('deleting a review asks first, and Cancel keeps it', async () => {
@@ -92,7 +93,7 @@ describe('delete controls', () => {
     expect(deleteButtons('review')).toHaveLength(5);
   });
 
-  it('confirming delete removes the review and its comments', async () => {
+  it('confirming delete removes the review and its replies', async () => {
     const remove = vi.spyOn(reviewsApi, 'remove');
     const u = renderTitle('mock-1', Role.ADMIN);
     await screen.findByText('Great pacing in the second half.');
@@ -105,23 +106,22 @@ describe('delete controls', () => {
     expect(db.reviews.some((r) => r.id === 'r-mock-1-0')).toBe(false);
   });
 
-  it('confirming delete removes an own comment', async () => {
-    db.comments.push({
-      id: 'c-own',
+  it('confirming delete removes an own reply', async () => {
+    db.replies.push({
+      id: 'rp-own',
       reviewId: 'r-mock-1-0',
-      parentId: null,
       author: me,
-      body: 'My own comment',
-      isOfficial: false,
+      body: 'My own reply',
       createdAt: new Date().toISOString(),
     });
-    const remove = vi.spyOn(commentsApi, 'remove');
+    const remove = vi.spyOn(repliesApi, 'remove');
     const u = renderTitle('mock-1', Role.CONSUMER);
-    await screen.findByText('My own comment');
-    await u.click(deleteButtons('comment')[0] as HTMLElement);
+    await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
+    await screen.findByText('My own reply');
+    await u.click(deleteButtons('reply')[0] as HTMLElement);
     await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Delete' }));
-    await vi.waitFor(() => expect(remove).toHaveBeenCalledWith('c-own'));
-    await vi.waitFor(() => expect(screen.queryByText('My own comment')).not.toBeInTheDocument());
+    await vi.waitFor(() => expect(remove).toHaveBeenCalledWith('rp-own'));
+    await vi.waitFor(() => expect(screen.queryByText('My own reply')).not.toBeInTheDocument());
   });
 });
 
