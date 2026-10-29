@@ -103,3 +103,13 @@ export interface GenreOptionDTO {
   name: string;
   titleCount: number;
 }
+
+/** One row of GET /creator/stats: how a creators own title is doing. */
+export interface CreatorTitleStatsDTO {
+  titleId: string;
+  name: string;
+  status: TitleStatus;
+  reviewCount: number;
+  avgRating: number;
+  listAdds: number;
+}
