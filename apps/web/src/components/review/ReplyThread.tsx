@@ -148,7 +148,7 @@ function ReplyItem({
         />
       ) : (
         <>
-          <p className="max-w-[65ch]">{reply.body}</p>
+          <p className="max-w-[65ch] break-words whitespace-pre-line">{reply.body}</p>
           {(mine || canRemove) && (
             <div className="flex gap-5">
               {mine && (

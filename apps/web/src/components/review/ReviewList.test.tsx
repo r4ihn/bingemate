@@ -168,4 +168,27 @@ describe('review card actions', () => {
     expect(screen.queryByRole('button', { name: /^Edit review/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete review by sam_k' })).toBeInTheDocument();
   });
+  it('folds a very long review behind Read more, and keeps its line breaks when open', async () => {
+    const long = Array.from({ length: 400 }, (_, i) => `sentence${i}`).join(' ');
+    db.reviews.push({ ...review('r-long', 'other', 'maya_r'), body: `First paragraph\n\n${long}` });
+    mount();
+    const u = userEvent.setup();
+    await screen.findByRole('button', { name: 'Read more of this review' });
+    expect(screen.queryByText(/sentence399/)).not.toBeInTheDocument();
+    await u.click(screen.getByRole('button', { name: 'Read more of this review' }));
+    const text = screen.getByText(/sentence399/);
+    expect(text.textContent).toContain('First paragraph\n\n');
+    expect(text).toHaveClass('whitespace-pre-line');
+  });
+
+  it('edits in place without a second panel inside the card', async () => {
+    mount();
+    const u = userEvent.setup();
+    await u.click(await screen.findByRole('button', { name: 'Edit review by sam_k' }));
+    const mine = screen
+      .getByRole('heading', { name: 'Edit your review' })
+      .closest('article') as HTMLElement;
+    // The article is the only filled panel: the form adds no border or background of its own
+    expect(mine.querySelectorAll('.bg-surface, .border-line')).toHaveLength(0);
+  });
 });

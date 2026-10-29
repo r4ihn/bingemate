@@ -13,7 +13,7 @@ import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
 import { Panel } from '../ui/Panel.js';
 import { inputClass } from '../ui/inputClass.js';
-import { MAX_RATING } from '../../rating.js';
+import { RATING_MAX, RATING_MIN } from '../../rating.js';
 import { fieldConfig } from './fieldConfig.js';
 import { StarRating, StarsDisplay } from './StarRating.js';
 
@@ -42,12 +42,15 @@ function OwnTitleNote() {
 function Form({
   title,
   existing,
+  flat = false,
   onSubmitted,
   onCancel,
 }: {
   title: TitleSummary;
   /** Set when editing: the form starts from this review and saves over it. */
   existing?: Review;
+  /** No panel of its own, for a form that already sits inside a card. */
+  flat?: boolean;
   onSubmitted: (r: Review) => void;
   onCancel?: () => void;
 }) {
@@ -74,8 +77,8 @@ function Form({
     if (inFlight.current) return;
 
     const found: Record<string, string> = {};
-    if (rating < 1 || rating > MAX_RATING) {
-      found.rating = `Choose a rating from 1 to ${MAX_RATING} stars`;
+    if (rating < RATING_MIN || rating > RATING_MAX) {
+      found.rating = `Choose a rating from ${RATING_MIN} to ${RATING_MAX} stars`;
     }
     if (!body.trim()) found.body = 'Write something about this title before posting';
     for (const f of config) {
@@ -117,8 +120,8 @@ function Form({
     }
   }
 
-  return (
-    <Panel>
+  const content = (
+    <>
       <h3 ref={heading} tabIndex={-1} className="text-xl font-semibold tracking-tight">
         {existing ? 'Edit your review' : 'Write a review'}
       </h3>
@@ -169,8 +172,9 @@ function Form({
           )}
         </div>
       </form>
-    </Panel>
+    </>
   );
+  return flat ? <div>{content}</div> : <Panel>{content}</Panel>;
 }
 
 function AlreadyReviewed({ review, onEdit }: { review: Review; onEdit: () => void }) {

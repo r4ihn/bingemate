@@ -1,7 +1,7 @@
 import type { Paginated } from '@bingemate/shared';
 import { Role } from '@bingemate/shared';
 import { db, getMockActor, newId, ownerId } from '../mocks/db.js';
-import { MAX_RATING } from '../rating.js';
+import { RATING_MAX, RATING_MIN } from '../rating.js';
 import type { Reply, Review, ReviewInput } from '../types/review.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
@@ -65,8 +65,8 @@ export const reviewsApi = {
     if (!useMock) notWired('review endpoints (HS)');
     await delay();
     assertCanWrite();
-    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) {
-      throw new ApiError(400, `Rating must be a whole number from 1 to ${MAX_RATING}`);
+    if (!Number.isInteger(input.rating) || input.rating < RATING_MIN || input.rating > RATING_MAX) {
+      throw new ApiError(400, `Rating must be a whole number from ${RATING_MIN} to ${RATING_MAX}`);
     }
     if (!db.titles.some((t) => t.id === titleId)) throw new ApiError(404, 'Title not found');
     assertNotOwnTitle(titleId);
@@ -92,8 +92,8 @@ export const reviewsApi = {
     if (!useMock) notWired('review endpoints (HS)');
     await delay();
     assertCanWrite();
-    if (!Number.isInteger(input.rating) || input.rating < 1 || input.rating > MAX_RATING) {
-      throw new ApiError(400, `Rating must be a whole number from 1 to ${MAX_RATING}`);
+    if (!Number.isInteger(input.rating) || input.rating < RATING_MIN || input.rating > RATING_MAX) {
+      throw new ApiError(400, `Rating must be a whole number from ${RATING_MIN} to ${RATING_MAX}`);
     }
     const review = db.reviews.find((r) => r.id === id);
     if (!review) throw new ApiError(404, 'Review not found');

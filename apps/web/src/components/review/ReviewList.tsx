@@ -12,6 +12,7 @@ import { Badge } from '../ui/Badge.js';
 import { dangerActionClass, actionClass } from './actionStyles.js';
 import { ReviewEditForm } from './ReviewForm.js';
 import { ReplyThread } from './ReplyThread.js';
+import { ReviewText } from './ReviewText.js';
 import { StarsDisplay } from './StarRating.js';
 
 function describeFields(fields: ReviewFields | undefined): string {
@@ -112,6 +113,7 @@ function ReviewCard({
           <ReviewEditForm
             title={title}
             existing={review}
+            flat
             onSubmitted={() => {
               setEditing(false);
               onEdited();
@@ -121,7 +123,7 @@ function ReviewCard({
         </div>
       ) : (
         <>
-          <p className="mt-3 max-w-[65ch]">{review.body}</p>
+          <ReviewText text={review.body} className="mt-3" />
           {detail && <p className="mt-2 text-sm text-muted">{detail}</p>}
           {deleteError && (
             <p role="alert" className="mt-2 text-sm text-danger">
