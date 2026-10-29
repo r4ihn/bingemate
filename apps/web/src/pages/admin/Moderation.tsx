@@ -101,7 +101,7 @@ export function Moderation() {
         title="Delete review?"
         body={
           deleting
-            ? `${deleting.author.name}’s review of “${deleting.titleName}” and its comments will be deleted.`
+            ? `${deleting.author.name}’s review of “${deleting.titleName}” and its replies will be deleted.`
             : ''
         }
         confirmLabel="Delete"

@@ -1,6 +1,6 @@
 import { TitleStatus } from '@bingemate/shared';
 import type { MediaType } from '@bingemate/shared';
-import { db } from '../mocks/db.js';
+import { db, ownerId } from '../mocks/db.js';
 import type { TitleDetail } from '../types/title.js';
 import { ApiError } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
@@ -23,7 +23,7 @@ export const titlesApi = {
     await delay();
     const title = db.titles.find((t) => t.id === id);
     if (!title) throw new ApiError(404, 'Title not found');
-    return clone(title);
+    return clone({ ...title, createdById: ownerId(title) });
   },
 
   /** Public search: APPROVED titles only, name contains `q`, optional media type, one page. */

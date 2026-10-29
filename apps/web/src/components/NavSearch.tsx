@@ -118,7 +118,7 @@ export function NavSearch() {
         ref={buttonRef}
         type="button"
         onClick={() => setOpen(true)}
-        className="flex h-[46px] w-[54px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] bg-white/[0.06] text-caption text-white/60 transition-colors hover:bg-white/15"
+        className="flex h-[46px] w-[46px] cursor-pointer sm:w-[54px] flex-col items-center justify-center gap-[3px] rounded-[10px] bg-white/[0.06] text-caption text-white/60 transition-colors hover:bg-white/15"
       >
         <svg viewBox="0 0 24 24" className="h-[15px] w-[15px] fill-white" aria-hidden="true">
           <path d={SEARCH_ICON} />
@@ -131,7 +131,7 @@ export function NavSearch() {
   return (
     <>
       {/* Keeps the dock the same width while the bar covers it on small screens */}
-      <span aria-hidden="true" className="h-[46px] w-[54px] flex-none lg:hidden" />
+      <span aria-hidden="true" className="h-[46px] w-[46px] flex-none sm:w-[54px] lg:hidden" />
       <div
         ref={wrapRef}
         onKeyDown={onKeyDown}

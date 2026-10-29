@@ -5,7 +5,8 @@ import { listsApi } from '../api/lists.js';
 import { useAuth } from '../auth/AuthContext.js';
 import { LIST_STATUSES } from '../labels.js';
 import type { ListItem } from '../types/list.js';
-import { inputClass } from './ui/inputClass.js';
+import { Dropdown } from './ui/Dropdown.js';
+import type { DropdownOption } from './ui/Dropdown.js';
 
 const REMOVE = 'REMOVE';
 
@@ -63,27 +64,22 @@ export function ListControl({ titleId, titleName }: { titleId: string; titleName
     }
   }
 
+  const options: DropdownOption[] = [
+    ...LIST_STATUSES.map((s) => ({ value: s.status, label: s.label })),
+    ...(entry ? [{ value: REMOVE, label: 'Remove from list', tone: 'danger' as const }] : []),
+  ];
+
   return (
-    <div>
-      <select
-        aria-label={entry ? `List status for ${titleName}` : 'Add to list'}
+    <div className="w-fit min-w-48">
+      <Dropdown
+        label={entry ? `List status for ${titleName}` : 'Add to list'}
         value={entry ? entry.status : ''}
+        placeholder="Add to list"
+        options={options}
         disabled={busy || (entry === undefined && !error)}
-        onChange={(e) => void choose(e.target.value)}
-        className={`${inputClass} min-h-11 cursor-pointer rounded-full py-2 font-semibold`}
-      >
-        {!entry && (
-          <option value="" disabled>
-            Add to list
-          </option>
-        )}
-        {LIST_STATUSES.map((s) => (
-          <option key={s.status} value={s.status}>
-            {s.label}
-          </option>
-        ))}
-        {entry && <option value={REMOVE}>Remove from list</option>}
-      </select>
+        onChange={(value) => void choose(value)}
+        className="rounded-full"
+      />
       {error && (
         <p role="alert" className="mt-2 text-sm text-danger">
           {error}

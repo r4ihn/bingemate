@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { titlesRouter } from './modules/titles/titles.routes.js';
 
 /**
  * Mounts all module routers under /api.
@@ -13,6 +14,6 @@ router.get('/', (_req, res) => {
 });
 
 router.use('/auth', authRouter);
-// router.use('/titles', titlesRouter);
+router.use('/titles', titlesRouter);
 // router.use('/reviews', reviewsRouter);
 // ...

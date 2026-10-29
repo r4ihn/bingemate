@@ -13,7 +13,7 @@ const textLink = ({ isActive }: { isActive: boolean }) =>
   }`;
 
 const iconBtn =
-  'flex h-[46px] w-[54px] cursor-pointer flex-col items-center justify-center gap-[3px] rounded-[10px] bg-white/[0.06] text-caption text-white/60 transition-colors hover:bg-white/15';
+  'flex h-[46px] w-[46px] cursor-pointer sm:w-[54px] flex-col items-center justify-center gap-[3px] rounded-[10px] bg-white/[0.06] text-caption text-white/60 transition-colors hover:bg-white/15';
 
 const PERSON = 'M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3.5-4-6-9-6z';
 
@@ -72,10 +72,10 @@ export function MainLayout() {
         Skip to content
       </a>
 
-      <header className="fixed inset-x-4 top-4 z-50 mx-auto flex w-fit max-w-[calc(100vw-2rem)] gap-2 rounded-[14px] border border-line bg-dock p-1.5 backdrop-blur-md">
+      <header className="fixed inset-x-4 top-4 z-50 mx-auto flex w-fit max-w-[calc(100vw-2rem)] gap-1 sm:gap-2 rounded-[14px] border border-line bg-dock p-1.5 backdrop-blur-md">
         <Link
           to="/"
-          className="flex h-[46px] items-center rounded-[10px] bg-accent px-[18px] text-lg font-bold tracking-tight text-accent-ink"
+          className="flex h-[46px] items-center rounded-[10px] bg-accent px-3 text-base font-bold sm:px-[18px] sm:text-lg tracking-tight text-accent-ink"
         >
           BingeMate
         </Link>
