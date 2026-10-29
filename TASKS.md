@@ -46,7 +46,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [ ] 965 imported TV reviews have no date, so the loader gives them the load time: they show as "today" and sort above every real review. Give them one fixed old date in the loader instead *(JW/HS)*
 - [x] ETL scripts: clean nulls/duplicates, normalise genre names across the three datasets, dedupe people, keep a dataset-ID → DB-ID mapping. See `data/etl/README.md` (cleaners, loaders for PostgreSQL and MongoDB, `id-map.json`, verifiers)
 - [x] `prisma/seed.ts`: one admin, one creator, one consumer, plus a small sample of titles (3 approved + 1 pending creator title)
-- [ ] Turn the CRUD into `titles` and `users` API modules with validation. Done: `modules/titles` with `GET /api/titles/:id` (APPROVED only, 404 otherwise; genres, people, `createdById`) and zod query validation. Still to do: the `users` module (every route needs auth, so it waits for RA) and the write endpoints (see the creator item below)
+- [ ] Turn the CRUD into `titles` and `users` API modules with validation. Done: `modules/titles` with `GET /api/titles/:id` (APPROVED only, 404 otherwise; genres, people, `createdById`) and zod query validation. Still to do: the `users` module (every route needs auth, which is in since PR #8) and the write endpoints (see the creator item below)
 - [ ] Creator title endpoints: create (→ `PENDING`), edit/delete own; editing an `APPROVED` title resets it to `PENDING`; store `rejection_reason` on `titles`. The `rejectionReason` column exists; endpoints not started
 
 ## 3. Authentication & RBAC (RA, Week 7–8)
@@ -57,17 +57,17 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - [x] `cookie-parser` + CORS with `credentials: true` restricted to the web origin (`app.ts`, origin from `WEB_ORIGIN`)
 - [x] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
   - [x] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401. Fixed in `authenticate.ts`
-- [ ] Ownership checks: users edit/delete only their own reviews and replies, creators edit/delete only their own titles (`titles.created_by`), admins override all
-- [ ] Reply permission: `CONSUMER` and `CREATOR` can reply to a review; `ADMIN` can delete any reply but never writes one
+- [ ] Ownership checks: users edit/delete only their own reviews and replies, creators edit/delete only their own titles (`titles.created_by`), admins override all. Plan: one helper, `assertOwnerOrAdmin(user, ownerId)` in `utils/ownership.ts` (403 unless owner or admin; check 404 first), called by HS's review/reply services and JW's creator title endpoints once those exist
+- [ ] Reply permission: `CONSUMER` and `CREATOR` can reply to a review; `ADMIN` can delete any reply but never writes one. Plan: `authorize('CONSUMER', 'CREATOR')` on `POST /reviews/:id/replies` and `PATCH /replies/:id`, `assertOwnerOrAdmin` on `DELETE /replies/:id`; pair with HS on the reply routes
 - [x] Rate-limit login/register; keep the JWT secret in env only. `authLimiter` is applied to both routes; `JWT_SECRET` is env-only (Zod-validated)
 - [ ] Tests for every role × protected route. Auth routes and `authorize` (every role) are covered in `tests/`; add a role test for each protected route as the other modules land
 
 ## 4. Admin moderation (RA, Week 11)
 
-- [ ] Delete any review (PostgreSQL header + MongoDB body) or reply, and keep the PostgreSQL aggregates in sync
-- [ ] `GET /admin/users` (paginated), `PATCH /admin/users/:id/role`
-- [ ] Title approval queue: `GET /admin/titles?status=PENDING`, `PATCH /admin/titles/:id/status` (APPROVED / REJECTED, optional rejection reason)
-- [x] Admin pages in the frontend *(with WH)*. UI done against mock data (branch `feat/web-shell`); real endpoints still to be wired
+- [ ] Delete any review (PostgreSQL header + MongoDB body) or reply, and keep the PostgreSQL aggregates in sync. Needs HS's review endpoints and JW's aggregate recompute (§2): admins delete through `DELETE /reviews/:id` via `assertOwnerOrAdmin`, so RA adds only `GET /admin/reviews?page=` (newest first, with the title name) for the moderation list. Delete order: PostgreSQL row and aggregates in one transaction, then the Mongo body and its replies. The UI shows `author.name`: use `users.username`, falling back to the email
+- [ ] `GET /admin/users` (paginated), `PATCH /admin/users/:id/role`. Starting on branch `feat/admin-endpoints`. Shapes from `apps/web/src/api/admin.ts`: `Paginated<{ id, email, role }>` and the updated user back. An admin cannot change their own role (400), unknown id 404. A changed role takes effect at the user's next login (the old JWT keeps its role for up to 2h)
+- [ ] Title approval queue: `GET /admin/titles?status=PENDING`, `PATCH /admin/titles/:id/status` (APPROVED / REJECTED, optional rejection reason). Same branch. Approving clears `rejectionReason`. The web mock returns a plain array: agree with WH to return `Paginated` (§6 "pagination everywhere")
+- [x] Admin pages in the frontend *(with WH)*. UI done against mock data; real endpoints still to be wired (see §8 Admin dashboard)
 
 ## 5. MongoDB: reviews, replies, trending (HS lead; SJ co-owns trending)
 
@@ -101,13 +101,13 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 
 - [ ] Status per entry: `COMPLETED`, `IN_PROGRESS`, `PLAN_TO`, filterable by media type *(JW)*
 - [ ] `GET/POST/PATCH/DELETE /me/lists` *(JW)*
-- [ ] Wrap list updates in a transaction (the report promises ACID for list updates) *(JW, RA support — overlaps auth/ownership checks)*
+- [ ] Wrap list updates in a transaction (the report promises ACID for list updates) *(JW, RA support — overlaps auth/ownership checks)*. Plan: every `/me/lists` route behind `authenticate`; look entries up with `{ id, userId: req.user.id }` inside `prisma.$transaction` so another user's entry is a 404 (not 403); Prisma `P2002` on the unique `(user_id, title_id)` becomes 409
 - [x] My Lists UI page *(WH — see §8)*. UI done against mock data; waiting on JW's `/me/lists`
 
 ## 8. Frontend (WH lead; SJ co-owns the data-heavy pages — rebalanced from solo)
 
 - [x] Browse and search page connected to the backend
-- [x] Router, layout, typed API client, `AuthContext`, protected routes *(WH)*. Done; `AuthContext` calls the real `/auth/*` once RA ships them
+- [x] Router, layout, typed API client, `AuthContext`, protected routes *(WH)*. Done; the real `/auth/*` endpoints shipped in PR #8 (register, login and me return `{ id, email, role }`, logout returns 204), so `AuthContext` can switch off the mock
 - [x] Login and register pages *(WH)*. Done; the password rule (8+ characters, a letter and a digit) is client-side only; RA confirmed the API enforces the same rule
 - [ ] Home page with trending cards *(SJ — consumes SJ's own trending queries from §6)*. WH built the layout (hero, poster strip, Movies/TV/Books rails) on the titles API; swap in SJ's trending data
 - [ ] Browse page filters (type, genre, rating) and pagination *(SJ — consumes SJ's own search/filter API from §6)*. WH built the shell: `?q`, `?type`, `?page` in the URL, type pills and pagination, plus the nav search with quick matches. Genre and rating filters are still SJ's, and the real `GET /titles?q=&type=&page=` needs wiring
