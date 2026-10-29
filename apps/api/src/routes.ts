@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { authRouter } from './modules/auth/auth.routes.js';
+import { genresRouter } from './modules/genres/genres.routes.js';
 import { listsRouter } from './modules/lists/lists.routes.js';
 import { repliesRouter, reviewRepliesRouter } from './modules/replies/replies.routes.js';
 import { posterRouter } from './modules/posters/posters.routes.js';
@@ -25,4 +26,5 @@ router.use('/reviews/:reviewId/replies', reviewRepliesRouter);
 router.use('/reviews', reviewsRouter);
 router.use('/replies', repliesRouter);
 router.use('/me/lists', listsRouter);
+router.use('/genres', genresRouter);
 // ...

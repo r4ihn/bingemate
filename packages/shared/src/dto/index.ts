@@ -96,3 +96,10 @@ export interface ReplyDTO {
 export interface ListItemDTO extends ListEntryDTO {
   title: TitleSummary;
 }
+
+/** One genre in the browse filter, with how many approved titles carry it. */
+export interface GenreOptionDTO {
+  id: string;
+  name: string;
+  titleCount: number;
+}
