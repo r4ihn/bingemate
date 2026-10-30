@@ -86,28 +86,28 @@ export async function main(): Promise<void> {
     // Undated reviews carry the same made-up 2022-2025 date in both stores, never the load time.
     const ids = loadIdMap();
     const undated = readProcessed('reviews.csv').filter((r) => !r['created_at']);
-    const expected = new Map(
+    const undatedDay = new Map(
       undated.map((r) => [
         lookup(ids.reviews, r['review_id'] ?? '', 'review'),
         undatedReviewDate(r['review_id'] ?? '').getTime(),
       ]),
     );
     const pgDates = await prisma.review.findMany({
-      where: { id: { in: [...expected.keys()] } },
+      where: { id: { in: [...undatedDay.keys()] } },
       select: { id: true, createdAt: true },
     });
-    const mongoDates = (await ReviewBody.find({ _id: { $in: [...expected.keys()] } })
+    const mongoDates = (await ReviewBody.find({ _id: { $in: [...undatedDay.keys()] } })
       .select('createdAt')
       .lean()) as unknown as { _id: string; createdAt: Date }[];
     check(
       `${undated.length} undated reviews have their made-up date in PostgreSQL`,
       pgDates.length === undated.length &&
-        pgDates.every((d) => d.createdAt.getTime() === expected.get(d.id)),
+        pgDates.every((d) => d.createdAt.getTime() === undatedDay.get(d.id)),
     );
     check(
       `${undated.length} undated reviews have the same date in MongoDB`,
       mongoDates.length === undated.length &&
-        mongoDates.every((d) => d.createdAt.getTime() === expected.get(d._id)),
+        mongoDates.every((d) => d.createdAt.getTime() === undatedDay.get(d._id)),
     );
 
     // Stored aggregates must equal what the view recomputes.
