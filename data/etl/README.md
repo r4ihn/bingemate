@@ -37,18 +37,18 @@ idempotent and reads only `../raw/` (except `clean-lists`, which reads the revie
 
 ## What each script does
 
-| Script             | Reads                                             | Writes (`../processed/`)                                            |
-| ------------------ | ------------------------------------------------- | ------------------------------------------------------------------- |
-| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`                 | `movies.csv`                                                        |
-| `clean-posters.ts` | `MovieGenre_cleaned.csv` (optional), `movies.csv` | `title_posters.csv` (`title_id`, `poster_url`)                      |
-| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`                    | `tv_shows.csv`                                                      |
-| `clean-books.ts`   | `titles.csv`, `book_details.csv`                  | `books.csv`                                                         |
-| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`                  | `genres.csv`, `title_genres.csv`                                    |
-| `clean-people.ts`  | `people.csv`, `title_people.csv`                  | `people.csv`, `title_people.csv`                                    |
-| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only)               | `users.csv`                                                         |
-| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json`               | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
-| `clean-lists.ts`   | `user_lists.csv`                                  | `user_lists.csv`                                                    |
-| `verify.ts`        | everything in `../processed/`                     | nothing; exits non-zero on a failed check                           |
+| Script             | Reads                                                                | Writes (`../processed/`)                                            |
+| ------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`                                    | `movies.csv`                                                        |
+| `clean-posters.ts` | poster sources (optional), `movies.csv`, `tv_shows.csv`, `books.csv` | `title_posters.csv` (`title_id`, `poster_url`)                      |
+| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`                                       | `tv_shows.csv`                                                      |
+| `clean-books.ts`   | `titles.csv`, `book_details.csv`                                     | `books.csv`                                                         |
+| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`                                     | `genres.csv`, `title_genres.csv`                                    |
+| `clean-people.ts`  | `people.csv`, `title_people.csv`                                     | `people.csv`, `title_people.csv`                                    |
+| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only)                                  | `users.csv`                                                         |
+| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json`                                  | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
+| `clean-lists.ts`   | `user_lists.csv`                                                     | `user_lists.csv`                                                    |
+| `verify.ts`        | everything in `../processed/`                                        | nothing; exits non-zero on a failed check                           |
 
 Dataset ids (`title_id`, `person_id`, ...) are kept as they are. Mapping them to database ids is the
 loader's job.
@@ -174,13 +174,23 @@ Every run writes to `../processed/logs/`:
 
 ## Posters
 
-`clean-posters.ts` matches the Kaggle MovieGenre posters to our movies on normalised name + release
-year (441 of 500). The URLs are hotlinked (`images-na.ssl-images-amazon.com`), only https is kept, and
-`load-postgres.ts` writes them to `Title.posterUrl`. A movie with no poster loads as `REJECTED`, which
-hides it, and is listed in `processed/logs/clean-posters.rejects.csv`. The source files are optional:
-with none in `data/raw/`, the step warns, writes an empty `title_posters.csv`, nothing is hidden, and
-every title keeps the gradient.
-TV shows and books have no poster source.
+`clean-posters.ts` writes `title_posters.csv` (`title_id`, `poster_url`), and `load-postgres.ts` puts
+it in `Title.posterUrl`. The links are hotlinked, and only https is kept.
+
+- Movies: `MovieGenre_cleaned.csv` and `movielens_movies.csv`, matched on normalised name + release year.
+- TV shows: `tv_series_data_cleaned.csv` (name + start year), then the saved lookups.
+- Books: `books_data_cleaned.csv` (name + publication year), then the saved lookups.
+
+`fetch-posters.ts` asks TVmaze and Open Library about the TV shows and books the files miss, and
+saves the answers to `data/raw/lookup_posters.csv`. It needs the network, so it is not part of
+`clean-all`. Run `clean-all`, then `fetch-posters`, then `clean-all` again. It can be stopped and
+resumed. TVmaze matches need the same year; Open Library matches are on title only, so some covers
+can be another edition.
+
+A movie with no poster loads as `REJECTED`, which hides it, and is listed in
+`processed/logs/clean-posters.rejects.csv`. TV shows and books are never hidden. Every source is
+optional: with none in `data/raw/`, the step warns, writes an empty `title_posters.csv`, nothing is
+hidden, and every title keeps the gradient.
 
 ## Media details
 

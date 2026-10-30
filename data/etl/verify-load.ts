@@ -8,6 +8,7 @@ import { undatedReviewDate } from './lib/dates.js';
 import { loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
+import { hasMoviePoster } from './lib/posters.js';
 
 /** Thrown inside the probe transaction to force a rollback when the UPDATE was (wrongly) accepted. */
 class RollbackProbe extends Error {}
@@ -116,8 +117,12 @@ export async function main(): Promise<void> {
         (await prisma.movieDetails.count({ where: { title: { status: 'REJECTED' } } })) > 0,
     );
     check(
-      'no movie is hidden when there are no posters',
-      readProcessed('title_posters.csv').length > 0 || hiddenMovies === 0,
+      'no movie is hidden when there are no movie posters',
+      hiddenMovies === 0 ||
+        hasMoviePoster(
+          readProcessed('movies.csv'),
+          new Map(readProcessed('title_posters.csv').map((p) => [p['title_id'] ?? '', ''])),
+        ),
     );
     const aBook = await prisma.title.findFirst({
       where: { mediaType: 'BOOK' },

@@ -8,7 +8,7 @@ import { bookDetailsRow, movieDetailsRow, tvDetailsRow } from './lib/details.js'
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
-import { titleVisibility } from './lib/posters.js';
+import { hasMoviePoster, titleVisibility } from './lib/posters.js';
 
 const DEV_PASSWORD = 'Password123!'; // same as prisma/seed.ts
 const BATCH = 2000;
@@ -87,8 +87,10 @@ export async function main(): Promise<void> {
             p['poster_url'] ?? '',
           ]),
         );
-        if (posters.size === 0) log.warn('no posters loaded: every movie stays visible');
-        const titles = readProcessedTitles().map((t) => {
+        const rawTitles = readProcessedTitles();
+        const moviesHavePosters = hasMoviePoster(rawTitles, posters);
+        if (!moviesHavePosters) log.warn('no movie posters loaded: every movie stays visible');
+        const titles = rawTitles.map((t) => {
           const id = newId();
           ids.titles[t['title_id'] ?? ''] = id;
           const posterUrl = posters.get(t['title_id'] ?? '') || null;
@@ -96,7 +98,7 @@ export async function main(): Promise<void> {
             id,
             name: t['name'] ?? '',
             mediaType: (t['media_type'] ?? '') as MediaType,
-            ...titleVisibility(t['media_type'] ?? '', posterUrl, posters.size > 0),
+            ...titleVisibility(t['media_type'] ?? '', posterUrl, moviesHavePosters),
             releaseYear: toInt(t['release_year']),
             description: t['description'] || null,
             posterUrl,

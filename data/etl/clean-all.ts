@@ -11,8 +11,8 @@ import { main as users } from './clean-users.js';
 import { LOG_DIR } from './lib/io.js';
 import { main as verify } from './verify.js';
 
-// Order matters: clean-lists reads the reviews that clean-reviews kept; clean-posters reads movies.csv.
+// Order matters: clean-lists reads the reviews that clean-reviews kept; clean-posters reads the titles.
 // summary.json and the reject files are rebuilt each run; etl.log keeps the full history.
 rmSync(`${LOG_DIR}summary.json`, { force: true });
-for (const step of [movies, posters, tvshows, books, genres, people, users, reviews, lists]) step();
+for (const step of [movies, tvshows, books, posters, genres, people, users, reviews, lists]) step();
 verify();

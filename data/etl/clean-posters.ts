@@ -1,22 +1,18 @@
 import { existsSync } from 'node:fs';
 import { toNumber } from './lib/clean.js';
+import type { Row } from './lib/csv.js';
 import { RAW_DIR, readProcessed, readRaw, runIfMain, writeProcessed } from './lib/io.js';
 import { StepLog } from './lib/log.js';
+import { googleCoverUrl, imdbPosterUrl, normalise, tvSearchName } from './lib/posters.js';
 
 const SOURCE = 'MovieGenre_cleaned.csv';
 /** MovieLens 1M movies.csv: TMDB poster links, which last longer than the Amazon ones in SOURCE. */
 const TMDB_SOURCE = 'movielens_movies.csv';
+const TV_SOURCE = 'tv_series_data_cleaned.csv';
+const BOOK_SOURCE = 'books_data_cleaned.csv';
+/** What fetch-posters.ts found online for the titles the files above miss. */
+export const LOOKUP_SOURCE = 'lookup_posters.csv';
 export const POSTER_COLUMNS = ['title_id', 'poster_url'] as const;
-
-/** Comparable form of a title: no accents, no leading article, letters and digits only. */
-function normalise(name: string): string {
-  const folded = name
-    .normalize('NFKD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/^(the|a|an) /, '');
-  return folded.replace(/[^a-z0-9]/g, '');
-}
 
 /** "Toy Story (1995)" -> name and year. Rows without a trailing (YYYY) cannot be matched. */
 function splitTitle(title: string): { name: string; year: number } | null {
@@ -41,18 +37,34 @@ function httpsUrl(value: string | undefined): string | null {
   return /^https:\/\/[^\s"]+$/.test(s) ? s : null;
 }
 
+/** name + year -> poster for one source file, or empty when the file is not there. First row wins. */
+function postersByKey(
+  file: string,
+  toEntry: (r: Row) => { name: string; year: string; url: string | null },
+): Map<string, string> {
+  const found = new Map<string, string>();
+  if (!existsSync(RAW_DIR + file)) return found;
+  for (const r of readRaw(file)) {
+    const { name, year, url } = toEntry(r);
+    const key = `${normalise(name)}|${year}`;
+    if (url !== null && !found.has(key)) found.set(key, url);
+  }
+  return found;
+}
+
 /**
- * Matches the Kaggle MovieGenre posters to our movies on normalised name + release year and writes
- * title_id -> poster_url. The source is optional: raw files are not committed, so without it the
- * step writes an empty file and the movies keep their placeholder gradient.
+ * Matches the poster sources to our titles on normalised name + release year, then falls back to
+ * the saved online lookups, and writes title_id -> poster_url. Every source is optional: raw files
+ * are not committed, so without them the step writes an empty file and titles keep the gradient.
  */
 export function main(): void {
   const log = new StepLog('clean-posters');
   const movies = readProcessed('movies.csv');
   log.count('movies', movies.length);
 
-  if (!existsSync(RAW_DIR + SOURCE) && !existsSync(RAW_DIR + TMDB_SOURCE)) {
-    log.warn(`${SOURCE} and ${TMDB_SOURCE} not found in data/raw: no posters added`);
+  const sources = [SOURCE, TMDB_SOURCE, TV_SOURCE, BOOK_SOURCE, LOOKUP_SOURCE];
+  if (!sources.some((file) => existsSync(RAW_DIR + file))) {
+    log.warn(`no poster source in data/raw (${sources.join(', ')}): no posters added`);
     writeProcessed('title_posters.csv', POSTER_COLUMNS, []);
     log.finish();
     return;
@@ -113,6 +125,53 @@ export function main(): void {
 
   log.count('movies with a poster', out.length);
   log.count('movies without a poster', movies.length - out.length);
+
+  const lookups = new Map(
+    (existsSync(RAW_DIR + LOOKUP_SOURCE) ? readRaw(LOOKUP_SOURCE) : [])
+      .filter((r) => (r['poster_url'] ?? '') !== '')
+      .map((r) => [r['title_id'] ?? '', r['poster_url'] ?? '']),
+  );
+  const addRest = (
+    label: string,
+    titles: Row[],
+    files: Map<string, string>,
+    toKeyName: (name: string) => string,
+  ): void => {
+    let fromFile = 0;
+    let fromLookup = 0;
+    for (const t of titles) {
+      const id = t['title_id'] ?? '';
+      const file = files.get(`${normalise(toKeyName(t['name'] ?? ''))}|${t['release_year'] ?? ''}`);
+      const url = file ?? lookups.get(id);
+      if (file !== undefined) fromFile++;
+      else if (url !== undefined) fromLookup++;
+      if (url !== undefined) out.push({ title_id: id, poster_url: url });
+    }
+    log.count(`${label} with a poster from a file`, fromFile);
+    log.count(`${label} with a poster from a lookup`, fromLookup);
+    log.count(`${label} without a poster`, titles.length - fromFile - fromLookup);
+  };
+  addRest(
+    'TV shows',
+    readProcessed('tv_shows.csv'),
+    postersByKey(TV_SOURCE, (r) => ({
+      name: r['Series_Title'] ?? '',
+      year: /\d{4}/.exec(r['Runtime_of_Series'] ?? '')?.[0] ?? '',
+      url: httpsUrl(imdbPosterUrl(r['Poster_Link'] ?? '')),
+    })),
+    tvSearchName,
+  );
+  addRest(
+    'books',
+    readProcessed('books.csv'),
+    postersByKey(BOOK_SOURCE, (r) => ({
+      name: r['Title'] ?? '',
+      year: /\d{4}/.exec(r['publishedDate'] ?? '')?.[0] ?? '',
+      url: httpsUrl(googleCoverUrl(r['image'] ?? '')),
+    })),
+    (name) => name,
+  );
+
   writeProcessed('title_posters.csv', POSTER_COLUMNS, out);
   log.finish();
 }

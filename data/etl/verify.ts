@@ -27,7 +27,6 @@ export function main(): void {
   const titles = [...movies, ...tv, ...books];
   const titleIds = new Set(titles.map((t) => t['title_id']));
   const posters = readProcessed('title_posters.csv');
-  const movieIds = new Set(movies.map((m) => m['title_id']));
   const genres = readProcessed('genres.csv');
   const titleGenres = readProcessed('title_genres.csv');
   const people = readProcessed('people.csv');
@@ -67,12 +66,12 @@ export function main(): void {
     }),
   );
 
-  // Posters (hotlinked, so they must be https URLs on movies that exist)
+  // Posters (hotlinked, so they must be https URLs on titles that exist)
   check(
-    'every poster belongs to a movie, once, with an https URL',
+    'every poster belongs to a title, once, with an https URL',
     unique(posters, (p) => p['title_id'] ?? '') &&
       posters.every(
-        (p) => movieIds.has(p['title_id']) && /^https:\/\/[^\s"]+$/.test(p['poster_url'] ?? ''),
+        (p) => titleIds.has(p['title_id']) && /^https:\/\/[^\s"]+$/.test(p['poster_url'] ?? ''),
       ),
   );
 
