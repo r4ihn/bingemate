@@ -3,8 +3,8 @@ import type { Row } from './csv.js';
 
 /** A title with no detail values gets no row, so `details` stays null instead of an empty object. */
 function unlessBlank<T extends { titleId: string }>(row: T): T | null {
-  const { titleId: _titleId, ...values } = row;
-  return Object.values(values).some((v) => v !== null) ? row : null;
+  const hasValue = Object.entries(row).some(([key, value]) => key !== 'titleId' && value !== null);
+  return hasValue ? row : null;
 }
 
 export function movieDetailsRow(t: Row, titleId: string) {

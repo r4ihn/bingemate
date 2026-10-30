@@ -15,6 +15,7 @@ const summary: TitleSummary = {
 const detail: TitleDetailDTO = {
   ...summary,
   description: 'Spice.',
+  details: null,
   releaseYear: 2021,
   genres: ['Sci-Fi'],
   people: [],

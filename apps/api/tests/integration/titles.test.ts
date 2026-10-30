@@ -170,6 +170,63 @@ describe('GET /api/titles/:id', () => {
     expect(firstArgs(findFirst).where).toEqual({ id: 't1', status: 'APPROVED' });
   });
 
+  const detailRow = (over: Record<string, unknown>) =>
+    row({ description: null, releaseYear: null, genres: [], people: [], ...over });
+  const getDetails = async (over: Record<string, unknown>) => {
+    findFirst.mockResolvedValue(detailRow(over));
+    const res = await request(app).get('/api/titles/t1');
+    expect(res.status).toBe(200);
+    return res.body.details;
+  };
+
+  it('returns movie details', async () => {
+    const movieDetails = { runtimeMin: 109, tagline: null, rated: 'R', letterboxdRating: 4.32 };
+    expect(await getDetails({ movieDetails })).toEqual({ mediaType: 'MOVIE', ...movieDetails });
+  });
+
+  it('returns TV details and keeps a score of 0', async () => {
+    const tvDetails = {
+      numSeasons: 5,
+      duration: 23,
+      contentRating: 'TV-MA',
+      metascore: 93,
+      userscore: 0,
+    };
+    expect(await getDetails({ mediaType: 'TV_SHOW', tvDetails })).toEqual({
+      mediaType: 'TV_SHOW',
+      ...tvDetails,
+    });
+  });
+
+  it('returns book details and keeps a ratings count of 0', async () => {
+    const bookDetails = { publisher: 'NYU Press', ratingsCount: 0 };
+    expect(await getDetails({ mediaType: 'BOOK', bookDetails })).toEqual({
+      mediaType: 'BOOK',
+      ...bookDetails,
+    });
+  });
+
+  it('returns null details when the title has no row', async () => {
+    expect(await getDetails({ movieDetails: null })).toBeNull();
+  });
+
+  it('ignores a details row of another type', async () => {
+    const movieDetails = { runtimeMin: 109, tagline: null, rated: 'R', letterboxdRating: 4.32 };
+    expect(await getDetails({ mediaType: 'BOOK', movieDetails })).toBeNull();
+  });
+
+  it('asks for all three details relations', async () => {
+    await getDetails({});
+    expect(Object.keys(firstArgs(findFirst).select)).toEqual(
+      expect.arrayContaining(['movieDetails', 'tvDetails', 'bookDetails']),
+    );
+  });
+
+  it('does not join details for the list', async () => {
+    await request(app).get('/api/titles');
+    expect(Object.keys(firstArgs(findMany).select)).not.toContain('movieDetails');
+  });
+
   it('answers 404 for a missing, pending or rejected title alike', async () => {
     findFirst.mockResolvedValue(null);
 

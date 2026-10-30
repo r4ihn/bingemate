@@ -49,12 +49,32 @@ export interface TitlePersonDTO {
   role: PersonRole;
 }
 
+/** Facts only one media type has. `mediaType` says which shape this is. */
+export type TitleDetailsDTO =
+  | {
+      mediaType: 'MOVIE';
+      runtimeMin: number | null;
+      tagline: string | null;
+      rated: string | null;
+      letterboxdRating: number | null;
+    }
+  | {
+      mediaType: 'TV_SHOW';
+      numSeasons: number | null;
+      duration: number | null;
+      contentRating: string | null;
+      metascore: number | null;
+      userscore: number | null;
+    }
+  | { mediaType: 'BOOK'; publisher: string | null; ratingsCount: number | null };
+
 /** One title with the fields only the detail page needs. */
 export interface TitleDetailDTO extends TitleSummary {
   description: string | null;
   releaseYear: number | null;
   genres: string[];
   people: TitlePersonDTO[];
+  details: TitleDetailsDTO | null;
 }
 
 export interface AuthorDTO {
