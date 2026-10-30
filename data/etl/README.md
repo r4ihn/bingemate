@@ -34,17 +34,18 @@ idempotent and reads only `../raw/` (except `clean-lists`, which reads the revie
 
 ## What each script does
 
-| Script             | Reads                               | Writes (`../processed/`)                                            |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------- |
-| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`   | `movies.csv`                                                        |
-| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`      | `tv_shows.csv`                                                      |
-| `clean-books.ts`   | `titles.csv`, `book_details.csv`    | `books.csv`                                                         |
-| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`    | `genres.csv`, `title_genres.csv`                                    |
-| `clean-people.ts`  | `people.csv`, `title_people.csv`    | `people.csv`, `title_people.csv`                                    |
-| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only) | `users.csv`                                                         |
-| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json` | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
-| `clean-lists.ts`   | `user_lists.csv`                    | `user_lists.csv`                                                    |
-| `verify.ts`        | everything in `../processed/`       | nothing; exits non-zero on a failed check                           |
+| Script             | Reads                                             | Writes (`../processed/`)                                            |
+| ------------------ | ------------------------------------------------- | ------------------------------------------------------------------- |
+| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`                 | `movies.csv`                                                        |
+| `clean-posters.ts` | `MovieGenre_cleaned.csv` (optional), `movies.csv` | `title_posters.csv` (`title_id`, `poster_url`)                      |
+| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`                    | `tv_shows.csv`                                                      |
+| `clean-books.ts`   | `titles.csv`, `book_details.csv`                  | `books.csv`                                                         |
+| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`                  | `genres.csv`, `title_genres.csv`                                    |
+| `clean-people.ts`  | `people.csv`, `title_people.csv`                  | `people.csv`, `title_people.csv`                                    |
+| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only)               | `users.csv`                                                         |
+| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json`               | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
+| `clean-lists.ts`   | `user_lists.csv`                                  | `user_lists.csv`                                                    |
+| `verify.ts`        | everything in `../processed/`                     | nothing; exits non-zero on a failed check                           |
 
 Dataset ids (`title_id`, `person_id`, ...) are kept as they are. Mapping them to database ids is the
 loader's job.
@@ -167,3 +168,12 @@ Every run writes to `../processed/logs/`:
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star
    were my calls; confirm with the team.
 7. Aggregates are computed by the loader through the view; keep that in sync when reviews are written through the API. (HS)
+
+## Posters
+
+`clean-posters.ts` matches the Kaggle MovieGenre posters to our movies on normalised name + release
+year (441 of 500). The URLs are hotlinked (`images-na.ssl-images-amazon.com`), only https is kept, and
+`load-postgres.ts` writes them to `Title.posterUrl`. The source file is optional: without
+`data/raw/MovieGenre_cleaned.csv` the step warns, writes an empty `title_posters.csv`, and every title
+keeps the gradient. Unmatched movies are listed in `processed/logs/clean-posters.rejects.csv`.
+TV shows and books have no poster source.
