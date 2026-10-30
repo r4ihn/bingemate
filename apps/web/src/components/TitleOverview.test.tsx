@@ -29,6 +29,14 @@ describe('TitleOverview facts', () => {
     expect(screen.getByText('NYU Press')).toBeInTheDocument();
   });
 
+  it('shows the runtime once, in the facts list', () => {
+    renderWithProviders(
+      <TitleOverview title={{ ...title, runtime: '45 min per episode' }} breadcrumb={['Browse']} />,
+    );
+    expect(screen.getByText('Runtime')).toBeInTheDocument();
+    expect(screen.getAllByText(/45 min per episode/)).toHaveLength(1);
+  });
+
   it('shows no label for a fact the title does not have', () => {
     renderWithProviders(<TitleOverview title={title} breadcrumb={['Browse']} />);
     expect(screen.queryByText('Seasons')).not.toBeInTheDocument();

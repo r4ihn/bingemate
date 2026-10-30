@@ -158,6 +158,9 @@ model Review {
   @@index([titleId])
 }
 
+// One optional row per title, of the title's own type only: the composite foreign key plus the CHECK
+// in the migration refuse anything else. So a title's mediaType cannot change while it has a details
+// row; delete the row in the same transaction first.
 model MovieDetails {
   titleId          String    @id
   mediaType        MediaType @default(MOVIE)

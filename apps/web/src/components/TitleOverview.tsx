@@ -35,7 +35,7 @@ export function TitleOverview({ title, breadcrumb }: { title: TitleDetail; bread
             {title.name}
           </h1>
           <p className="mt-3 text-sm text-muted md:mt-4">
-            {[MEDIA_LABEL[title.mediaType], title.year, title.runtime].filter(Boolean).join(', ')}
+            {[MEDIA_LABEL[title.mediaType], title.year].filter(Boolean).join(', ')}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-4 md:mt-6">
             <Pill filled>
