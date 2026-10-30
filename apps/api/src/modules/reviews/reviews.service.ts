@@ -208,15 +208,27 @@ export async function updateReview(
     throw new HttpError(403, 'You cannot review a title you created');
   }
 
-  const setRating = async (rating: number) =>
-    prisma.$transaction(async (tx) => {
+  const newRating = input.rating;
+  const ratingChanged = newRating !== undefined && newRating !== review.rating;
+  if (ratingChanged) {
+    await prisma.$transaction(async (tx) => {
       await lockTitle(tx, review.titleId);
-      await tx.review.update({ where: { id }, data: { rating } });
+      await tx.review.update({ where: { id }, data: { rating: newRating } });
       await recomputeTitleRating(tx, review.titleId);
     });
+  }
 
-  const ratingChanged = input.rating !== undefined && input.rating !== review.rating;
-  if (ratingChanged) await setRating(input.rating as number);
+  // Puts the old rating back only while the row still holds ours: an edit from another tab
+  // that saved in between must not be overwritten.
+  const undoRating = async () =>
+    prisma.$transaction(async (tx) => {
+      await lockTitle(tx, review.titleId);
+      const { count } = await tx.review.updateMany({
+        where: { id, rating: newRating },
+        data: { rating: review.rating },
+      });
+      if (count > 0) await recomputeTitleRating(tx, review.titleId);
+    });
 
   if (input.body !== undefined || input.fields !== undefined) {
     const type = review.title.mediaType;
@@ -242,7 +254,7 @@ export async function updateReview(
     } catch (err) {
       console.error('Review body update failed, restoring the rating:', err);
       if (ratingChanged) {
-        await setRating(review.rating).catch((undoErr: unknown) =>
+        await undoRating().catch((undoErr: unknown) =>
           console.error('Could not restore the rating:', undoErr),
         );
       }
@@ -270,10 +282,15 @@ export async function deleteReview(user: AuthUser, id: string): Promise<void> {
   });
 
   // Leftovers in MongoDB are unreachable (nothing lists them), so a failure here is logged, not raised.
-  try {
-    await ReviewBody.deleteOne({ _id: id });
-    await Reply.deleteMany({ reviewId: id });
-  } catch (err) {
-    console.error(`Review ${id} was deleted but its body or replies were not:`, err);
+  // Both deletes run even if one fails, so a failed body delete still clears the replies.
+  const [body, replies] = await Promise.allSettled([
+    ReviewBody.deleteOne({ _id: id }),
+    Reply.deleteMany({ reviewId: id }),
+  ]);
+  if (body.status === 'rejected') {
+    console.error(`Review ${id} was deleted but its body was not:`, body.reason);
+  }
+  if (replies.status === 'rejected') {
+    console.error(`Review ${id} was deleted but its replies were not:`, replies.reason);
   }
 }

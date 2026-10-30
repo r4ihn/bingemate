@@ -9,7 +9,7 @@ process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 // No databases in CI: both stores are replaced and the tests check what the module asks of them.
 const calls: string[] = [];
 const prisma = {
-  title: { findFirst: vi.fn(), update: vi.fn() },
+  title: { findFirst: vi.fn() },
   review: {
     findUnique: vi.fn(),
     findFirst: vi.fn(),
@@ -17,10 +17,11 @@ const prisma = {
     count: vi.fn(),
     create: vi.fn(),
     update: vi.fn(),
+    updateMany: vi.fn(),
     delete: vi.fn(),
-    aggregate: vi.fn(),
   },
   $queryRaw: vi.fn(),
+  $executeRaw: vi.fn(),
   $transaction: vi.fn(),
 };
 const mongo = {
@@ -70,6 +71,7 @@ beforeEach(() => {
     for (const fn of Object.values(group)) fn.mockReset();
   }
   prisma.$queryRaw.mockReset().mockImplementation(async () => calls.push('lock'));
+  prisma.$executeRaw.mockReset().mockImplementation(async () => calls.push('recompute'));
   // Interactive transactions run against the same stub; array form just awaits each query.
   prisma.$transaction
     .mockReset()
@@ -79,8 +81,6 @@ beforeEach(() => {
   Object.values(mongo).forEach((fn) => fn.mockReset());
 
   prisma.title.findFirst.mockResolvedValue({ mediaType: 'MOVIE', createdById: null });
-  prisma.title.update.mockImplementation(async () => calls.push('recompute'));
-  prisma.review.aggregate.mockResolvedValue({ _avg: { rating: 3.456 }, _count: { _all: 7 } });
   prisma.review.create.mockImplementation(async () => {
     calls.push('pg-insert');
     return { id: 'r1' };
@@ -181,10 +181,10 @@ describe('POST /api/titles/:titleId/reviews', () => {
       titleId: 't1',
       rating: 5,
     });
-    expect(prisma.title.update.mock.calls[0]?.[0].data).toEqual({
-      avgRating: 3.46,
-      reviewCount: 7,
-    });
+    // totals are copied from the view, so they round exactly like it
+    const [sql, titleId] = prisma.$executeRaw.mock.calls[0] ?? [];
+    expect((sql as string[]).join('?')).toMatch(/FROM "title_rating_stats"/);
+    expect(titleId).toBe('t1');
     expect(mongo.movieCreate.mock.calls[0]?.[0]).toEqual({
       _id: 'r1',
       titleId: 't1',
@@ -221,7 +221,7 @@ describe('POST /api/titles/:titleId/reviews', () => {
     expect(res.body.error).toMatch(/Nothing was changed/);
     expect(prisma.review.delete.mock.calls[0]?.[0]).toEqual({ where: { id: 'r1' } });
     // totals are rebuilt again after the undo
-    expect(prisma.title.update).toHaveBeenCalledTimes(2);
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -379,7 +379,7 @@ describe('PATCH /api/reviews/:id', () => {
 
     expect(res.status).toBe(200);
     expect(prisma.review.update).not.toHaveBeenCalled();
-    expect(prisma.title.update).not.toHaveBeenCalled();
+    expect(prisma.$executeRaw).not.toHaveBeenCalled();
     expect(mongo.movieUpdate.mock.calls[0]).toEqual([{ _id: 'r1' }, { $set: { body: 'Edited.' } }]);
   });
 
@@ -406,11 +406,29 @@ describe('PATCH /api/reviews/:id', () => {
   it('puts the old rating back when the body cannot be saved', async () => {
     mongo.movieUpdate.mockRejectedValue(new Error('mongo is down'));
 
+    prisma.review.updateMany.mockResolvedValue({ count: 1 });
+
     const res = await patch({ rating: 2, body: 'Edited.' });
 
     expect(res.status).toBe(502);
-    const writes = prisma.review.update.mock.calls.map((c) => c[0].data.rating);
-    expect(writes).toEqual([2, 4]);
+    expect(prisma.review.update.mock.calls[0]?.[0].data).toEqual({ rating: 2 });
+    // only while the row still holds the 2 this request wrote
+    expect(prisma.review.updateMany.mock.calls[0]?.[0]).toEqual({
+      where: { id: 'r1', rating: 2 },
+      data: { rating: 4 },
+    });
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps an edit another tab saved in between, instead of undoing over it', async () => {
+    mongo.movieUpdate.mockRejectedValue(new Error('mongo is down'));
+    prisma.review.updateMany.mockResolvedValue({ count: 0 }); // the row no longer holds our 2
+
+    const res = await patch({ rating: 2, body: 'Edited.' });
+
+    expect(res.status).toBe(502);
+    // totals rebuilt once for our own write, not again for an undo that did not happen
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
   });
 
   it('does not touch the rating back when it never changed', async () => {
@@ -420,6 +438,7 @@ describe('PATCH /api/reviews/:id', () => {
 
     expect(res.status).toBe(502);
     expect(prisma.review.update).not.toHaveBeenCalled();
+    expect(prisma.review.updateMany).not.toHaveBeenCalled();
   });
 
   it('still refuses the creator of the title', async () => {
@@ -481,5 +500,13 @@ describe('DELETE /api/reviews/:id', () => {
 
     expect(res.status).toBe(204);
     expect(prisma.review.delete).toHaveBeenCalled();
+  });
+
+  it('still clears the replies when the body delete fails', async () => {
+    mongo.deleteOne.mockRejectedValue(new Error('mongo is down'));
+
+    await del();
+
+    expect(mongo.replyDeleteMany.mock.calls[0]?.[0]).toEqual({ reviewId: 'r1' });
   });
 });

@@ -8,21 +8,18 @@ export async function lockTitle(tx: Prisma.TransactionClient, titleId: string): 
   await tx.$queryRaw`SELECT "id" FROM "Title" WHERE "id" = ${titleId} FOR UPDATE`;
 }
 
-/** Rebuilds avgRating and reviewCount from the reviews, rounded to 2 places like title_rating_stats. */
+/**
+ * Copies avgRating and reviewCount from the title_rating_stats view, so the stored columns use
+ * the view's exact numeric ROUND. Rounding a float in JS gets .xx5 ties wrong (41/40 gives 1.02,
+ * the view 1.03). Leaves updatedAt alone: a new review is not an edit of the title.
+ */
 export async function recomputeTitleRating(
   tx: Prisma.TransactionClient,
   titleId: string,
 ): Promise<void> {
-  const stats = await tx.review.aggregate({
-    where: { titleId },
-    _avg: { rating: true },
-    _count: { _all: true },
-  });
-  await tx.title.update({
-    where: { id: titleId },
-    data: {
-      avgRating: Math.round((stats._avg.rating ?? 0) * 100) / 100,
-      reviewCount: stats._count._all,
-    },
-  });
+  await tx.$executeRaw`
+    UPDATE "Title" AS t
+    SET "avgRating" = s."avg_rating", "reviewCount" = s."review_count"
+    FROM "title_rating_stats" AS s
+    WHERE s."title_id" = t."id" AND t."id" = ${titleId}`;
 }
