@@ -107,9 +107,17 @@ export async function main(): Promise<void> {
       (await prisma.bookDetails.count({ where: { ratingsCount: 0 } })) ===
         books.filter((b) => b['ratings_count'] === '0').length,
     );
+    const hiddenMovies = await prisma.title.count({
+      where: { mediaType: 'MOVIE', status: 'REJECTED' },
+    });
     check(
       'hidden movies keep their details',
-      (await prisma.movieDetails.count({ where: { title: { status: 'REJECTED' } } })) > 0,
+      hiddenMovies === 0 ||
+        (await prisma.movieDetails.count({ where: { title: { status: 'REJECTED' } } })) > 0,
+    );
+    check(
+      'no movie is hidden when there are no posters',
+      readProcessed('title_posters.csv').length > 0 || hiddenMovies === 0,
     );
     const aBook = await prisma.title.findFirst({
       where: { mediaType: 'BOOK' },

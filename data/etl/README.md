@@ -18,6 +18,9 @@ npx tsx data/etl/load-all.ts                     # both stores in order; add --r
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
 
+Ids change on every load, so rebuild the trending cards afterwards, from `apps/api`:
+`npx tsx src/jobs/refreshTrending.ts`.
+
 Ids are random per run and the Mongo bodies are keyed by the PostgreSQL review ids, so always load (and
 `--reset`) both stores together with `load-all.ts`. Running `load-postgres.ts --reset` alone orphans the Mongo bodies until
 `load-mongo-reviews.ts --reset` is run too. `load-postgres` runs in one transaction: a failed load leaves the database as it was and writes no
@@ -173,9 +176,10 @@ Every run writes to `../processed/logs/`:
 
 `clean-posters.ts` matches the Kaggle MovieGenre posters to our movies on normalised name + release
 year (441 of 500). The URLs are hotlinked (`images-na.ssl-images-amazon.com`), only https is kept, and
-`load-postgres.ts` writes them to `Title.posterUrl`. The source file is optional: without
-`data/raw/MovieGenre_cleaned.csv` the step warns, writes an empty `title_posters.csv`, and every title
-keeps the gradient. Unmatched movies are listed in `processed/logs/clean-posters.rejects.csv`.
+`load-postgres.ts` writes them to `Title.posterUrl`. A movie with no poster loads as `REJECTED`, which
+hides it, and is listed in `processed/logs/clean-posters.rejects.csv`. The source files are optional:
+with none in `data/raw/`, the step warns, writes an empty `title_posters.csv`, nothing is hidden, and
+every title keeps the gradient.
 TV shows and books have no poster source.
 
 ## Media details

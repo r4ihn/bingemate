@@ -8,10 +8,10 @@ import { bookDetailsRow, movieDetailsRow, tvDetailsRow } from './lib/details.js'
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
+import { titleVisibility } from './lib/posters.js';
 
 const DEV_PASSWORD = 'Password123!'; // same as prisma/seed.ts
 const BATCH = 2000;
-const NO_POSTER_REASON = 'Imported movie without a poster';
 const TX_TIMEOUT_MS = 10 * 60 * 1000; // the full dataset loads in well under this
 
 type Role = 'ADMIN' | 'CREATOR' | 'CONSUMER';
@@ -87,19 +87,16 @@ export async function main(): Promise<void> {
             p['poster_url'] ?? '',
           ]),
         );
+        if (posters.size === 0) log.warn('no posters loaded: every movie stays visible');
         const titles = readProcessedTitles().map((t) => {
           const id = newId();
           ids.titles[t['title_id'] ?? ''] = id;
           const posterUrl = posters.get(t['title_id'] ?? '') || null;
-          // A movie must have a poster to be shown. REJECTED keeps the row (and its reviews) but the
-          // API treats anything not APPROVED as absent; approve it once a poster exists.
-          const hidden = t['media_type'] === 'MOVIE' && posterUrl === null;
           return {
             id,
             name: t['name'] ?? '',
             mediaType: (t['media_type'] ?? '') as MediaType,
-            status: hidden ? ('REJECTED' as const) : ('APPROVED' as const),
-            rejectionReason: hidden ? NO_POSTER_REASON : null,
+            ...titleVisibility(t['media_type'] ?? '', posterUrl, posters.size > 0),
             releaseYear: toInt(t['release_year']),
             description: t['description'] || null,
             posterUrl,
