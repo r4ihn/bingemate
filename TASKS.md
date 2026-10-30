@@ -195,10 +195,14 @@ All `[~]` items here are on `feat/api-reviews-replies-lists`.
 - [ ] Video presentation and demo script
 - [x] README with setup steps (docker compose → migrate → seed → run). Update it if the local Postgres port change to `5433` (uncommitted) is kept, and see the README item in §1
 
-## 12. Known gaps and follow-ups (found in code review, 29 Oct)
+## 12. Known gaps and follow-ups (found in code review, 29–30 Oct)
+
+Fixed on 30 Oct (on the branches in "Where the work is"): stored ratings now come from the `title_rating_stats` view, so they round exactly like it (JS rounding stored 1.02 for 41 stars over 40 reviews, the view 1.03); a failed review edit undoes its rating only if no other edit has saved since; deleting a review clears its replies even when the body delete fails; the creator form drops an image still being prepared when it closes.
+
+- [ ] **A reply posted while its review is being deleted can be left behind.** The reply check passes, the review and its replies are deleted, then the reply is saved. It needs two requests at nearly the same moment and nothing lists the leftover; a periodic cleanup of replies whose review is gone would cover it, together with the title/user delete leftovers below _(HS)_
 
 - [ ] **Deleting a title or a user leaves MongoDB documents behind.** PostgreSQL cascades the review rows, but their bodies, replies and the title image stay in MongoDB. Whoever builds title delete (§2) and user delete must remove them too _(JW, RA)_
 - [ ] **A creator can change the image of an approved title with no re-moderation**, while editing the title itself would send it back to `PENDING`. Disappears if Part A (§0) is agreed; otherwise decide whether an image change also re-submits _(WH, JW)_
 - [ ] **The owner cannot see the image of their own pending title**, because the image is served only for approved titles. Disappears with Part A; otherwise let the owner and admins fetch it _(WH)_
 - [ ] **If the `trending_titles` view returns no rows, the refresh job removes every card.** Correct for a truly empty view (a failed read stops before the delete); accepted for now _(SJ)_
-- [ ] Small shared helpers are repeated across modules (the title id param schema, the admin-cannot-write check, the page/pageSize schema), and `titles.routes.ts` still uses try/catch instead of the `route()` helper. Tidy once the modules have merged _(WH)_
+- [ ] Small shared helpers are repeated across modules (the title id param schema, the admin-cannot-write check, the page/pageSize schema), and `titles.routes.ts` still uses try/catch instead of the `route()` helper. The trending job also reads poster URLs with a second query that could be a JOIN in its ranking SQL. Tidy once the modules have merged _(WH)_
