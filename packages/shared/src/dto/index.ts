@@ -96,3 +96,31 @@ export interface ReplyDTO {
 export interface ListItemDTO extends ListEntryDTO {
   title: TitleSummary;
 }
+
+/** One genre in the browse filter, with how many approved titles carry it. */
+export interface GenreOptionDTO {
+  id: string;
+  name: string;
+  titleCount: number;
+}
+
+/** One row of GET /creator/stats: how a creators own title is doing. */
+export interface CreatorTitleStatsDTO {
+  titleId: string;
+  name: string;
+  status: TitleStatus;
+  reviewCount: number;
+  avgRating: number;
+  listAdds: number;
+}
+
+/** A trending title as stored in MongoDB: enough to draw a card without asking PostgreSQL. */
+export interface TrendingCardDTO {
+  titleId: string;
+  name: string;
+  mediaType: MediaType;
+  posterUrl?: string;
+  avgRating: number;
+  reviewCount: number;
+  score: number;
+}
