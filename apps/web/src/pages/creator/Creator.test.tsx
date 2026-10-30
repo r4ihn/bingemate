@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
@@ -180,6 +180,21 @@ describe('SubmissionForm (poster image)', () => {
       expect(screen.getByRole('button', { name: 'Submit for approval' })).toBeEnabled(),
     );
     expect(submit).not.toHaveBeenCalled();
+  });
+
+  it('drops an image still being prepared when the form closes', async () => {
+    let finish: (b: Blob) => void = () => undefined;
+    vi.mocked(image.shrinkPoster).mockReturnValue(new Promise((done) => (finish = done)));
+    const user = renderCreator('/creator/new');
+    await user.upload(await screen.findByLabelText(/Poster image/), picture());
+    await screen.findByText('Preparing the image…');
+
+    cleanup(); // the creator leaves the page
+    finish(new Blob(['shrunk'], { type: 'image/jpeg' }));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+
+    // no local address made after the form is gone, so nothing is left unreleased
+    expect(URL.createObjectURL).not.toHaveBeenCalled();
   });
 
   it('removes a chosen image before it is saved', async () => {

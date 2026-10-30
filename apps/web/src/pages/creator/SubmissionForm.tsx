@@ -51,10 +51,12 @@ function Form({
   // the creator removes it, belongs to an older number and its result is dropped.
   const latestPick = useRef(0);
   const helpId = useId();
-  // Release the preview's local address when it is replaced and when the form closes
+  // Release the preview's local address when it is replaced and when the form closes. Closing also
+  // counts as a newer pick, so an image still being prepared is dropped instead of kept in memory.
   const previewUrl = useRef<string | null>(null);
   useEffect(
     () => () => {
+      latestPick.current++;
       if (previewUrl.current) URL.revokeObjectURL(previewUrl.current);
     },
     [],
