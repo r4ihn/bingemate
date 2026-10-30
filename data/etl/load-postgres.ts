@@ -2,7 +2,9 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { emptyIdMap, lookup, newId, saveIdMap } from './id-mapping.js';
 import { toInt } from './lib/clean.js';
+import type { Row } from './lib/csv.js';
 import { reviewCreatedAt } from './lib/dates.js';
+import { bookDetailsRow, movieDetailsRow, tvDetailsRow } from './lib/details.js';
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
@@ -105,6 +107,21 @@ export async function main(): Promise<void> {
           };
         });
         await insertAll(log, 'titles', titles, (data) => tx.title.createMany({ data }));
+
+        const detailRows = <T>(file: string, toRow: (t: Row, id: string) => T | null): T[] =>
+          readProcessed(file).flatMap((t) => {
+            const row = toRow(t, lookup(ids.titles, t['title_id'], 'title'));
+            return row === null ? [] : [row];
+          });
+        await insertAll(log, 'movie_details', detailRows('movies.csv', movieDetailsRow), (data) =>
+          tx.movieDetails.createMany({ data }),
+        );
+        await insertAll(log, 'tv_details', detailRows('tv_shows.csv', tvDetailsRow), (data) =>
+          tx.tvDetails.createMany({ data }),
+        );
+        await insertAll(log, 'book_details', detailRows('books.csv', bookDetailsRow), (data) =>
+          tx.bookDetails.createMany({ data }),
+        );
 
         const genres = readProcessed('genres.csv').map((g) => {
           const id = newId();

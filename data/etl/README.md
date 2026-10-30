@@ -177,3 +177,9 @@ year (441 of 500). The URLs are hotlinked (`images-na.ssl-images-amazon.com`), o
 `data/raw/MovieGenre_cleaned.csv` the step warns, writes an empty `title_posters.csv`, and every title
 keeps the gradient. Unmatched movies are listed in `processed/logs/clean-posters.rejects.csv`.
 TV shows and books have no poster source.
+
+## Media details
+
+`load-postgres.ts` fills `MovieDetails`, `TvDetails` and `BookDetails` from the detail columns in
+`movies.csv`, `tv_shows.csv` and `books.csv` (mapping in `lib/details.ts`). A title with no detail
+values gets no row. Book `price` is cleaned but not loaded: only 23% of books have one.
