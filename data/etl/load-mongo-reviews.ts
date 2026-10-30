@@ -60,8 +60,8 @@ export async function main(): Promise<void> {
           body: b.text,
           details: b.details,
         };
-        // Same date as the Postgres header, including the fixed date for undated reviews.
-        doc['createdAt'] = reviewCreatedAt(header['created_at']);
+        // Same date as the Postgres header, including the made-up date for undated reviews.
+        doc['createdAt'] = reviewCreatedAt(header['created_at'], String(b.review_id));
         return doc;
       });
       inserted += (await ReviewBody.insertMany(docs)).length;

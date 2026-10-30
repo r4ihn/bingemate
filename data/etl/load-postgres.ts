@@ -132,8 +132,8 @@ export async function main(): Promise<void> {
             userId: lookup(ids.users, r['user_id'], 'user'),
             titleId: lookup(ids.titles, r['title_id'], 'title'),
             rating: Number(r['rating']),
-            // Undated reviews get one fixed old date, not the load time.
-            createdAt: reviewCreatedAt(r['created_at']),
+            // Undated reviews get a made-up 2022-2025 date, not the load time.
+            createdAt: reviewCreatedAt(r['created_at'], r['review_id'] ?? ''),
           };
           return row;
         });

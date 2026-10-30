@@ -2,7 +2,8 @@ import { RATING_MAX } from '@bingemate/shared/rating';
 import { PrismaClient } from '@prisma/client';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
-import { UNDATED_REVIEW_DATE, reviewCreatedAt } from './lib/dates.js';
+import { loadIdMap, lookup } from './id-mapping.js';
+import { undatedReviewDate } from './lib/dates.js';
 import { loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
@@ -82,20 +83,31 @@ export async function main(): Promise<void> {
     );
     check('every Postgres review has a Mongo body', pgIds.size === mongoIds.length);
 
-    // Undated reviews carry the one fixed old date in both stores, never the load time.
-    const undated = readProcessed('reviews.csv').filter((r) => !r['created_at']).length;
-    const stamp = reviewCreatedAt(null);
-    const undatedPg = await prisma.review.count({ where: { createdAt: stamp } });
-    const undatedMongo = await ReviewBody.countDocuments({ createdAt: stamp });
+    // Undated reviews carry the same made-up 2022-2025 date in both stores, never the load time.
+    const ids = loadIdMap();
+    const undated = readProcessed('reviews.csv').filter((r) => !r['created_at']);
+    const expected = new Map(
+      undated.map((r) => [
+        lookup(ids.reviews, r['review_id'] ?? '', 'review'),
+        undatedReviewDate(r['review_id'] ?? '').getTime(),
+      ]),
+    );
+    const pgDates = await prisma.review.findMany({
+      where: { id: { in: [...expected.keys()] } },
+      select: { id: true, createdAt: true },
+    });
+    const mongoDates = (await ReviewBody.find({ _id: { $in: [...expected.keys()] } })
+      .select('createdAt')
+      .lean()) as unknown as { _id: string; createdAt: Date }[];
     check(
-      `${undated} undated reviews have ${UNDATED_REVIEW_DATE} in PostgreSQL`,
-      undatedPg === undated,
-      `got ${undatedPg}`,
+      `${undated.length} undated reviews have their made-up date in PostgreSQL`,
+      pgDates.length === undated.length &&
+        pgDates.every((d) => d.createdAt.getTime() === expected.get(d.id)),
     );
     check(
-      `${undated} undated reviews have ${UNDATED_REVIEW_DATE} in MongoDB`,
-      undatedMongo === undated,
-      `got ${undatedMongo}`,
+      `${undated.length} undated reviews have the same date in MongoDB`,
+      mongoDates.length === undated.length &&
+        mongoDates.every((d) => d.createdAt.getTime() === expected.get(d._id)),
     );
 
     // Stored aggregates must equal what the view recomputes.

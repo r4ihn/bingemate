@@ -96,9 +96,9 @@ loader's job.
 - **One review per (user, title)**: 322 duplicate pairs; the newest by `review_date` is kept (undated counts
   as oldest, then highest id). The dropped ones are listed in `clean-reviews.rejects.csv`.
 - `review_date` must be a real `YYYY-MM-DD`. 965 TV reviews have none (947 remain after duplicates are
-  dropped) and stay empty in `reviews.csv` (`created_at` blank). Both loaders give them the fixed date
-  `1900-01-01` (`lib/dates.ts`), older than every real review (the earliest is from 1938), so they sort to
-  the end of a newest-first list instead of looking like they were written on the day of the load.
+  dropped) and stay empty in `reviews.csv` (`created_at` blank). Both loaders give each one a made-up date
+  from 1 Jan 2022 to 31 Dec 2025 (`lib/dates.ts`). The day comes from a hash of the dataset review id, so
+  PostgreSQL and MongoDB agree and a reload gives the same dates. They are not real dates.
 - Postgres header (`reviews.csv`) and Mongo body (`review_bodies.jsonl`) contain exactly the same
   `review_id`s; a body is only written if its user and title match the header.
 - Body text: CRLF -> LF, each line trimmed (removes the hard-wrap indentation in old movie reviews),
@@ -134,7 +134,7 @@ than its survivor, title ids identical, no text left untrimmed.
 - Ids: the loaders generate UUIDs (`crypto.randomUUID`, no dependency) and keep the dataset-id map in
   `id-map.json`, which the Mongo loader needs.
 - Everyone gets the dev password `Password123!` (one bcrypt hash, cost 12). Dataset users have placeholder emails.
-- Imported titles are `APPROVED` with `createdById` NULL. Undated reviews get `createdAt` `1900-01-01`.
+- Imported titles are `APPROVED` with `createdById` NULL. Undated reviews get a made-up `createdAt` between 2022 and 2025.
 - `Title.avgRating` / `reviewCount` are filled from the `title_rating_stats` view at the end of the load.
 - Mongo body: `body` = cleaned text, `mediaType` = discriminator, `details` = the media-specific extras
   (a new `Mixed` field on `ReviewBody`), `createdAt` = the Postgres review date. Comments stay in their own collection.
