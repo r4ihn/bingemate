@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { listsRouter } from './modules/lists/lists.routes.js';
 import { repliesRouter, reviewRepliesRouter } from './modules/replies/replies.routes.js';
+import { posterRouter } from './modules/posters/posters.routes.js';
 import { reviewsRouter, titleReviewsRouter } from './modules/reviews/reviews.routes.js';
 import { titlesRouter } from './modules/titles/titles.routes.js';
 
@@ -18,6 +19,7 @@ router.get('/', (_req, res) => {
 
 router.use('/auth', authRouter);
 router.use('/titles/:titleId/reviews', titleReviewsRouter);
+router.use('/titles/:titleId/poster', posterRouter);
 router.use('/titles', titlesRouter);
 router.use('/reviews/:reviewId/replies', reviewRepliesRouter);
 router.use('/reviews', reviewsRouter);

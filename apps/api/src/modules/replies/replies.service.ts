@@ -44,13 +44,16 @@ async function findReply(id: string): Promise<ReplyDoc> {
   return doc;
 }
 
-/** Oldest first, ties broken on id. The review lives in PostgreSQL, the replies in MongoDB. */
+/** Oldest first, ties broken on id. Only for reviews of approved titles, like the reviews themselves. */
 export async function listReplies(
   reviewId: string,
   page: number,
   pageSize: number,
 ): Promise<Paginated<ReplyDTO>> {
-  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
+  const review = await prisma.review.findFirst({
+    where: { id: reviewId, title: { status: 'APPROVED' } },
+    select: { id: true },
+  });
   if (!review) throw new HttpError(404, 'Review not found');
 
   const [docs, total] = await Promise.all([
@@ -72,7 +75,10 @@ export async function createReply(
   body: string,
 ): Promise<ReplyDTO> {
   assertCanWrite(user);
-  const review = await prisma.review.findUnique({ where: { id: reviewId }, select: { id: true } });
+  const review = await prisma.review.findFirst({
+    where: { id: reviewId, title: { status: 'APPROVED' } },
+    select: { id: true },
+  });
   if (!review) throw new HttpError(404, 'Review not found');
   const doc = await Reply.create({ reviewId, userId: user.id, body });
   return oneReply(doc.toObject() as unknown as ReplyDoc);
