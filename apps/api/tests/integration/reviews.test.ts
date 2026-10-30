@@ -436,13 +436,15 @@ describe('PATCH /api/reviews/:id', () => {
 
   it('treats a review with no body in MongoDB as a failed edit, not a silent success', async () => {
     mongo.movieUpdate.mockResolvedValue({ matchedCount: 0 });
+    prisma.review.updateMany.mockResolvedValue({ count: 1 });
 
     const res = await patch({ rating: 2, body: 'Edited.' });
 
     expect(res.status).toBe(502);
     expect(res.body.error).toMatch(/Nothing was changed/);
     // the rating that was already moved goes back
-    expect(prisma.review.update.mock.calls.map((c) => c[0].data.rating)).toEqual([2, 4]);
+    expect(prisma.review.update.mock.calls[0]?.[0].data).toEqual({ rating: 2 });
+    expect(prisma.review.updateMany.mock.calls[0]?.[0].data).toEqual({ rating: 4 });
   });
 
   it('does not touch the rating back when it never changed', async () => {
