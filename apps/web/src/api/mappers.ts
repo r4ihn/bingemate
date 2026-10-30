@@ -4,6 +4,7 @@ import type {
   ReviewDTO,
   ReviewFieldsDTO,
   TitleDetailDTO,
+  TitleDetailsDTO,
   TitleSummary,
 } from '@bingemate/shared';
 import type { NoFields, Reply, Review, ReviewFields } from '../types/review.js';
@@ -24,12 +25,34 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
   };
 }
 
+/** The facts the title page shows for a media type; a blank value adds no field. */
+function mapDetails(d: TitleDetailsDTO | null) {
+  if (d?.mediaType === 'MOVIE') {
+    return {
+      ...(d.runtimeMin != null && { runtime: `${d.runtimeMin} min` }),
+      ...(d.rated != null && { rated: d.rated }),
+    };
+  }
+  if (d?.mediaType === 'TV_SHOW') {
+    return {
+      ...(d.numSeasons != null && {
+        seasons: `${d.numSeasons} ${d.numSeasons === 1 ? 'season' : 'seasons'}`,
+      }),
+      ...(d.duration != null && { runtime: `${d.duration} min per episode` }),
+      ...(d.contentRating != null && { rated: d.contentRating }),
+    };
+  }
+  if (d?.mediaType === 'BOOK') return d.publisher != null ? { publisher: d.publisher } : {};
+  return {};
+}
+
 /** Genres and people are not shown by the UI yet, so they are dropped here. */
 export function detailToTitle(d: TitleDetailDTO): TitleDetail {
   return {
     ...summaryToTitle(d),
     synopsis: d.description ?? '',
     ...(d.releaseYear != null && { year: d.releaseYear }),
+    ...mapDetails(d.details),
   };
 }
 

@@ -141,7 +141,7 @@ bingemate/
 
 | Store | Holds |
 |---|---|
-| PostgreSQL (Prisma) | users (+ role, bcrypt hash), titles (+ status PENDING/APPROVED/REJECTED, created_by, rejection_reason), genres, people, title_genres, title_people, list_entries, reviews header (id, user_id, title_id, rating, timestamps), rating aggregates |
+| PostgreSQL (Prisma) | users (+ role, bcrypt hash), titles (+ status PENDING/APPROVED/REJECTED, created_by, rejection_reason), movie_details, tv_details, book_details (one optional row per title, type enforced by a composite foreign key), genres, people, title_genres, title_people, list_entries, reviews header (id, user_id, title_id, rating, timestamps), rating aggregates |
 | MongoDB (Mongoose) | review bodies (`_id` = PG `reviews.id`) with media-specific fields, comment threads (one reply level, creator official reply flagged `isOfficial`), denormalised trending cards |
 
 Cross-database link: a review's PostgreSQL row and its Mongo body share one id; comments store `reviewId` / `userId`. There are no FKs across the two stores, so the reviews service writes PostgreSQL first, then Mongo, and undoes the PostgreSQL row if the Mongo write fails. Deleting a title or review must also delete the Mongo body and comments.

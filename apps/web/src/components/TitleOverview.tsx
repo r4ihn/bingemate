@@ -13,6 +13,9 @@ export function TitleOverview({ title, breadcrumb }: { title: TitleDetail; bread
     { label: 'Country', values: countries },
     { label: 'Studio', values: title.studio ? [title.studio] : [] },
     { label: 'Runtime', values: title.runtime ? [title.runtime] : [] },
+    { label: 'Seasons', values: title.seasons ? [title.seasons] : [] },
+    { label: 'Rated', values: title.rated ? [title.rated] : [] },
+    { label: 'Publisher', values: title.publisher ? [title.publisher] : [] },
   ].filter((f) => f.values.length > 0);
 
   return (

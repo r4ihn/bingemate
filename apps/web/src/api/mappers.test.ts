@@ -41,6 +41,46 @@ describe('summaryToTitle', () => {
 });
 
 describe('detailToTitle', () => {
+  const withDetails = (details: TitleDetailDTO['details']) => detailToTitle({ ...detail, details });
+
+  it('maps movie details to a runtime and rating', () => {
+    const t = withDetails({
+      mediaType: 'MOVIE',
+      runtimeMin: 109,
+      tagline: null,
+      rated: 'R',
+      letterboxdRating: null,
+    });
+    expect(t.runtime).toBe('109 min');
+    expect(t.rated).toBe('R');
+  });
+  const tv = {
+    mediaType: 'TV_SHOW',
+    numSeasons: 1,
+    duration: 50,
+    contentRating: 'TV-MA',
+    metascore: null,
+    userscore: null,
+  } as const;
+  it('maps TV details, with one season in the singular', () => {
+    const t = withDetails(tv);
+    expect(t.seasons).toBe('1 season');
+    expect(t.runtime).toBe('50 min per episode');
+    expect(t.rated).toBe('TV-MA');
+  });
+  it('counts several seasons in the plural', () => {
+    expect(withDetails({ ...tv, numSeasons: 5 }).seasons).toBe('5 seasons');
+  });
+  it('maps a book publisher', () => {
+    const t = withDetails({ mediaType: 'BOOK', publisher: 'NYU Press', ratingsCount: null });
+    expect(t.publisher).toBe('NYU Press');
+  });
+  it('adds no fact fields for null or blank details', () => {
+    const blank = withDetails({ ...tv, numSeasons: null, duration: null, contentRating: null });
+    for (const t of [withDetails(null), blank]) {
+      for (const key of ['runtime', 'rated', 'seasons', 'publisher']) expect(key in t).toBe(false);
+    }
+  });
   it('maps description to synopsis and releaseYear to year', () => {
     const t = detailToTitle(detail);
     expect(t.synopsis).toBe('Spice.');
