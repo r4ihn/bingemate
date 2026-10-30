@@ -2,6 +2,8 @@ import { RATING_MAX } from '@bingemate/shared/rating';
 import { PrismaClient } from '@prisma/client';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
+import { loadIdMap, lookup } from './id-mapping.js';
+import { undatedReviewDate } from './lib/dates.js';
 import { loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
@@ -80,6 +82,33 @@ export async function main(): Promise<void> {
       mongoIds.every((id) => pgIds.has(id)),
     );
     check('every Postgres review has a Mongo body', pgIds.size === mongoIds.length);
+
+    // Undated reviews carry the same made-up 2022-2025 date in both stores, never the load time.
+    const ids = loadIdMap();
+    const undated = readProcessed('reviews.csv').filter((r) => !r['created_at']);
+    const undatedDay = new Map(
+      undated.map((r) => [
+        lookup(ids.reviews, r['review_id'] ?? '', 'review'),
+        undatedReviewDate(r['review_id'] ?? '').getTime(),
+      ]),
+    );
+    const pgDates = await prisma.review.findMany({
+      where: { id: { in: [...undatedDay.keys()] } },
+      select: { id: true, createdAt: true },
+    });
+    const mongoDates = (await ReviewBody.find({ _id: { $in: [...undatedDay.keys()] } })
+      .select('createdAt')
+      .lean()) as unknown as { _id: string; createdAt: Date }[];
+    check(
+      `${undated.length} undated reviews have their made-up date in PostgreSQL`,
+      pgDates.length === undated.length &&
+        pgDates.every((d) => d.createdAt.getTime() === undatedDay.get(d.id)),
+    );
+    check(
+      `${undated.length} undated reviews have the same date in MongoDB`,
+      mongoDates.length === undated.length &&
+        mongoDates.every((d) => d.createdAt.getTime() === undatedDay.get(d._id)),
+    );
 
     // Stored aggregates must equal what the view recomputes.
     const drift = await prisma.$queryRaw<{ n: bigint }[]>`

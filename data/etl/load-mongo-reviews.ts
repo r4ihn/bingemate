@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
 import { loadIdMap, lookup } from './id-mapping.js';
+import { reviewCreatedAt } from './lib/dates.js';
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { PROCESSED_DIR, readJsonLines, readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
@@ -59,8 +60,8 @@ export async function main(): Promise<void> {
           body: b.text,
           details: b.details,
         };
-        // Same date as the Postgres header; undated reviews get the load time from `timestamps`.
-        if (header['created_at']) doc['createdAt'] = new Date(`${header['created_at']}T00:00:00Z`);
+        // Same date as the Postgres header, including the made-up date for undated reviews.
+        doc['createdAt'] = reviewCreatedAt(header['created_at'], String(b.review_id));
         return doc;
       });
       inserted += (await ReviewBody.insertMany(docs)).length;
