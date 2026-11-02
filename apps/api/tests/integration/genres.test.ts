@@ -33,13 +33,15 @@ beforeEach(() => {
 });
 
 describe('GET /api/genres', () => {
-  it('is public and reads the genre_filter_options view without a type filter', async () => {
+  it('counts approved titles across all types before applying the threshold', async () => {
     const res = await request(app).get('/api/genres');
 
     expect(res.status).toBe(200);
     expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
     const { text, values } = sentSql();
-    expect(text).toContain('"genre_filter_options"');
+    expect(text).toContain('GROUP BY g."id", g."name"');
+    expect(text).toContain("t.\"status\" = 'APPROVED'");
+    expect(text).toContain('HAVING COUNT(*) >= 5');
     expect(text).not.toContain('WHERE');
     expect(values).toEqual([]);
   });

@@ -9,6 +9,7 @@ export const TRENDING_PER_TYPE = 50;
 
 interface TrendingRow {
   id: string;
+  posterUrl: string | null;
   name: string;
   mediaType: string;
   review_count: number | bigint;
@@ -27,34 +28,26 @@ export interface RefreshResult {
  * Rebuilds the denormalised trending cards in MongoDB from the `trending_titles` view:
  * the top 50 per media type are upserted by title id, and any card whose title is not in that
  * set any more is deleted. Running it twice in a row leaves the same cards behind.
- * The view has no poster, so the posters are looked up from Title in one extra query.
+ * Posters are joined from Title in the same query.
  */
 export async function refreshTrending(): Promise<RefreshResult> {
   const rows = await prisma.$queryRaw<TrendingRow[]>(
-    Prisma.sql`SELECT "id", "name", "mediaType", "review_count", "avg_rating", "trending_score"
+    Prisma.sql`SELECT "id", "name", "mediaType", "review_count", "avg_rating", "trending_score", "posterUrl"
       FROM (
-        SELECT v.*, ROW_NUMBER() OVER (
+        SELECT v.*, t."posterUrl", ROW_NUMBER() OVER (
           PARTITION BY v."mediaType" ORDER BY v."trending_score" DESC, v."id" ASC
         ) AS "rank"
         FROM "trending_titles" v
+        JOIN "Title" t ON t."id" = v."id"
       ) ranked
       WHERE "rank" <= ${TRENDING_PER_TYPE}`,
   );
   const ids = rows.map((r) => r.id);
 
-  const posters = new Map<string, string | null>();
-  if (ids.length > 0) {
-    const titles = await prisma.title.findMany({
-      where: { id: { in: ids } },
-      select: { id: true, posterUrl: true },
-    });
-    for (const t of titles) posters.set(t.id, t.posterUrl);
-  }
-
   if (rows.length > 0) {
     await TrendingCard.bulkWrite(
       rows.map((r) => {
-        const posterUrl = posters.get(r.id);
+        const posterUrl = r.posterUrl;
         return {
           updateOne: {
             filter: { titleId: r.id },

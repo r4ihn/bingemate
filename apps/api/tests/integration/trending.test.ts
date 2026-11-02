@@ -106,7 +106,7 @@ describe('GET /api/trending', () => {
 
     expect(trendingCard.find).toHaveBeenCalledWith({});
     expect(chain.sort).toHaveBeenCalledWith({ score: -1, titleId: 1 });
-    expect(chain.limit).toHaveBeenCalledWith(20);
+    expect(chain.limit).toHaveBeenCalledWith(150);
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
@@ -114,7 +114,7 @@ describe('GET /api/trending', () => {
     await request(app).get('/api/trending?type=TV_SHOW&limit=5');
 
     expect(trendingCard.find).toHaveBeenCalledWith({ mediaType: 'TV_SHOW' });
-    expect(chain.limit).toHaveBeenCalledWith(5);
+    expect(chain.limit).toHaveBeenCalledWith(150);
   });
 
   it('treats an empty type and limit as not given', async () => {
@@ -122,7 +122,7 @@ describe('GET /api/trending', () => {
 
     expect(res.status).toBe(200);
     expect(trendingCard.find).toHaveBeenCalledWith({});
-    expect(chain.limit).toHaveBeenCalledWith(20);
+    expect(chain.limit).toHaveBeenCalledWith(150);
   });
 
   it.each([
@@ -143,10 +143,19 @@ describe('GET /api/trending', () => {
     const res = await request(app).get(`/api/trending?limit=${limit}`);
 
     expect(res.status).toBe(200);
-    expect(chain.limit).toHaveBeenCalledWith(limit);
+    expect(chain.limit).toHaveBeenCalledWith(150);
+  });
+
+  it('excludes deleted or hidden titles immediately', async () => {
+    chain.lean.mockResolvedValue([card({ titleId: 'hidden' }), card({ titleId: 't1' })]);
+    prisma.title.findMany.mockResolvedValue([{ id: 't1' }]);
+    const res = await request(app).get('/api/trending?limit=1');
+    expect(res.body.data.map((c: { titleId: string }) => c.titleId)).toEqual(['t1']);
+    expect(prisma.title.findMany.mock.calls[0]?.[0].where.status).toBe('APPROVED');
   });
 
   it('maps cards to the response shape, in the order MongoDB gave them', async () => {
+    prisma.title.findMany.mockResolvedValue([{ id: 't1' }, { id: 't2' }]);
     chain.lean.mockResolvedValue([
       card({ titleId: 't2', name: 'Alien', mediaType: 'MOVIE', score: 4.8 }),
       card({ titleId: 't1', posterUrl: undefined }),
@@ -193,7 +202,7 @@ describe('refreshTrending', () => {
 
   it('writes one upsert per row keyed by title id, with the poster from Title', async () => {
     prisma.$queryRaw.mockResolvedValue([
-      viewRow('t1', { review_count: 7n, avg_rating: '4.5', trending_score: 3.9 }),
+      viewRow('t1', { posterUrl: 'https://img/1.jpg', review_count: 7n, avg_rating: '4.5', trending_score: 3.9 }),
       viewRow('t2', { mediaType: 'BOOK' }),
     ]);
     prisma.title.findMany.mockResolvedValue([
@@ -203,10 +212,7 @@ describe('refreshTrending', () => {
 
     const result = await refreshTrending();
 
-    expect(prisma.title.findMany).toHaveBeenCalledWith({
-      where: { id: { in: ['t1', 't2'] } },
-      select: { id: true, posterUrl: true },
-    });
+    expect(prisma.title.findMany).not.toHaveBeenCalled();
     expect(trendingCard.bulkWrite.mock.calls[0]?.[0]).toEqual([
       {
         updateOne: {
