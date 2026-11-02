@@ -10,3 +10,13 @@ export const createSubmissionSchema = z
   .strict();
 
 export type CreateSubmissionInput = z.infer<typeof createSubmissionSchema>;
+
+export const updateSubmissionSchema = createSubmissionSchema
+  .pick({ name: true, description: true })
+  .partial()
+  .strict()
+  .refine((v) => v.name !== undefined || v.description !== undefined, {
+    message: 'Nothing to change',
+  });
+
+export type UpdateSubmissionInput = z.infer<typeof updateSubmissionSchema>;
