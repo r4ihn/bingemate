@@ -1,6 +1,7 @@
-import { ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
+import { type CreatorTitleStatsDTO, ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, setUnauthorizedHandler } from './client.js';
+import { creatorApi } from './creator.js';
 import { listsApi } from './lists.js';
 import { repliesApi, reviewsApi } from './reviews.js';
 import { titlesApi } from './titles.js';
@@ -42,6 +43,56 @@ const summary = {
   reviewCount: 2,
 };
 const author = { id: 'u1', name: 'Ann', role: Role.CONSUMER };
+
+describe('creatorApi.stats (real)', () => {
+  it('maps rows and keeps only approved titles', async () => {
+    const approved: CreatorTitleStatsDTO = {
+      titleId: 't1',
+      name: 'Dune',
+      status: TitleStatus.APPROVED,
+      avgRating: 4.5,
+      reviewCount: 8,
+      listAdds: 13,
+    };
+    fetchMock.mockReturnValue(
+      json([
+        approved,
+        { ...approved, titleId: 't2', status: TitleStatus.PENDING },
+        { ...approved, titleId: 't3', status: TitleStatus.REJECTED },
+      ]),
+    );
+
+    const result = await creatorApi.stats();
+
+    expect(result).toEqual([
+      { titleId: 't1', name: 'Dune', avgRating: 4.5, reviewCount: 8, listAdds: 13 },
+    ]);
+    expect(result[0]).not.toHaveProperty('status');
+    expect(lastCall().url).toBe('/api/creator/stats');
+    expect(lastCall().init.method).toBeUndefined();
+    expect(lastCall().init.credentials).toBe('include');
+  });
+
+  it('an empty array gives an empty list', async () => {
+    fetchMock.mockReturnValue(json([]));
+
+    expect(await creatorApi.stats()).toEqual([]);
+  });
+
+  it('a 403 for a non-creator shows the server message', async () => {
+    fetchMock.mockReturnValue(json({ error: 'Only creators can view stats' }, 403));
+
+    await expect(creatorApi.stats()).rejects.toMatchObject({
+      status: 403,
+      message: 'Only creators can view stats',
+    });
+  });
+
+  it('submissions still rejects as not wired against the real API', async () => {
+    await expect(creatorApi.submissions()).rejects.toThrow(/not wired/i);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
 
 describe('listsApi (real)', () => {
   const entry = { id: 'l1', titleId: 't1', status: ListStatus.COMPLETED, title: summary };

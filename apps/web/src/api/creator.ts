@@ -1,7 +1,7 @@
-import { MediaType, TitleStatus } from '@bingemate/shared';
+import { type CreatorTitleStatsDTO, MediaType, TitleStatus } from '@bingemate/shared';
 import { MOCK_USER, db, getMockActor, newId } from '../mocks/db.js';
 import type { CreatorStat, Submission, SubmissionInput } from '../types/creator.js';
-import { ApiError } from './client.js';
+import { ApiError, apiFetch } from './client.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
 // The seeded demo titles belong to MOCK_USER; every creator sees them alongside their own submissions
@@ -72,7 +72,18 @@ export const creatorApi = {
   },
 
   async stats(): Promise<CreatorStat[]> {
-    if (!useMock) notWired('/creator/stats (SJ)');
+    if (!useMock) {
+      const rows = await apiFetch<CreatorTitleStatsDTO[]>('/creator/stats');
+      return rows
+        .filter((t) => t.status === TitleStatus.APPROVED)
+        .map((t) => ({
+          titleId: t.titleId,
+          name: t.name,
+          avgRating: t.avgRating,
+          reviewCount: t.reviewCount,
+          listAdds: t.listAdds,
+        }));
+    }
     await delay();
     return own()
       .filter((t) => t.status === TitleStatus.APPROVED)
