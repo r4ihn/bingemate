@@ -353,13 +353,61 @@ describe('repliesApi.list (real)', () => {
   });
 });
 
-describe('methods that stay mock-only', () => {
+describe('repliesApi writes (real)', () => {
+  const reply = {
+    id: 'p1',
+    reviewId: 'r1',
+    author,
+    body: 'hi',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+
   it.each([
-    ['repliesApi.create', () => repliesApi.create('r1', 'hi')],
-    ['repliesApi.update', () => repliesApi.update('p1', 'hi')],
-    ['repliesApi.remove', () => repliesApi.remove('p1')],
-  ])('%s still refuses to run against the real API', async (_name, call) => {
-    await expect(call()).rejects.toThrow(/not wired/i);
-    expect(fetchMock).not.toHaveBeenCalled();
+    ['r1', '/api/reviews/r1/replies'],
+    ['r/1 c', '/api/reviews/r%2F1%20c/replies'],
+  ])('create posts the text and maps the reply for %s', async (reviewId, path) => {
+    fetchMock.mockReturnValue(json({ ...reply, parentId: 'ignored', isOfficial: true }, 201));
+
+    expect(await repliesApi.create(reviewId, 'hi')).toEqual(reply);
+
+    const { url, init } = lastCall();
+    expect(url).toBe(path);
+    expect(init.method).toBe('POST');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({ body: 'hi' });
+  });
+
+  it('update patches the text', async () => {
+    const updated = { ...reply, body: 'edited', editedAt: '2026-01-02T00:00:00.000Z' };
+    fetchMock.mockReturnValue(json(updated));
+
+    expect(await repliesApi.update('p/1', 'edited')).toEqual(updated);
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/replies/p%2F1');
+    expect(init.method).toBe('PATCH');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({ body: 'edited' });
+  });
+
+  it('remove sends DELETE and resolves undefined', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(repliesApi.remove('p/1 c')).resolves.toBeUndefined();
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/replies/p%2F1%20c');
+    expect(init.method).toBe('DELETE');
+    expect(init.credentials).toBe('include');
+    expect(init.body).toBeUndefined();
+  });
+
+  it("an admin reply attempt shows the server's 403 message", async () => {
+    fetchMock.mockReturnValue(json({ error: 'Admins cannot write reviews or replies' }, 403));
+
+    await expect(repliesApi.create('r1', 'hi')).rejects.toMatchObject({
+      status: 403,
+      message: 'Admins cannot write reviews or replies',
+    });
   });
 });

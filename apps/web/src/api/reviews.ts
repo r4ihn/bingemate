@@ -5,7 +5,7 @@ import { RATING_MAX, RATING_MIN } from '../rating.js';
 import type { Reply, Review, ReviewInput } from '../types/review.js';
 import { ApiError, apiFetch } from './client.js';
 import { mapReply, mapReview } from './mappers.js';
-import { clone, delay, notWired, useMock } from './mockMode.js';
+import { clone, delay, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 5;
 
@@ -169,7 +169,13 @@ export const repliesApi = {
 
   /** Any signed-in user except an admin may reply to a review, including its author. */
   async create(reviewId: string, body: string): Promise<Reply> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      const reply = await apiFetch<ReplyDTO>(`/reviews/${encodeURIComponent(reviewId)}/replies`, {
+        method: 'POST',
+        body: JSON.stringify({ body }),
+      });
+      return mapReply(reply);
+    }
     await delay();
     assertCanWrite();
     if (!db.reviews.some((r) => r.id === reviewId)) throw new ApiError(404, 'Review not found');
@@ -186,7 +192,13 @@ export const repliesApi = {
 
   /** Writer only: an admin never edits, and nobody edits another user's reply. */
   async update(id: string, body: string): Promise<Reply> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      const reply = await apiFetch<ReplyDTO>(`/replies/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ body }),
+      });
+      return mapReply(reply);
+    }
     await delay();
     assertCanWrite();
     const reply = db.replies.find((r) => r.id === id);
@@ -201,7 +213,9 @@ export const repliesApi = {
   },
 
   async remove(id: string): Promise<void> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      return apiFetch<void>(`/replies/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
     await delay();
     db.replies = db.replies.filter((r) => r.id !== id);
   },
