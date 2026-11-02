@@ -41,8 +41,8 @@ bingemate/
 │   │   │   │   └── admin/                # RA: role management, title approval queue, moderation
 │   │   │   ├── mongo/
 │   │   │   │   └── models/
-│   │   │   │       ├── reviewBody.model.ts  # _id = PG reviews.id; discriminators: movie / book / tvShow
-│   │   │   │       ├── comment.model.ts
+│   │   │   │       ├── reviewBody.model.ts  # _id = PG reviews.id; one shape, media-specific fields in `details`
+│   │   │   │       ├── reply.model.ts
 │   │   │   │       └── trendingCard.model.ts
 │   │   │   ├── jobs/
 │   │   │   │   └── refreshTrending.ts    # rebuild denormalised trending cards

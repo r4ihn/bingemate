@@ -8,7 +8,7 @@ export interface ReviewFieldConfig {
   optional?: boolean;
 }
 
-/** Media-specific review fields; names match the Mongo discriminators (TASKS.md section 5). */
+/** Media-specific review fields; names match the keys the API stores in the review's `details` (TASKS.md section 5). */
 export const fieldConfig: Record<MediaType, ReviewFieldConfig[]> = {
   [MediaType.MOVIE]: [
     { name: 'runtimeMinutes', label: 'Runtime watched (minutes)', type: 'number', min: 1 },

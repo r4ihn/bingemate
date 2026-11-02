@@ -27,10 +27,8 @@ const prisma = {
 const mongo = {
   find: vi.fn(),
   deleteOne: vi.fn(),
-  movieCreate: vi.fn(),
-  movieUpdate: vi.fn(),
-  bookCreate: vi.fn(),
-  bookUpdate: vi.fn(),
+  create: vi.fn(),
+  update: vi.fn(),
   replyDeleteMany: vi.fn(),
 };
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
@@ -38,10 +36,9 @@ vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({
   ReviewBody: {
     find: (q: unknown) => ({ lean: () => mongo.find(q) }),
     deleteOne: mongo.deleteOne,
+    create: mongo.create,
+    updateOne: mongo.update,
   },
-  MovieReviewBody: { create: mongo.movieCreate, updateOne: mongo.movieUpdate },
-  BookReviewBody: { create: mongo.bookCreate, updateOne: mongo.bookUpdate },
-  TvShowReviewBody: { create: vi.fn(), updateOne: vi.fn() },
 }));
 vi.mock('../../src/mongo/models/reply.model.js', () => ({
   Reply: { deleteMany: mongo.replyDeleteMany },
@@ -86,7 +83,7 @@ beforeEach(() => {
     return { id: 'r1' };
   });
   prisma.review.findUnique.mockResolvedValue(null);
-  mongo.movieCreate.mockImplementation(async () => calls.push('mongo-insert'));
+  mongo.create.mockImplementation(async () => calls.push('mongo-insert'));
   mongo.find.mockResolvedValue([{ _id: 'r1', body: 'Great.' }]);
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
@@ -166,7 +163,7 @@ describe('POST /api/titles/:titleId/reviews', () => {
 
     expect(res.status).toBe(400);
     expect(prisma.review.create).not.toHaveBeenCalled();
-    expect(mongo.movieCreate).not.toHaveBeenCalled();
+    expect(mongo.create).not.toHaveBeenCalled();
   });
 
   it('saves the header and the new totals, then the body, in that order', async () => {
@@ -185,12 +182,13 @@ describe('POST /api/titles/:titleId/reviews', () => {
     const [sql, titleId] = prisma.$executeRaw.mock.calls[0] ?? [];
     expect((sql as string[]).join('?')).toMatch(/FROM "title_rating_stats"/);
     expect(titleId).toBe('t1');
-    expect(mongo.movieCreate.mock.calls[0]?.[0]).toEqual({
+    expect(mongo.create.mock.calls[0]?.[0]).toEqual({
       _id: 'r1',
       titleId: 't1',
       userId: 'u1',
+      mediaType: 'MOVIE',
       body: 'Great.',
-      runtimeMinutes: 120,
+      details: { runtimeMinutes: 120 },
     });
     expect(res.body).toMatchObject({
       id: 'r1',
@@ -200,20 +198,20 @@ describe('POST /api/titles/:titleId/reviews', () => {
     });
   });
 
-  it('keeps only the fields the media type takes, under their MongoDB names', async () => {
+  it('keeps only the fields the media type takes, inside details', async () => {
     prisma.title.findFirst.mockResolvedValue({ mediaType: 'BOOK', createdById: null });
     reReadSucceeds();
 
     await post({ rating: 3, body: 'x', fields: { chapters: 12, runtimeMinutes: 90, season: 2 } });
 
-    expect(mongo.bookCreate.mock.calls[0]?.[0]).toMatchObject({ chaptersRead: 12 });
-    const saved = mongo.bookCreate.mock.calls[0]?.[0];
+    const saved = mongo.create.mock.calls[0]?.[0];
+    expect(saved).toMatchObject({ mediaType: 'BOOK', details: { chaptersRead: 12 } });
+    expect(saved.details).toEqual({ chaptersRead: 12 });
     expect(saved).not.toHaveProperty('runtimeMinutes');
-    expect(saved).not.toHaveProperty('season');
   });
 
   it('takes the header row back out when the body cannot be saved', async () => {
-    mongo.movieCreate.mockRejectedValue(new Error('mongo is down'));
+    mongo.create.mockRejectedValue(new Error('mongo is down'));
 
     const res = await post({ rating: 5, body: 'x' });
 
@@ -243,7 +241,7 @@ describe('GET /api/titles/:titleId/reviews', () => {
     ]);
     prisma.review.count.mockResolvedValue(12);
     mongo.find.mockResolvedValue([
-      { _id: 'r2', body: 'Second.', chaptersRead: 8, details: { review_year: 1999 } },
+      { _id: 'r2', body: 'Second.', details: { chaptersRead: 8, review_year: 1999 } },
       { _id: 'r1', body: 'First.' },
     ]);
 
@@ -333,7 +331,7 @@ describe('PATCH /api/reviews/:id', () => {
       .mockResolvedValueOnce(stored())
       .mockResolvedValue(reviewRow({ rating: 2 }));
     prisma.review.update.mockImplementation(async () => calls.push('pg-update'));
-    mongo.movieUpdate.mockImplementation(async () => {
+    mongo.update.mockImplementation(async () => {
       calls.push('mongo-update');
       return { matchedCount: 1 };
     });
@@ -357,7 +355,7 @@ describe('PATCH /api/reviews/:id', () => {
     expect(other.status).toBe(403);
     expect(admin.status).toBe(403);
     expect(prisma.review.update).not.toHaveBeenCalled();
-    expect(mongo.movieUpdate).not.toHaveBeenCalled();
+    expect(mongo.update).not.toHaveBeenCalled();
   });
 
   it('rejects an empty change and a rating out of range', async () => {
@@ -375,7 +373,7 @@ describe('PATCH /api/reviews/:id', () => {
       where: { id: 'r1' },
       data: { rating: 2 },
     });
-    expect(mongo.movieUpdate).not.toHaveBeenCalled();
+    expect(mongo.update).not.toHaveBeenCalled();
   });
 
   it('leaves PostgreSQL alone when only the text changes', async () => {
@@ -384,7 +382,7 @@ describe('PATCH /api/reviews/:id', () => {
     expect(res.status).toBe(200);
     expect(prisma.review.update).not.toHaveBeenCalled();
     expect(prisma.$executeRaw).not.toHaveBeenCalled();
-    expect(mongo.movieUpdate.mock.calls[0]).toEqual([{ _id: 'r1' }, { $set: { body: 'Edited.' } }]);
+    expect(mongo.update.mock.calls[0]).toEqual([{ _id: 'r1' }, { $set: { body: 'Edited.' } }]);
   });
 
   it('leaves PostgreSQL alone when the rating is sent unchanged', async () => {
@@ -395,20 +393,25 @@ describe('PATCH /api/reviews/:id', () => {
 
   it('sets the fields it is given and clears the ones the form left out', async () => {
     await patch({ fields: { runtimeMinutes: 95 } });
-    mongo.movieUpdate.mockClear();
+    // dotted paths: only these keys change, so the dataset extras beside them stay put
+    expect(mongo.update.mock.calls[0]).toEqual([
+      { _id: 'r1' },
+      { $set: { 'details.runtimeMinutes': 95 } },
+    ]);
+    mongo.update.mockClear();
     prisma.review.findUnique.mockResolvedValueOnce(
       stored({ title: { mediaType: 'BOOK', createdById: null, status: 'APPROVED' } }),
     );
     await patch({ fields: {} });
 
-    expect(mongo.bookUpdate.mock.calls[0]).toEqual([
+    expect(mongo.update.mock.calls[0]).toEqual([
       { _id: 'r1' },
-      { $unset: { chaptersRead: '' } },
+      { $unset: { 'details.chaptersRead': '' } },
     ]);
   });
 
   it('puts the old rating back when the body cannot be saved', async () => {
-    mongo.movieUpdate.mockRejectedValue(new Error('mongo is down'));
+    mongo.update.mockRejectedValue(new Error('mongo is down'));
 
     prisma.review.updateMany.mockResolvedValue({ count: 1 });
 
@@ -425,7 +428,7 @@ describe('PATCH /api/reviews/:id', () => {
   });
 
   it('keeps an edit another tab saved in between, instead of undoing over it', async () => {
-    mongo.movieUpdate.mockRejectedValue(new Error('mongo is down'));
+    mongo.update.mockRejectedValue(new Error('mongo is down'));
     prisma.review.updateMany.mockResolvedValue({ count: 0 }); // the row no longer holds our 2
 
     const res = await patch({ rating: 2, body: 'Edited.' });
@@ -436,7 +439,7 @@ describe('PATCH /api/reviews/:id', () => {
   });
 
   it('treats a review with no body in MongoDB as a failed edit, not a silent success', async () => {
-    mongo.movieUpdate.mockResolvedValue({ matchedCount: 0 });
+    mongo.update.mockResolvedValue({ matchedCount: 0 });
     prisma.review.updateMany.mockResolvedValue({ count: 1 });
 
     const res = await patch({ rating: 2, body: 'Edited.' });
@@ -449,7 +452,7 @@ describe('PATCH /api/reviews/:id', () => {
   });
 
   it('does not touch the rating back when it never changed', async () => {
-    mongo.movieUpdate.mockRejectedValue(new Error('mongo is down'));
+    mongo.update.mockRejectedValue(new Error('mongo is down'));
 
     const res = await patch({ body: 'Edited.' });
 
