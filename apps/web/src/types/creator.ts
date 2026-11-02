@@ -10,6 +10,10 @@ export interface SubmissionInput {
   name: string;
   mediaType: MediaType;
   synopsis: string;
+  /** A new image, already shrunk by `shrinkPoster`. Left out when the creator did not pick one. */
+  poster?: Blob;
+  /** Edit only: take the title's current image away. */
+  removePoster?: boolean;
 }
 
 export interface CreatorStat {

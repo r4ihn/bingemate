@@ -56,3 +56,71 @@ export interface TitleDetailDTO extends TitleSummary {
   genres: string[];
   people: TitlePersonDTO[];
 }
+
+export interface AuthorDTO {
+  id: string;
+  name: string;
+  role: Role;
+}
+
+/** Media-specific extras on a review; a title's media type decides which ones apply. */
+export interface ReviewFieldsDTO {
+  runtimeMinutes?: number;
+  chapters?: number;
+  season?: number;
+  episodes?: number;
+}
+
+export interface ReviewDTO {
+  id: string;
+  titleId: string;
+  author: AuthorDTO;
+  rating: number;
+  body: string;
+  fields: ReviewFieldsDTO;
+  createdAt: string;
+}
+
+/** A reply under a review: one flat list per review, no replies to replies. */
+export interface ReplyDTO {
+  id: string;
+  reviewId: string;
+  author: AuthorDTO;
+  body: string;
+  createdAt: string;
+  /** Set once the writer has changed the text; createdAt stays as it was. */
+  editedAt?: string;
+}
+
+/** One title on the signed-in user's list, with enough of the title to draw a card. */
+export interface ListItemDTO extends ListEntryDTO {
+  title: TitleSummary;
+}
+
+/** One genre in the browse filter, with how many approved titles carry it. */
+export interface GenreOptionDTO {
+  id: string;
+  name: string;
+  titleCount: number;
+}
+
+/** One row of GET /creator/stats: how a creators own title is doing. */
+export interface CreatorTitleStatsDTO {
+  titleId: string;
+  name: string;
+  status: TitleStatus;
+  reviewCount: number;
+  avgRating: number;
+  listAdds: number;
+}
+
+/** A trending title as stored in MongoDB: enough to draw a card without asking PostgreSQL. */
+export interface TrendingCardDTO {
+  titleId: string;
+  name: string;
+  mediaType: MediaType;
+  posterUrl?: string;
+  avgRating: number;
+  reviewCount: number;
+  score: number;
+}
