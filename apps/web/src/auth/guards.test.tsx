@@ -14,6 +14,9 @@ function routes() {
       <Route element={<ProtectedRoute roles={[Role.ADMIN]} />}>
         <Route path="/admin" element={<p>admin page</p>} />
       </Route>
+      <Route element={<ProtectedRoute roles={[Role.CREATOR]} />}>
+        <Route path="/creator" element={<p>creator page</p>} />
+      </Route>
     </Routes>
   );
 }
@@ -32,6 +35,12 @@ describe('ProtectedRoute', () => {
   it('lets an ADMIN through', () => {
     renderWithProviders(routes(), { route: '/admin', role: Role.ADMIN });
     expect(screen.getByText('admin page')).toBeInTheDocument();
+  });
+
+  it('sends an ADMIN to /forbidden when roles=[CREATOR]', () => {
+    renderWithProviders(routes(), { route: '/creator', role: Role.ADMIN });
+    expect(screen.getByText('forbidden page')).toBeInTheDocument();
+    expect(screen.queryByText('creator page')).not.toBeInTheDocument();
   });
 });
 
