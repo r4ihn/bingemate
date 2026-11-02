@@ -8,7 +8,7 @@ import { reviewsApi } from '../../api/reviews.js';
 import { db, resetDb } from '../../mocks/db.js';
 import { rate, renderWithProviders } from '../../test/utils.js';
 import type { Review } from '../../types/review.js';
-import { ReviewForm } from './ReviewForm.js';
+import { ReviewForm, ReviewEditForm } from './ReviewForm.js';
 
 const base = { id: 'mock-20', status: TitleStatus.APPROVED, avgRating: 4, reviewCount: 0 };
 const movie: TitleSummary = { ...base, name: 'Quiet Orbit', mediaType: MediaType.MOVIE };
@@ -51,6 +51,16 @@ beforeEach(() => resetDb());
 afterEach(() => vi.restoreAllMocks());
 
 describe('ReviewForm', () => {
+  it('preserves a partial TV review through editing and submission', async () => {
+    const existing = { ...fake, fields: { season: 2 } };
+    const update = vi.spyOn(reviewsApi, 'update').mockResolvedValue(existing);
+    renderWithProviders(<ReviewEditForm title={tv} existing={existing} onSubmitted={vi.fn()} />, { role: Role.CONSUMER });
+    expect(screen.getByLabelText('Season')).toHaveValue('2');
+    expect(screen.getByLabelText('Episodes watched')).toHaveValue('');
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Save changes' }));
+    expect(update).toHaveBeenCalledWith('r1', expect.objectContaining({ fields: { season: 2 } }));
+  });
+
   it('renders movie fields for MOVIE and season/episode fields for TV_SHOW', async () => {
     await setup(movie);
     expect(screen.getByLabelText('Runtime watched (minutes)')).toBeInTheDocument();
