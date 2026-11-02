@@ -4,7 +4,7 @@ import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
 import type { ListQuery, TitleSort } from './titles.schema.js';
 
-const summarySelect = {
+export const summarySelect = {
   id: true,
   name: true,
   mediaType: true,
@@ -17,7 +17,7 @@ const summarySelect = {
 
 type SummaryRow = Prisma.TitleGetPayload<{ select: typeof summarySelect }>;
 
-function toSummary(t: SummaryRow): TitleSummary {
+export function toSummary(t: SummaryRow): TitleSummary {
   return {
     id: t.id,
     name: t.name,
