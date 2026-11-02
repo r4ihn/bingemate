@@ -60,7 +60,12 @@ export const reviewsApi = {
 
   /** The signed-in user's review of this title, or null. Lets the form know before the user writes one. */
   async mine(titleId: string): Promise<Review | null> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const review = await apiFetch<ReviewDTO | null>(
+        `/titles/${encodeURIComponent(titleId)}/reviews/mine`,
+      );
+      return review === null ? null : mapReview(review);
+    }
     await delay();
     const review = db.reviews.find(
       (r) => r.titleId === titleId && r.author.id === getMockActor().id,
@@ -69,7 +74,13 @@ export const reviewsApi = {
   },
 
   async create(titleId: string, input: ReviewInput): Promise<Review> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const review = await apiFetch<ReviewDTO>(`/titles/${encodeURIComponent(titleId)}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({ rating: input.rating, body: input.body }),
+      });
+      return mapReview(review);
+    }
     await delay();
     assertCanWrite();
     if (!Number.isInteger(input.rating) || input.rating < RATING_MIN || input.rating > RATING_MAX) {
@@ -95,7 +106,13 @@ export const reviewsApi = {
 
   /** Owner only. Keeps the original date and moves the title's average by the change in rating. */
   async update(id: string, input: ReviewInput): Promise<Review> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const review = await apiFetch<ReviewDTO>(`/reviews/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ rating: input.rating, body: input.body }),
+      });
+      return mapReview(review);
+    }
     await delay();
     assertCanWrite();
     if (!Number.isInteger(input.rating) || input.rating < RATING_MIN || input.rating > RATING_MAX) {
@@ -115,7 +132,9 @@ export const reviewsApi = {
   },
 
   async remove(id: string): Promise<void> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      return apiFetch<void>(`/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
     await delay();
     const review = db.reviews.find((r) => r.id === id);
     if (review) applyToAggregates(review.titleId, review.rating, -1);

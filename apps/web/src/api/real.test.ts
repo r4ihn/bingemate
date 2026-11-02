@@ -1,6 +1,6 @@
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ApiError } from './client.js';
+import { ApiError, setUnauthorizedHandler } from './client.js';
 import { repliesApi, reviewsApi } from './reviews.js';
 import { titlesApi } from './titles.js';
 
@@ -156,6 +156,112 @@ describe('reviewsApi.listByTitle (real)', () => {
   });
 });
 
+describe('reviewsApi writes (real)', () => {
+  const review = {
+    id: 'r1',
+    titleId: 't1',
+    author,
+    rating: 5,
+    body: 'Loved it',
+    createdAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  it('mine returns null when the user has no review', async () => {
+    fetchMock.mockReturnValue(json(null));
+
+    expect(await reviewsApi.mine('t1')).toBeNull();
+    expect(lastCall().url).toBe('/api/titles/t1/reviews/mine');
+    expect(lastCall().init.credentials).toBe('include');
+    expect(lastCall().init.method).toBeUndefined();
+  });
+
+  it('mine maps the review and encodes the title id', async () => {
+    fetchMock.mockReturnValue(json({ ...review, fields: { legacy: 'ignored' } }));
+
+    const result = await reviewsApi.mine('a/b c');
+
+    expect(result).toEqual(review);
+    expect(result).not.toHaveProperty('fields');
+    expect(lastCall().url).toBe('/api/titles/a%2Fb%20c/reviews/mine');
+  });
+
+  it('create posts only rating and body', async () => {
+    fetchMock.mockReturnValue(json({ ...review, fields: {} }, 201));
+    const input = { rating: 5, body: 'Loved it', fields: { legacy: 'ignored' } };
+
+    expect(await reviewsApi.create('a/b c', input)).toEqual(review);
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/titles/a%2Fb%20c/reviews');
+    expect(init.method).toBe('POST');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({ rating: 5, body: 'Loved it' });
+  });
+
+  it.each([
+    ['r1', '/api/reviews/r1'],
+    ['r/1 c', '/api/reviews/r%2F1%20c'],
+  ])('update patches the review %s', async (id, path) => {
+    const updated = { ...review, rating: 4, body: 'Still good' };
+    fetchMock.mockReturnValue(json({ ...updated, fields: {} }));
+    const input = { rating: 4, body: 'Still good', fields: { legacy: 'ignored' } };
+
+    expect(await reviewsApi.update(id, input)).toEqual(updated);
+
+    const { url, init } = lastCall();
+    expect(url).toBe(path);
+    expect(init.method).toBe('PATCH');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({ rating: 4, body: 'Still good' });
+  });
+
+  it('remove sends DELETE and resolves undefined on 204', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(reviewsApi.remove('r/1 c')).resolves.toBeUndefined();
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/reviews/r%2F1%20c');
+    expect(init.method).toBe('DELETE');
+    expect(init.credentials).toBe('include');
+    expect(init.body).toBeUndefined();
+  });
+
+  it('a 409 on create carries the server message', async () => {
+    fetchMock.mockReturnValue(json({ error: 'You have already reviewed this title' }, 409));
+
+    await expect(reviewsApi.create('t1', { rating: 5, body: 'Loved it' })).rejects.toMatchObject({
+      status: 409,
+      message: 'You have already reviewed this title',
+    });
+  });
+
+  it('an admin review attempt carries the server message', async () => {
+    fetchMock.mockReturnValue(json({ error: 'Admins cannot write reviews or replies' }, 403));
+
+    await expect(reviewsApi.create('t1', { rating: 5, body: 'Loved it' })).rejects.toMatchObject({
+      status: 403,
+      message: 'Admins cannot write reviews or replies',
+    });
+  });
+
+  it('a 401 on create calls the unauthorized handler', async () => {
+    const unauthorized = vi.fn();
+    setUnauthorizedHandler(unauthorized);
+    fetchMock.mockReturnValue(json({ error: 'Unauthorized' }, 401));
+
+    try {
+      await expect(reviewsApi.create('t1', { rating: 5, body: 'Loved it' })).rejects.toMatchObject({
+        status: 401,
+        message: 'Unauthorized',
+      });
+      expect(unauthorized).toHaveBeenCalledTimes(1);
+    } finally {
+      setUnauthorizedHandler(null);
+    }
+  });
+});
+
 describe('repliesApi.list (real)', () => {
   it('requests up to 200 replies and unwraps data, keeping API order', async () => {
     fetchMock.mockReturnValue(
@@ -248,12 +354,7 @@ describe('repliesApi.list (real)', () => {
 });
 
 describe('methods that stay mock-only', () => {
-  const input = { rating: 4, body: 'x' };
   it.each([
-    ['reviewsApi.mine', () => reviewsApi.mine('t1')],
-    ['reviewsApi.create', () => reviewsApi.create('t1', input)],
-    ['reviewsApi.update', () => reviewsApi.update('r1', input)],
-    ['reviewsApi.remove', () => reviewsApi.remove('r1')],
     ['repliesApi.create', () => repliesApi.create('r1', 'hi')],
     ['repliesApi.update', () => repliesApi.update('p1', 'hi')],
     ['repliesApi.remove', () => repliesApi.remove('p1')],
