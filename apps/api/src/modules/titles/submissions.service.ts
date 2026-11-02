@@ -25,6 +25,15 @@ export function toSubmission(row: SubmissionRow): SubmissionDTO {
   };
 }
 
+export async function listOwnSubmissions(user: AuthUser): Promise<SubmissionDTO[]> {
+  const rows = await prisma.title.findMany({
+    where: { createdById: user.id },
+    orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+    select: submissionSelect,
+  });
+  return rows.map(toSubmission);
+}
+
 export async function createSubmission(
   user: AuthUser,
   input: CreateSubmissionInput,

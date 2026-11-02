@@ -6,10 +6,10 @@ process.env.DATABASE_URL ??= 'postgresql://u:p@localhost:5432/db?schema=public';
 process.env.MONGO_URI ??= 'mongodb://localhost:27017/bingemate';
 process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 
-// No databases: check the write arguments and return the selected title fields.
+// No databases: check the query arguments and return the selected title fields.
 const calls: string[] = [];
 const prisma = {
-  title: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  title: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
   review: { findMany: vi.fn() },
 };
 const mongo = {
@@ -38,6 +38,7 @@ const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
 
 beforeEach(() => {
   calls.length = 0;
+  prisma.title.findMany.mockReset().mockResolvedValue([]);
   prisma.title.delete.mockReset().mockImplementation(async () => calls.push('pg-delete'));
   prisma.review.findMany.mockReset().mockImplementation(async () => {
     calls.push('review-ids');
@@ -74,6 +75,74 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.restoreAllMocks();
+});
+
+describe('GET /api/creator/titles', () => {
+  it('needs a signed-in user', async () => {
+    const res = await request(app).get('/api/creator/titles');
+
+    expect(res.status).toBe(401);
+    expect(res.body.error).toBeTypeOf('string');
+    expect(prisma.title.findMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['CONSUMER', 'ADMIN'] as const)('refuses a %s', async (role) => {
+    const res = await request(app).get('/api/creator/titles').set(as('u1', role));
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBeTypeOf('string');
+    expect(prisma.title.findMany).not.toHaveBeenCalled();
+  });
+
+  it.each(['', '?createdById=other'])(
+    'lists only the signed-in creator\'s titles, newest first (query: %s)',
+    async (query) => {
+      const res = await request(app).get(`/api/creator/titles${query}`).set(as());
+
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual([]);
+      expect(prisma.title.findMany).toHaveBeenCalledTimes(1);
+      expect(prisma.title.findMany).toHaveBeenCalledWith({
+        where: { createdById: 'c1' },
+        orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
+        select: {
+          id: true,
+          name: true,
+          mediaType: true,
+          status: true,
+          avgRating: true,
+          reviewCount: true,
+          posterUrl: true,
+          createdById: true,
+          description: true,
+          rejectionReason: true,
+        },
+      });
+    },
+  );
+
+  it('returns status and rejection reason for every status in database order', async () => {
+    const rows = [
+      { id: 't3', status: 'PENDING', rejectionReason: null },
+      { id: 't2', status: 'APPROVED', rejectionReason: null },
+      { id: 't1', status: 'REJECTED', rejectionReason: 'Needs more detail.' },
+    ].map((fields) => ({
+      name: 'Dune',
+      mediaType: 'MOVIE',
+      avgRating: 0,
+      reviewCount: 0,
+      posterUrl: null,
+      createdById: 'c1',
+      description: 'Sand.',
+      ...fields,
+    }));
+    prisma.title.findMany.mockResolvedValue(rows);
+
+    const res = await request(app).get('/api/creator/titles').set(as());
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(rows.map(({ posterUrl: _posterUrl, ...submission }) => submission));
+  });
 });
 
 describe('DELETE /api/titles/:id', () => {
