@@ -2,10 +2,12 @@ import { resolvePosterUrl } from './posterUrl.js';
 import type {
   ReplyDTO,
   ReviewDTO,
+  SubmissionDTO,
   TitleDetailDTO,
   TitleDetailsDTO,
   TitleSummary,
 } from '@bingemate/shared';
+import type { Submission } from '../types/creator.js';
 import type { Reply, Review } from '../types/review.js';
 import type { TitleDetail } from '../types/title.js';
 
@@ -21,6 +23,13 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
     synopsis: '',
     ...(s.posterUrl !== undefined && { posterUrl: resolvePosterUrl(s.posterUrl) }),
     ...(s.createdById !== undefined && { createdById: s.createdById }),
+  };
+}
+
+export function mapSubmission(dto: SubmissionDTO): Submission {
+  return {
+    title: { ...summaryToTitle(dto), synopsis: dto.description ?? '' },
+    rejectionReason: dto.rejectionReason ?? undefined,
   };
 }
 

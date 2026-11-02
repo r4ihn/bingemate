@@ -1,4 +1,10 @@
-import { type CreatorTitleStatsDTO, ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
+import {
+  type CreatorTitleStatsDTO,
+  ListStatus,
+  MediaType,
+  Role,
+  TitleStatus,
+} from '@bingemate/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, setUnauthorizedHandler } from './client.js';
 import { creatorApi } from './creator.js';
@@ -86,11 +92,6 @@ describe('creatorApi.stats (real)', () => {
       status: 403,
       message: 'Only creators can view stats',
     });
-  });
-
-  it('submissions still rejects as not wired against the real API', async () => {
-    await expect(creatorApi.submissions()).rejects.toThrow(/not wired/i);
-    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
 
@@ -558,4 +559,182 @@ describe('repliesApi writes (real)', () => {
       message: 'Admins cannot write reviews or replies',
     });
   });
+});
+
+describe('creatorApi submissions (real)', () => {
+  const dto = {
+    ...summary,
+    status: TitleStatus.PENDING,
+    description: 'Sand.',
+    rejectionReason: null,
+  };
+  const input = { name: 'Dune', mediaType: MediaType.MOVIE, synopsis: 'Sand.' };
+
+  it('submissions maps rows and the rejection reason', async () => {
+    fetchMock.mockReturnValueOnce(
+      json([
+        dto,
+        {
+          ...dto,
+          id: 't2',
+          description: null,
+          rejectionReason: 'Fix it',
+          status: TitleStatus.REJECTED,
+        },
+      ]),
+    );
+    expect(await creatorApi.submissions()).toEqual([
+      {
+        title: { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.' },
+        rejectionReason: undefined,
+      },
+      {
+        title: { ...summary, id: 't2', status: TitleStatus.REJECTED, synopsis: '' },
+        rejectionReason: 'Fix it',
+      },
+    ]);
+    expect(lastCall().url).toBe('/api/creator/titles');
+    expect(lastCall().init.method).toBeUndefined();
+    expect(lastCall().init.credentials).toBe('include');
+  });
+
+  it('submit posts the title, then puts the image as the raw file', async () => {
+    const poster = new Blob(['image'], { type: 'image/webp' });
+    fetchMock
+      .mockReturnValueOnce(json({ ...dto, id: 'a/b c' }, 201))
+      .mockReturnValueOnce(json({ posterUrl: '/new.webp' }));
+    const result = await creatorApi.submit({ ...input, poster });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe('/api/titles');
+    expect(init.method).toBe('POST');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({
+      name: 'Dune',
+      mediaType: 'MOVIE',
+      description: 'Sand.',
+    });
+    expect(lastCall().url).toBe('/api/titles/a%2Fb%20c/poster');
+    expect(lastCall().init.method).toBe('PUT');
+    expect(lastCall().init.credentials).toBe('include');
+    expect(lastCall().init.body).toBe(poster);
+    expect(lastCall().init.headers).toEqual({ 'Content-Type': 'image/webp' });
+    expect(result.title).toMatchObject({ id: 'a/b c', synopsis: 'Sand.', posterUrl: '/new.webp' });
+  });
+
+  it('submit without an image makes one call', async () => {
+    fetchMock.mockReturnValueOnce(json(dto, 201));
+    expect(await creatorApi.submit(input)).toMatchObject({
+      title: { id: 't1', synopsis: 'Sand.' },
+      rejectionReason: undefined,
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('submit tells the user the title exists when only the image fails', async () => {
+    fetchMock
+      .mockReturnValueOnce(json(dto, 201))
+      .mockReturnValueOnce(json({ error: 'Use a JPEG, PNG or WebP image' }, 415));
+    const error: unknown = await creatorApi
+      .submit({ ...input, poster: new Blob(['bad'], { type: 'image/gif' }) })
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 415, message: expect.stringContaining('saved') });
+    expect(error).toMatchObject({
+      message: expect.stringContaining('Use a JPEG, PNG or WebP image'),
+    });
+  });
+
+  it.each([
+    [{ name: 'Edited', mediaType: MediaType.BOOK, synopsis: undefined }, { name: 'Edited' }],
+    [{ name: undefined, synopsis: '' }, { description: '' }],
+    [
+      { name: 'Edited', synopsis: 'New.' },
+      { name: 'Edited', description: 'New.' },
+    ],
+  ])('update sends only what changed and never mediaType: %j', async (changes, body) => {
+    fetchMock.mockReturnValueOnce(
+      json({ ...dto, name: 'Server name', description: 'Server description' }),
+    );
+    const result = await creatorApi.update('a/b c', changes);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(lastCall().url).toBe('/api/titles/a%2Fb%20c');
+    expect(lastCall().init.method).toBe('PATCH');
+    expect(lastCall().init.credentials).toBe('include');
+    expect(JSON.parse(lastCall().init.body as string)).toEqual(body);
+    expect(result.title).toMatchObject({ name: 'Server name', synopsis: 'Server description' });
+  });
+
+  it('update with removePoster sends DELETE', async () => {
+    fetchMock
+      .mockReturnValueOnce(json({ ...dto, posterUrl: '/old.jpg' }))
+      .mockResolvedValueOnce(new Response(null, { status: 204 }));
+    const result = await creatorApi.update('a/b c', { name: 'Edited', removePoster: true });
+    expect(fetchMock.mock.calls.map((c) => [c[0], c[1].method])).toEqual([
+      ['/api/titles/a%2Fb%20c', 'PATCH'],
+      ['/api/titles/a%2Fb%20c/poster', 'DELETE'],
+    ]);
+    expect(lastCall().init.body).toBeUndefined();
+    expect(result.title.posterUrl).toBeUndefined();
+  });
+
+  it.each(['put', 'delete'])(
+    'an image-only update skips PATCH and looks up its own title: %s',
+    async (action) => {
+      const poster = new Blob(['new'], { type: 'image/png' });
+      fetchMock.mockReturnValueOnce(
+        json([
+          { ...dto, id: 'other' },
+          { ...dto, id: 'a/b c', posterUrl: '/old.jpg' },
+        ]),
+      );
+      if (action === 'put') fetchMock.mockReturnValueOnce(json({ posterUrl: '/new.png' }));
+      else fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+      const result = await creatorApi.update('a/b c', {
+        name: undefined,
+        synopsis: undefined,
+        mediaType: MediaType.BOOK,
+        ...(action === 'put' ? { poster } : { removePoster: true }),
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/creator/titles');
+      expect(fetchMock.mock.calls[0]?.[1].method).toBeUndefined();
+      expect(lastCall().url).toBe('/api/titles/a%2Fb%20c/poster');
+      expect(lastCall().init.method).toBe(action === 'put' ? 'PUT' : 'DELETE');
+      if (action === 'put') {
+        expect(lastCall().init.body).toBe(poster);
+        expect(lastCall().init.headers).toEqual({ 'Content-Type': 'image/png' });
+      }
+      expect(result.title.id).toBe('a/b c');
+      expect(result.title.posterUrl).toBe(action === 'put' ? '/new.png' : undefined);
+    },
+  );
+
+  it('an image-only update reports a missing own title', async () => {
+    fetchMock.mockReturnValueOnce(json([]));
+    await expect(creatorApi.update('missing', { removePoster: true })).rejects.toMatchObject({
+      status: 404,
+      message: 'Title not found',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it.each(['submissions', 'submit', 'update'] as const)(
+    'a 403 shows the server message for %s',
+    async (method) => {
+      fetchMock.mockReturnValueOnce(json({ error: 'Only creators can edit titles' }, 403));
+      const request =
+        method === 'submissions'
+          ? creatorApi.submissions()
+          : method === 'submit'
+            ? creatorApi.submit(input)
+            : creatorApi.update('t1', { name: 'Edited' });
+      await expect(request).rejects.toMatchObject({
+        name: 'ApiError',
+        status: 403,
+        message: 'Only creators can edit titles',
+      });
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+    },
+  );
 });
