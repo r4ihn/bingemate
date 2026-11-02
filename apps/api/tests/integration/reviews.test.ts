@@ -157,7 +157,7 @@ describe('POST /api/titles/:titleId/reviews', () => {
     ['no body', { rating: 4 }],
     ['an unknown field', { rating: 4, body: 'x', fields: { bogus: 1 } }],
     ['an extra top-level key', { rating: 4, body: 'x', userId: 'someone-else' }],
-    ['a negative runtime', { rating: 4, body: 'x', fields: { runtimeMinutes: -5 } }],
+    ['a media-specific field', { rating: 4, body: 'x', fields: { runtimeMinutes: 120 } }],
   ])('rejects %s with 400 and writes nothing', async (_label, payload) => {
     const res = await post(payload);
 
@@ -169,7 +169,7 @@ describe('POST /api/titles/:titleId/reviews', () => {
   it('saves the header and the new totals, then the body, in that order', async () => {
     reReadSucceeds();
 
-    const res = await post({ rating: 5, body: '  Great.  ', fields: { runtimeMinutes: 120 } });
+    const res = await post({ rating: 5, body: '  Great.  ' });
 
     expect(res.status).toBe(201);
     expect(calls).toEqual(['lock', 'pg-insert', 'recompute', 'mongo-insert']);
@@ -188,7 +188,6 @@ describe('POST /api/titles/:titleId/reviews', () => {
       userId: 'u1',
       mediaType: 'MOVIE',
       body: 'Great.',
-      details: { runtimeMinutes: 120 },
     });
     expect(res.body).toMatchObject({
       id: 'r1',
@@ -198,16 +197,19 @@ describe('POST /api/titles/:titleId/reviews', () => {
     });
   });
 
-  it('keeps only the fields the media type takes, inside details', async () => {
-    prisma.title.findFirst.mockResolvedValue({ mediaType: 'BOOK', createdById: null });
+  it.each(['MOVIE', 'BOOK', 'TV_SHOW'])('saves the same stars-and-text body for %s', async (type) => {
+    prisma.title.findFirst.mockResolvedValue({ mediaType: type, createdById: null });
     reReadSucceeds();
 
-    await post({ rating: 3, body: 'x', fields: { chapters: 12, runtimeMinutes: 90, season: 2 } });
+    await post({ rating: 3, body: 'x' });
 
-    const saved = mongo.create.mock.calls[0]?.[0];
-    expect(saved).toMatchObject({ mediaType: 'BOOK', details: { chaptersRead: 12 } });
-    expect(saved.details).toEqual({ chaptersRead: 12 });
-    expect(saved).not.toHaveProperty('runtimeMinutes');
+    expect(mongo.create.mock.calls[0]?.[0]).toEqual({
+      _id: 'r1',
+      titleId: 't1',
+      userId: 'u1',
+      mediaType: type,
+      body: 'x',
+    });
   });
 
   it('takes the header row back out when the body cannot be saved', async () => {
@@ -241,7 +243,7 @@ describe('GET /api/titles/:titleId/reviews', () => {
     ]);
     prisma.review.count.mockResolvedValue(12);
     mongo.find.mockResolvedValue([
-      { _id: 'r2', body: 'Second.', details: { chaptersRead: 8, review_year: 1999 } },
+      { _id: 'r2', body: 'Second.', details: { review_year: 1999 } },
       { _id: 'r1', body: 'First.' },
     ]);
 
@@ -258,12 +260,12 @@ describe('GET /api/titles/:titleId/reviews', () => {
     expect(res.body.data[0]).toMatchObject({
       id: 'r2',
       body: 'Second.',
-      fields: { chapters: 8 },
       // no username yet: a short name from the id, never the email
       author: { name: 'user-u2', role: 'CREATOR' },
     });
+    // the dataset's extras stay in MongoDB, and a review is only stars and text
     expect(res.body.data[0]).not.toHaveProperty('details');
-    expect(res.body.data[1].fields).toEqual({});
+    expect(res.body.data[0]).not.toHaveProperty('fields');
   });
 
   it('shows empty text when a body is missing from MongoDB', async () => {
@@ -391,23 +393,12 @@ describe('PATCH /api/reviews/:id', () => {
     expect(prisma.review.update).not.toHaveBeenCalled();
   });
 
-  it('sets the fields it is given and clears the ones the form left out', async () => {
-    await patch({ fields: { runtimeMinutes: 95 } });
-    // dotted paths: only these keys change, so the dataset extras beside them stay put
-    expect(mongo.update.mock.calls[0]).toEqual([
-      { _id: 'r1' },
-      { $set: { 'details.runtimeMinutes': 95 } },
-    ]);
-    mongo.update.mockClear();
-    prisma.review.findUnique.mockResolvedValueOnce(
-      stored({ title: { mediaType: 'BOOK', createdById: null, status: 'APPROVED' } }),
-    );
-    await patch({ fields: {} });
+  it('refuses media-specific fields and changes nothing', async () => {
+    const res = await patch({ fields: { runtimeMinutes: 95 } });
 
-    expect(mongo.update.mock.calls[0]).toEqual([
-      { _id: 'r1' },
-      { $unset: { 'details.chaptersRead': '' } },
-    ]);
+    expect(res.status).toBe(400);
+    expect(mongo.update).not.toHaveBeenCalled();
+    expect(prisma.review.update).not.toHaveBeenCalled();
   });
 
   it('puts the old rating back when the body cannot be saved', async () => {

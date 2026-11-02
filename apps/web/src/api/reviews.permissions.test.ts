@@ -4,7 +4,7 @@ import { db, resetDb, setMockActor } from '../mocks/db.js';
 import { ApiError } from './client.js';
 import { repliesApi, reviewsApi } from './reviews.js';
 
-const input = { rating: 4, body: 'Fine', fields: { runtimeMinutes: 90 } };
+const input = { rating: 4, body: 'Fine' };
 const asRole = (role: Role, id = 'actor-1') =>
   setMockActor({ id, email: `${role.toLowerCase()}@test.dev`, role });
 const refused = (p: Promise<unknown>, status: number) =>

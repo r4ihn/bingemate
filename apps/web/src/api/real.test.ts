@@ -124,7 +124,6 @@ describe('reviewsApi.listByTitle (real)', () => {
             author,
             rating: 5,
             body: 'Great',
-            fields: {},
             createdAt: '2026-01-01T00:00:00.000Z',
           },
         ],
@@ -138,7 +137,7 @@ describe('reviewsApi.listByTitle (real)', () => {
     expect(url).toBe('/api/titles/t1/reviews?page=3&pageSize=5');
     expect(init.credentials).toBe('include');
     expect(res).toMatchObject({ page: 3, pageSize: 5, total: 11 });
-    expect(res.data[0]).toMatchObject({ id: 'r1', fields: {}, author });
+    expect(res.data[0]).toMatchObject({ id: 'r1', author });
   });
 
   it('surfaces a 404 as ApiError', async () => {
@@ -249,7 +248,7 @@ describe('repliesApi.list (real)', () => {
 });
 
 describe('methods that stay mock-only', () => {
-  const input = { rating: 4, body: 'x', fields: { runtimeMinutes: 90 } };
+  const input = { rating: 4, body: 'x' };
   it.each([
     ['reviewsApi.mine', () => reviewsApi.mine('t1')],
     ['reviewsApi.create', () => reviewsApi.create('t1', input)],

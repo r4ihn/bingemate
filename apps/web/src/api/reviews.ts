@@ -86,7 +86,6 @@ export const reviewsApi = {
       author: { ...getMockActor() },
       rating: input.rating,
       body: input.body,
-      fields: input.fields,
       createdAt: new Date().toISOString(),
     };
     db.reviews.push(review);
@@ -111,7 +110,6 @@ export const reviewsApi = {
     applyToAggregates(review.titleId, review.rating, -1);
     review.rating = input.rating;
     review.body = input.body;
-    review.fields = input.fields;
     applyToAggregates(review.titleId, review.rating, 1);
     return clone(review);
   },
