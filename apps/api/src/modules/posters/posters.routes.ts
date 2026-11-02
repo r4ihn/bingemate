@@ -2,10 +2,11 @@ import express, { Router } from 'express';
 import type { NextFunction, Request, Response } from 'express';
 import rateLimit from 'express-rate-limit';
 import { z } from 'zod';
-import { authenticate } from '../../middleware/authenticate.js';
+import { authenticate, optionalAuthenticate } from '../../middleware/authenticate.js';
 import { HttpError } from '../../middleware/errorHandler.js';
 import { validate } from '../../middleware/validate.js';
-import { route, userOf } from '../../utils/asyncRoute.js';
+import { userOf } from '../../utils/asyncRoute.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import { MAX_IMAGE_BYTES } from './image.js';
 import { deletePoster, getPoster, putPoster } from './posters.service.js';
 
@@ -40,9 +41,10 @@ export const posterRouter: Router = Router({ mergeParams: true });
 
 posterRouter.get(
   '/',
+  optionalAuthenticate,
   validate(titleIdParamSchema, 'params'),
-  route(async (req, res) => {
-    const { contentType, data, version } = await getPoster(req.params['titleId'] as string);
+  asyncHandler(async (req, res) => {
+    const { contentType, data, version, isPublic } = await getPoster(req.params['titleId'] as string, req.user);
     // The link a title hands out carries ?v=<version>. Only a request for exactly that version may
     // be kept for a year; a missing or old ?v= must be asked again, or a replaced image could stay
     // pinned under an old address.
@@ -50,8 +52,9 @@ posterRouter.get(
     res
       .set({
         'Content-Type': contentType,
-        'Cache-Control': current ? 'public, max-age=31536000, immutable' : 'no-cache',
+        'Cache-Control': isPublic ? (current ? 'public, max-age=31536000, immutable' : 'no-cache') : 'private, no-store',
         'X-Content-Type-Options': 'nosniff',
+        Vary: 'Cookie',
       })
       .send(data);
   }),
@@ -64,7 +67,7 @@ posterRouter.put(
   authenticate,
   validate(titleIdParamSchema, 'params'),
   rawImage,
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await putPoster(userOf(req), req.params['titleId'] as string, req.body));
   }),
 );
@@ -74,7 +77,7 @@ posterRouter.delete(
   uploadLimiter,
   authenticate,
   validate(titleIdParamSchema, 'params'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     await deletePoster(userOf(req), req.params['titleId'] as string);
     res.status(204).end();
   }),

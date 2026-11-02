@@ -1,3 +1,5 @@
+import { assertCanWrite } from '../../utils/assertCanWrite.js';
+import { toSkipTake } from '../../utils/pagination.js';
 import type { Prisma } from '@prisma/client';
 import { Role } from '@bingemate/shared';
 import type { AuthUser, MediaType, Paginated, ReviewDTO, ReviewFieldsDTO } from '@bingemate/shared';
@@ -40,9 +42,7 @@ const FIELD_KEYS: Record<MediaType, [keyof ReviewFieldsDTO, string][]> = {
 const failed = (what: string) =>
   new HttpError(502, `Could not ${what} the review. Nothing was changed, please try again.`);
 
-function assertCanWrite(user: AuthUser): void {
-  if (user.role === Role.ADMIN) throw new HttpError(403, 'Admins cannot write reviews or replies');
-}
+
 
 /** Keeps only the fields this media type takes, under their MongoDB names. */
 function mongoFields(type: MediaType, fields: ReviewFieldsDTO = {}): Record<string, number> {
@@ -116,8 +116,7 @@ export async function listReviews(
       where: { titleId },
       include,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      ...toSkipTake({ page, pageSize }),
     }),
     prisma.review.count({ where: { titleId } }),
   ]);

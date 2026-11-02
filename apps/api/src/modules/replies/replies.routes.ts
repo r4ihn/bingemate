@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { authenticate } from '../../middleware/authenticate.js';
 import { validate } from '../../middleware/validate.js';
-import { route, userOf } from '../../utils/asyncRoute.js';
+import { userOf } from '../../utils/asyncRoute.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import {
   replyBodySchema,
   replyIdParamSchema,
@@ -17,7 +18,7 @@ reviewRepliesRouter.get(
   '/',
   validate(reviewIdParamSchema, 'params'),
   validate(replyListQuerySchema, 'query'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     const { page, pageSize } = req.query as unknown as { page: number; pageSize: number };
     res.json(await listReplies(req.params['reviewId'] as string, page, pageSize));
   }),
@@ -28,7 +29,7 @@ reviewRepliesRouter.post(
   authenticate,
   validate(reviewIdParamSchema, 'params'),
   validate(replyBodySchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res
       .status(201)
       .json(await createReply(userOf(req), req.params['reviewId'] as string, req.body.body));
@@ -43,7 +44,7 @@ repliesRouter.patch(
   authenticate,
   validate(replyIdParamSchema, 'params'),
   validate(replyBodySchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await updateReply(userOf(req), req.params['id'] as string, req.body.body));
   }),
 );
@@ -52,7 +53,7 @@ repliesRouter.delete(
   '/:id',
   authenticate,
   validate(replyIdParamSchema, 'params'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     await deleteReply(userOf(req), req.params['id'] as string);
     res.status(204).end();
   }),

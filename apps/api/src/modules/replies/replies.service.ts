@@ -1,3 +1,5 @@
+import { assertCanWrite } from '../../utils/assertCanWrite.js';
+import { toSkipTake } from '../../utils/pagination.js';
 import { isValidObjectId } from 'mongoose';
 import { Role } from '@bingemate/shared';
 import type { AuthUser, AuthorDTO, Paginated, ReplyDTO } from '@bingemate/shared';
@@ -15,9 +17,7 @@ interface ReplyDoc {
   editedAt?: Date | null;
 }
 
-function assertCanWrite(user: AuthUser): void {
-  if (user.role === Role.ADMIN) throw new HttpError(403, 'Admins cannot write reviews or replies');
-}
+
 
 /** A writer whose account is gone still has their words shown, under a neutral name. */
 const removedUser = (id: string): AuthorDTO => ({ id, name: 'Deleted user', role: Role.CONSUMER });
@@ -56,11 +56,12 @@ export async function listReplies(
   });
   if (!review) throw new HttpError(404, 'Review not found');
 
+  const { skip, take } = toSkipTake({ page, pageSize });
   const [docs, total] = await Promise.all([
     Reply.find({ reviewId })
       .sort({ createdAt: 1, _id: 1 })
-      .skip((page - 1) * pageSize)
-      .limit(pageSize)
+      .skip(skip)
+      .limit(take)
       .lean() as unknown as Promise<ReplyDoc[]>,
     Reply.countDocuments({ reviewId }),
   ]);
