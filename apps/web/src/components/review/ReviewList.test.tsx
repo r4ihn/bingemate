@@ -12,6 +12,20 @@ import { ReviewList } from './ReviewList.js';
 afterEach(() => vi.restoreAllMocks());
 
 describe('ReviewList with unexpected data', () => {
+  it.each([
+    [{ season: 2 }, 'Season 2'],
+    [{ episodes: 8 }, '8 episodes'],
+  ])('displays partial TV fields %j', async (fields, label) => {
+    const review: Review = {
+      id: 'partial', titleId: 't1', author: { id: 'a', name: 'someone', role: Role.CONSUMER },
+      rating: 4, body: 'Partial TV details', fields, createdAt: new Date().toISOString(),
+    };
+    vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({ data: [review], page: 1, pageSize: 5, total: 1 });
+    renderWithProviders(<ReviewList titleId="t1" />);
+    expect(await screen.findByText(label)).toBeInTheDocument();
+    expect(document.body.textContent).not.toMatch(/undefined/);
+  });
+
   it('never prints "undefined" for a review whose media fields have an unknown shape', async () => {
     const odd = {
       id: 'r-odd',

@@ -82,6 +82,7 @@ function Form({
     }
     if (!body.trim()) found.body = 'Write something about this title before posting';
     for (const f of config) {
+      if (f.optional && !(media[f.name] ?? '').trim()) continue;
       const n = whole(media[f.name] ?? '');
       if (n === null || n < (f.min ?? 0))
         found[f.name] = `${f.label}: enter a whole number, ${f.min ?? 0} or more`;
@@ -94,7 +95,7 @@ function Form({
     setPending(true);
     try {
       const fields = Object.fromEntries(
-        config.map((f) => [f.name, Number(media[f.name])]),
+        config.filter((f) => !f.optional || (media[f.name] ?? '').trim()).map((f) => [f.name, Number(media[f.name])]),
       ) as unknown as ReviewFields;
       const input = { rating, body: body.trim(), fields };
       const review = existing
