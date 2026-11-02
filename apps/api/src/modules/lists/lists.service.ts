@@ -1,3 +1,4 @@
+import { toSkipTake } from '../../utils/pagination.js';
 import { Prisma } from '@prisma/client';
 import type { AuthUser, ListItemDTO, ListStatus, Paginated } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
@@ -30,8 +31,7 @@ export async function listMine(user: AuthUser, query: ListQuery): Promise<Pagina
       where,
       include,
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-      skip: (page - 1) * pageSize,
-      take: pageSize,
+      ...toSkipTake({ page, pageSize }),
     }),
     prisma.listEntry.count({ where }),
   ]);
