@@ -99,9 +99,10 @@ describe('GET /api/trending', () => {
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ data: [] });
+    expect(prisma.title.findMany).not.toHaveBeenCalled();
   });
 
-  it('reads MongoDB only: no type filter, limit 20, best score first then title id', async () => {
+  it('reads MongoDB with no type filter, limit 20, best score first then title id', async () => {
     await request(app).get('/api/trending');
 
     expect(trendingCard.find).toHaveBeenCalledWith({});
@@ -183,6 +184,50 @@ describe('GET /api/trending', () => {
           score: 4.2,
         },
       ],
+    });
+  });
+
+  it('does not return a card whose title is no longer approved', async () => {
+    chain.lean.mockResolvedValue([card()]);
+    prisma.title.findMany.mockResolvedValue([]);
+
+    const res = await request(app).get('/api/trending?limit=1');
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ data: [] });
+    expect(trendingCard.find).toHaveBeenCalledTimes(1);
+    expect(chain.limit).toHaveBeenCalledWith(1);
+  });
+
+  it('keeps score order after filtering unapproved titles', async () => {
+    chain.lean.mockResolvedValue([
+      card({ titleId: 't3', score: 4.9 }),
+      card({ titleId: 't2', score: 4.8 }),
+      card({ titleId: 't1', score: 4.2 }),
+    ]);
+    prisma.title.findMany.mockResolvedValue([{ id: 't1' }, { id: 't3' }]);
+
+    const res = await request(app).get('/api/trending');
+
+    expect(res.status).toBe(200);
+    expect(
+      res.body.data.map((c: { titleId: string; score: number }) => [c.titleId, c.score]),
+    ).toEqual([
+      ['t3', 4.9],
+      ['t1', 4.2],
+    ]);
+  });
+
+  it('looks up only the returned card ids with status APPROVED and selects only ids', async () => {
+    chain.lean.mockResolvedValue([card({ titleId: 't2' }), card({ titleId: 't1' })]);
+
+    const res = await request(app).get('/api/trending?type=BOOK&limit=2');
+
+    expect(res.status).toBe(200);
+    expect(prisma.title.findMany).toHaveBeenCalledTimes(1);
+    expect(prisma.title.findMany).toHaveBeenCalledWith({
+      where: { id: { in: ['t2', 't1'] }, status: 'APPROVED' },
+      select: { id: true },
     });
   });
 });

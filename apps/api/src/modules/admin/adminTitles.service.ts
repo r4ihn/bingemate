@@ -36,7 +36,7 @@ export async function setTitleStatus(
     where: { id },
     data: {
       status,
-      rejectionReason: status === 'REJECTED' ? rejectionReason?.trim() ?? null : null,
+      rejectionReason: status === 'REJECTED' ? (rejectionReason?.trim() ?? null) : null,
     },
     select: submissionSelect,
   });

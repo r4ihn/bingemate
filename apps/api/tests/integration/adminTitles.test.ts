@@ -53,11 +53,14 @@ beforeEach(() => {
   prisma.title.count.mockResolvedValue(31);
   prisma.title.findUnique.mockResolvedValue({ id: 't1' });
   prisma.title.update.mockImplementation(async ({ where, data }) => ({
-    ...submission(), posterUrl: null, id: where.id, ...data,
+    ...submission(),
+    posterUrl: null,
+    id: where.id,
+    ...data,
   }));
-  prisma.$transaction.mockReset().mockImplementation(
-    async (queries: Promise<unknown>[]) => Promise.all(queries),
-  );
+  prisma.$transaction
+    .mockReset()
+    .mockImplementation(async (queries: Promise<unknown>[]) => Promise.all(queries));
 });
 
 describe('admin title route authorization', () => {
@@ -75,8 +78,10 @@ describe('admin title route authorization', () => {
 
   it.each(['CONSUMER', 'CREATOR'] as const)('refuses a %s on both routes', async (role) => {
     const list = await request(app).get('/api/admin/titles').set(as('u1', role));
-    const patch = await request(app).patch('/api/admin/titles/t1/status')
-      .set(as('u1', role)).send({ status: 'APPROVED' });
+    const patch = await request(app)
+      .patch('/api/admin/titles/t1/status')
+      .set(as('u1', role))
+      .send({ status: 'APPROVED' });
 
     for (const res of [list, patch]) {
       expect(res.status).toBe(403);
@@ -112,12 +117,16 @@ describe('GET /api/admin/titles', () => {
     const rejected = submission({ status: 'REJECTED', rejectionReason: 'Needs detail.' });
     prisma.title.findMany.mockResolvedValue([{ ...rejected, posterUrl: '/poster.jpg' }]);
 
-    const res = await request(app).get('/api/admin/titles?status=REJECTED&page=2&pageSize=5')
+    const res = await request(app)
+      .get('/api/admin/titles?status=REJECTED&page=2&pageSize=5')
       .set(as());
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
-      data: [{ ...rejected, posterUrl: '/poster.jpg' }], page: 2, pageSize: 5, total: 31,
+      data: [{ ...rejected, posterUrl: '/poster.jpg' }],
+      page: 2,
+      pageSize: 5,
+      total: 31,
     });
     expect(prisma.title.findMany).toHaveBeenCalledWith({
       where: { status: 'REJECTED' },
@@ -130,7 +139,8 @@ describe('GET /api/admin/titles', () => {
   });
 
   it.each(['status=bogus', 'pageSize=500', 'page=0'])(
-    'rejects invalid query %s before querying', async (query) => {
+    'rejects invalid query %s before querying',
+    async (query) => {
       const res = await request(app).get(`/api/admin/titles?${query}`).set(as());
 
       expect(res.status).toBe(400);
@@ -143,19 +153,25 @@ describe('GET /api/admin/titles', () => {
 });
 
 describe('PATCH /api/admin/titles/:id/status', () => {
-  const patch = (body: unknown, id = 't1') => request(app)
-    .patch(`/api/admin/titles/${id}/status`).set(as()).send(body as object);
+  const patch = (body: unknown, id = 't1') =>
+    request(app)
+      .patch(`/api/admin/titles/${id}/status`)
+      .set(as())
+      .send(body as object);
 
   it('approves and clears the rejection reason even if one is sent', async () => {
     const res = await patch({ status: 'APPROVED', rejectionReason: 'Ignore this.' });
 
     expect(res.status).toBe(200);
     expect(prisma.title.findUnique).toHaveBeenCalledWith({
-      where: { id: 't1' }, select: { id: true },
+      where: { id: 't1' },
+      select: { id: true },
     });
     expect(prisma.title.update).toHaveBeenCalledTimes(1);
     expect(prisma.title.update).toHaveBeenCalledWith({
-      where: { id: 't1' }, data: { status: 'APPROVED', rejectionReason: null }, select,
+      where: { id: 't1' },
+      data: { status: 'APPROVED', rejectionReason: null },
+      select,
     });
     expect(prisma.title.findUnique.mock.invocationCallOrder[0]).toBeLessThan(
       prisma.title.update.mock.invocationCallOrder[0]!,
@@ -172,9 +188,12 @@ describe('PATCH /api/admin/titles/:id/status', () => {
       data: { status: 'REJECTED', rejectionReason: 'Needs more detail.' },
       select,
     });
-    expect(res.body).toEqual(submission({
-      status: 'REJECTED', rejectionReason: 'Needs more detail.',
-    }));
+    expect(res.body).toEqual(
+      submission({
+        status: 'REJECTED',
+        rejectionReason: 'Needs more detail.',
+      }),
+    );
   });
 
   it('allows rejection without a reason', async () => {
@@ -182,7 +201,9 @@ describe('PATCH /api/admin/titles/:id/status', () => {
 
     expect(res.status).toBe(200);
     expect(prisma.title.update).toHaveBeenCalledWith({
-      where: { id: 't1' }, data: { status: 'REJECTED', rejectionReason: null }, select,
+      where: { id: 't1' },
+      data: { status: 'REJECTED', rejectionReason: null },
+      select,
     });
   });
 
@@ -209,7 +230,8 @@ describe('PATCH /api/admin/titles/:id/status', () => {
     expect(res.status).toBe(404);
     expect(res.body.error).toBeTypeOf('string');
     expect(prisma.title.findUnique).toHaveBeenCalledWith({
-      where: { id: 't1' }, select: { id: true },
+      where: { id: 't1' },
+      select: { id: true },
     });
     expect(prisma.title.update).not.toHaveBeenCalled();
   });

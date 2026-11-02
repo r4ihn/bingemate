@@ -26,8 +26,8 @@ adminTitlesRouter.patch(
   validate(idParamSchema, 'params'),
   validate(setTitleStatusSchema),
   route(async (req, res) => {
-    res.json(await setTitleStatus(
-      req.params['id'] as string, req.body.status, req.body.rejectionReason,
-    ));
+    res.json(
+      await setTitleStatus(req.params['id'] as string, req.body.status, req.body.rejectionReason),
+    );
   }),
 );
