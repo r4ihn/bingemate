@@ -31,6 +31,7 @@ export interface TitleSummary {
 }
 
 export interface SubmissionDTO extends TitleSummary {
+  updatedAt: string;
   description: string | null;
   rejectionReason: string | null;
 }

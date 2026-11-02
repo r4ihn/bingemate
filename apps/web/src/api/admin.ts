@@ -42,12 +42,19 @@ export const adminApi = {
     return clone(db.titles.filter((t) => t.status === TitleStatus.PENDING));
   },
 
-  async setTitleStatus(id: string, status: TitleStatus, reason?: string): Promise<void> {
+  async setTitleStatus(
+    id: string,
+    status: TitleStatus,
+    reason?: string,
+    version?: string,
+  ): Promise<void> {
     if (!useMock) {
+      if (version === undefined) throw new ApiError(400, 'Reload the queue and try again.');
       await apiFetch<SubmissionDTO>(`/admin/titles/${encodeURIComponent(id)}/status`, {
         method: 'PATCH',
         body: JSON.stringify({
           status,
+          updatedAt: version,
           ...(reason !== undefined && { rejectionReason: reason }),
         }),
       });

@@ -36,6 +36,8 @@ const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
   Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
 });
 
+const updatedAt = new Date('2026-11-02T01:02:03.456Z');
+
 beforeEach(() => {
   calls.length = 0;
   prisma.title.findMany.mockReset().mockResolvedValue([]);
@@ -60,6 +62,7 @@ beforeEach(() => {
     createdById: 'c1',
     description: 'Sand.',
     rejectionReason: null,
+    updatedAt,
     ...data,
   }));
   prisma.title.create.mockReset().mockImplementation(async ({ data }) => ({
@@ -69,6 +72,7 @@ beforeEach(() => {
     reviewCount: 0,
     posterUrl: null,
     rejectionReason: null,
+    updatedAt,
     ...data,
   }));
 });
@@ -116,6 +120,7 @@ describe('GET /api/creator/titles', () => {
           createdById: true,
           description: true,
           rejectionReason: true,
+          updatedAt: true,
         },
       });
     },
@@ -134,6 +139,7 @@ describe('GET /api/creator/titles', () => {
       posterUrl: null,
       createdById: 'c1',
       description: 'Sand.',
+      updatedAt,
       ...fields,
     }));
     prisma.title.findMany.mockResolvedValue(rows);
@@ -141,7 +147,9 @@ describe('GET /api/creator/titles', () => {
     const res = await request(app).get('/api/creator/titles').set(as());
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(rows.map(({ posterUrl: _posterUrl, ...submission }) => submission));
+    expect(res.body).toEqual(rows.map(({ posterUrl: _posterUrl, ...submission }) => ({
+      ...submission, updatedAt: submission.updatedAt.toISOString(),
+    })));
   });
 });
 
@@ -457,6 +465,7 @@ describe('POST /api/titles', () => {
       createdById: true,
       description: true,
       rejectionReason: true,
+      updatedAt: true,
     });
     expect(res.body).toEqual({
       id: 't1',
@@ -468,6 +477,7 @@ describe('POST /api/titles', () => {
       createdById: 'c1',
       description: 'Sand.',
       rejectionReason: null,
+      updatedAt: updatedAt.toISOString(),
     });
   });
 

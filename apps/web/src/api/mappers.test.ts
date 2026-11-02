@@ -168,22 +168,24 @@ describe('mapReply', () => {
 });
 
 describe('mapSubmission', () => {
+  const updatedAt = '2026-11-02T00:00:00.000Z';
   it('maps summary fields, description and rejection reason', () => {
     const row = {
       ...summary,
       posterUrl: '/p.jpg',
       createdById: 'c1',
       description: 'Sand.',
+      updatedAt,
       rejectionReason: 'Fix it',
     };
     expect(mapSubmission(row)).toEqual({
-      title: { ...summaryToTitle(row), synopsis: 'Sand.' },
+      title: { ...summaryToTitle(row), synopsis: 'Sand.', version: updatedAt },
       rejectionReason: 'Fix it',
     });
   });
   it('maps a null description and reason to empty synopsis and undefined', () => {
-    expect(mapSubmission({ ...summary, description: null, rejectionReason: null })).toEqual({
-      title: { ...summary, synopsis: '' },
+    expect(mapSubmission({ ...summary, description: null, rejectionReason: null, updatedAt })).toEqual({
+      title: { ...summary, synopsis: '', version: updatedAt },
       rejectionReason: undefined,
     });
   });

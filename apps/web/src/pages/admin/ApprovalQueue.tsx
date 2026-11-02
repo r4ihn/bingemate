@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react';
 import { TitleStatus } from '@bingemate/shared';
 import { adminApi } from '../../api/admin.js';
+import { ApiError } from '../../api/client.js';
 import { StateMessage } from '../../components/StateMessage.js';
 import { Button } from '../../components/ui/Button.js';
 import { Table, Td } from '../../components/ui/Table.js';
@@ -28,10 +29,15 @@ export function ApprovalQueue() {
     try {
       const reason =
         status === TitleStatus.REJECTED ? reasons[t.id]?.trim() || undefined : undefined;
-      await adminApi.setTitleStatus(t.id, status, reason);
+      await adminApi.setTitleStatus(t.id, status, reason, t.version);
       setDecided((d) => new Set(d).add(t.id));
-    } catch {
-      setError(`Could not update “${t.name}”. Try again.`);
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setError(err.message);
+        reload();
+      } else {
+        setError(`Could not update “${t.name}”. Try again.`);
+      }
     } finally {
       inFlight.current.delete(t.id);
       setBusy(new Set(inFlight.current));

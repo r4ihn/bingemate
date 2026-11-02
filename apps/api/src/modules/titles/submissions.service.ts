@@ -13,6 +13,7 @@ export const submissionSelect = {
   ...summarySelect,
   description: true,
   rejectionReason: true,
+  updatedAt: true,
 } satisfies Prisma.TitleSelect;
 
 export type SubmissionRow = Prisma.TitleGetPayload<{ select: typeof submissionSelect }>;
@@ -22,6 +23,7 @@ export function toSubmission(row: SubmissionRow): SubmissionDTO {
     ...toSummary(row),
     description: row.description,
     rejectionReason: row.rejectionReason,
+    updatedAt: row.updatedAt.toISOString(),
   };
 }
 

@@ -747,6 +747,7 @@ describe('adminApi title queue (real)', () => {
     status: TitleStatus.PENDING,
     description: 'Sand.',
     rejectionReason: null,
+    updatedAt: '2026-11-02T00:00:00.000Z',
   };
 
   it('pendingTitles asks for PENDING with pageSize 50 and maps rows', async () => {
@@ -754,8 +755,8 @@ describe('adminApi title queue (real)', () => {
       json({ data: [dto, { ...dto, id: 't2', description: null }], page: 1, pageSize: 50, total: 2 }),
     );
     expect(await adminApi.pendingTitles()).toEqual([
-      { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.' },
-      { ...summary, id: 't2', status: TitleStatus.PENDING, synopsis: '' },
+      { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.', version: dto.updatedAt },
+      { ...summary, id: 't2', status: TitleStatus.PENDING, synopsis: '', version: dto.updatedAt },
     ]);
     expect(lastCall().url).toBe('/api/admin/titles?status=PENDING&pageSize=50');
     expect(lastCall().init.method).toBeUndefined();
@@ -767,24 +768,45 @@ describe('adminApi title queue (real)', () => {
       json({ ...dto, status: TitleStatus.REJECTED, rejectionReason: 'Fix it' }),
     );
     await expect(
-      adminApi.setTitleStatus('a/b c', TitleStatus.REJECTED, 'Fix it'),
+      adminApi.setTitleStatus('a/b c', TitleStatus.REJECTED, 'Fix it', dto.updatedAt),
     ).resolves.toBeUndefined();
     expect(lastCall().url).toBe('/api/admin/titles/a%2Fb%20c/status');
     expect(lastCall().init.method).toBe('PATCH');
     expect(lastCall().init.credentials).toBe('include');
     expect(JSON.parse(lastCall().init.body as string)).toEqual({
       status: 'REJECTED',
+      updatedAt: dto.updatedAt,
       rejectionReason: 'Fix it',
     });
   });
 
   it('setTitleStatus omits the rejectionReason key when no reason is given', async () => {
     fetchMock.mockReturnValueOnce(json({ ...dto, status: TitleStatus.APPROVED }));
-    await expect(adminApi.setTitleStatus('t1', TitleStatus.APPROVED)).resolves.toBeUndefined();
+    await expect(adminApi.setTitleStatus('t1', TitleStatus.APPROVED, undefined, dto.updatedAt)).resolves.toBeUndefined();
     expect(lastCall().url).toBe('/api/admin/titles/t1/status');
     expect(lastCall().init.method).toBe('PATCH');
     const body = JSON.parse(lastCall().init.body as string);
-    expect(body).toEqual({ status: 'APPROVED' });
+    expect(body).toEqual({ status: 'APPROVED', updatedAt: dto.updatedAt });
     expect(body).not.toHaveProperty('rejectionReason');
   });
+  it('setTitleStatus without a version throws without making a request', async () => {
+    const error: unknown = await adminApi
+      .setTitleStatus('t1', TitleStatus.APPROVED)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 400, message: 'Reload the queue and try again.' });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('setTitleStatus surfaces a 409 with the server message', async () => {
+    const message = 'This title changed after you opened it. Reload the queue and review it again.';
+    fetchMock.mockReturnValueOnce(json({ error: message }, 409));
+    const error: unknown = await adminApi
+      .setTitleStatus('t1', TitleStatus.APPROVED, undefined, dto.updatedAt)
+      .catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 409, message });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
 });
+

@@ -10,6 +10,7 @@ export const adminTitlesQuerySchema = z.object({
 export const setTitleStatusSchema = z
   .object({
     status: z.enum(['APPROVED', 'REJECTED']),
+    updatedAt: z.string().datetime(),
     rejectionReason: z.string().trim().max(500).optional(),
   })
   .strict();

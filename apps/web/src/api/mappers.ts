@@ -28,7 +28,7 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
 
 export function mapSubmission(dto: SubmissionDTO): Submission {
   return {
-    title: { ...summaryToTitle(dto), synopsis: dto.description ?? '' },
+    title: { ...summaryToTitle(dto), synopsis: dto.description ?? '', version: dto.updatedAt },
     rejectionReason: dto.rejectionReason ?? undefined,
   };
 }

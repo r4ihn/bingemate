@@ -2,7 +2,6 @@ import type { Paginated, SubmissionDTO, TitleStatus } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
 import { submissionSelect, toSubmission } from '../titles/submissions.service.js';
-import type { SubmissionRow } from '../titles/submissions.service.js';
 
 export async function listTitlesForReview(query: {
   status?: TitleStatus;
@@ -27,18 +26,26 @@ export async function listTitlesForReview(query: {
 export async function setTitleStatus(
   id: string,
   status: 'APPROVED' | 'REJECTED',
+  updatedAt: Date,
   rejectionReason?: string,
 ): Promise<SubmissionDTO> {
   const title = await prisma.title.findUnique({ where: { id }, select: { id: true } });
   if (!title) throw new HttpError(404, 'Title not found');
 
-  const row: SubmissionRow = await prisma.title.update({
-    where: { id },
+  const { count } = await prisma.title.updateMany({
+    where: { id, updatedAt },
     data: {
       status,
       rejectionReason: status === 'REJECTED' ? (rejectionReason?.trim() ?? null) : null,
     },
-    select: submissionSelect,
   });
-  return toSubmission(row);
+  if (count === 0) {
+    throw new HttpError(
+      409,
+      'This title changed after you opened it. Reload the queue and review it again.',
+    );
+  }
+  return toSubmission(
+    await prisma.title.findUniqueOrThrow({ where: { id }, select: submissionSelect }),
+  );
 }
