@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { authenticate } from '../../middleware/authenticate.js';
 import { validate } from '../../middleware/validate.js';
-import { route, userOf } from '../../utils/asyncRoute.js';
+import { userOf } from '../../utils/asyncRoute.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import {
   addEntrySchema,
   entryIdParamSchema,
@@ -19,7 +20,7 @@ listsRouter.use(authenticate);
 listsRouter.get(
   '/',
   validate(listQuerySchema, 'query'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await listMine(userOf(req), req.query as unknown as ListQuery));
   }),
 );
@@ -27,7 +28,7 @@ listsRouter.get(
 listsRouter.get(
   '/by-title/:titleId',
   validate(titleIdParamSchema, 'params'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await entryForTitle(userOf(req), req.params['titleId'] as string));
   }),
 );
@@ -35,7 +36,7 @@ listsRouter.get(
 listsRouter.post(
   '/',
   validate(addEntrySchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.status(201).json(await addEntry(userOf(req), req.body.titleId, req.body.status));
   }),
 );
@@ -44,7 +45,7 @@ listsRouter.patch(
   '/:id',
   validate(entryIdParamSchema, 'params'),
   validate(setStatusSchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await setEntryStatus(userOf(req), req.params['id'] as string, req.body.status));
   }),
 );
@@ -52,7 +53,7 @@ listsRouter.patch(
 listsRouter.delete(
   '/:id',
   validate(entryIdParamSchema, 'params'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     await removeEntry(userOf(req), req.params['id'] as string);
     res.status(204).end();
   }),
