@@ -8,8 +8,8 @@ export interface BookFields {
   chapters: number;
 }
 export interface TvFields {
-  season: number;
-  episodes: number;
+  season?: number;
+  episodes?: number;
 }
 export type ReviewFields = MovieFields | BookFields | TvFields;
 /** Imported reviews carry no media-specific extras; the API sends `{}` for them. */

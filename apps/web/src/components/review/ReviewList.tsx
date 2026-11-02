@@ -19,8 +19,11 @@ function describeFields(fields: ReviewFields | NoFields | undefined): string {
   if (!fields) return '';
   if ('runtimeMinutes' in fields) return `Watched ${fields.runtimeMinutes} min`;
   if ('chapters' in fields) return `Read ${fields.chapters} chapters`;
-  if ('season' in fields && 'episodes' in fields) {
-    return `Season ${fields.season}, ${fields.episodes} episodes`;
+  if ('season' in fields || 'episodes' in fields) {
+    return [
+      fields.season !== undefined ? `Season ${fields.season}` : '',
+      fields.episodes !== undefined ? `${fields.episodes} episodes` : '',
+    ].filter(Boolean).join(', ');
   }
   return '';
 }

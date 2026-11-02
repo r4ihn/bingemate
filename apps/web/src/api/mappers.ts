@@ -1,3 +1,4 @@
+import { resolvePosterUrl } from './posterUrl.js';
 import type {
   ReplyDTO,
   ReviewDTO,
@@ -18,7 +19,7 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
     avgRating: s.avgRating,
     reviewCount: s.reviewCount,
     synopsis: '',
-    ...(s.posterUrl !== undefined && { posterUrl: s.posterUrl }),
+    ...(s.posterUrl !== undefined && { posterUrl: resolvePosterUrl(s.posterUrl) }),
     ...(s.createdById !== undefined && { createdById: s.createdById }),
   };
 }
@@ -32,12 +33,15 @@ export function detailToTitle(d: TitleDetailDTO): TitleDetail {
   };
 }
 
-/** Keeps a media group only when it is complete; anything else becomes `{}` (no details line). */
+/** Preserve whichever optional media fields the API returned. */
 export function mapReviewFields(f: ReviewFieldsDTO): ReviewFields | NoFields {
   if (f.runtimeMinutes !== undefined) return { runtimeMinutes: f.runtimeMinutes };
   if (f.chapters !== undefined) return { chapters: f.chapters };
-  if (f.season !== undefined && f.episodes !== undefined) {
-    return { season: f.season, episodes: f.episodes };
+  if (f.season !== undefined || f.episodes !== undefined) {
+    return {
+      ...(f.season !== undefined && { season: f.season }),
+      ...(f.episodes !== undefined && { episodes: f.episodes }),
+    };
   }
   return {};
 }

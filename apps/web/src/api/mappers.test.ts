@@ -89,9 +89,9 @@ describe('mapReviewFields', () => {
   it('maps an empty object to an empty object', () => {
     expect(mapReviewFields({})).toEqual({});
   });
-  it('drops an incomplete TV group instead of lying', () => {
-    expect(mapReviewFields({ season: 2 })).toEqual({});
-    expect(mapReviewFields({ episodes: 8 })).toEqual({});
+  it('preserves partial TV fields', () => {
+    expect(mapReviewFields({ season: 2 })).toEqual({ season: 2 });
+    expect(mapReviewFields({ episodes: 8 })).toEqual({ episodes: 8 });
   });
   it('keeps a zero value', () => {
     expect(mapReviewFields({ runtimeMinutes: 0 })).toEqual({ runtimeMinutes: 0 });
