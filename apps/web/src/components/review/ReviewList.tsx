@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext.js';
 import { canDelete } from '../../auth/permissions.js';
 import { reviewsApi } from '../../api/reviews.js';
 import { useAsync } from '../../hooks/useAsync.js';
-import type { Review, ReviewFields } from '../../types/review.js';
+import type { NoFields, Review, ReviewFields } from '../../types/review.js';
 import { ConfirmDialog } from '../ConfirmDialog.js';
 import { Pagination } from '../Pagination.js';
 import { StateMessage } from '../StateMessage.js';
@@ -15,12 +15,15 @@ import { ReplyThread } from './ReplyThread.js';
 import { ReviewText } from './ReviewText.js';
 import { StarsDisplay } from './StarRating.js';
 
-function describeFields(fields: ReviewFields | undefined): string {
+function describeFields(fields: ReviewFields | NoFields | undefined): string {
   if (!fields) return '';
   if ('runtimeMinutes' in fields) return `Watched ${fields.runtimeMinutes} min`;
   if ('chapters' in fields) return `Read ${fields.chapters} chapters`;
-  if ('season' in fields && 'episodes' in fields) {
-    return `Season ${fields.season}, ${fields.episodes} episodes`;
+  if ('season' in fields || 'episodes' in fields) {
+    return [
+      fields.season !== undefined ? `Season ${fields.season}` : '',
+      fields.episodes !== undefined ? `${fields.episodes} episodes` : '',
+    ].filter(Boolean).join(', ');
   }
   return '';
 }
