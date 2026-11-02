@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { adminTitlesRouter } from './modules/admin/adminTitles.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { creatorRouter } from './modules/creator/creator.routes.js';
 import { genresRouter } from './modules/genres/genres.routes.js';
@@ -22,6 +23,7 @@ router.get('/', (_req, res) => {
 });
 
 router.use('/auth', authRouter);
+router.use('/admin/titles', adminTitlesRouter);
 router.use('/titles/:titleId/reviews', titleReviewsRouter);
 router.use('/titles/:titleId/poster', posterRouter);
 router.use('/titles', submissionsRouter);

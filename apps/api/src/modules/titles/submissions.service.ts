@@ -9,7 +9,7 @@ import { TitlePoster } from '../../mongo/models/titlePoster.model.js';
 import type { CreateSubmissionInput, UpdateSubmissionInput } from './submissions.schema.js';
 import { summarySelect, toSummary } from './titles.service.js';
 
-const submissionSelect = {
+export const submissionSelect = {
   ...summarySelect,
   description: true,
   rejectionReason: true,
