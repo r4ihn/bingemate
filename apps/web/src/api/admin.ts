@@ -1,9 +1,10 @@
 import { TitleStatus } from '@bingemate/shared';
-import type { Paginated, Role } from '@bingemate/shared';
+import type { Paginated, Role, SubmissionDTO } from '@bingemate/shared';
 import { db } from '../mocks/db.js';
 import type { AdminUser, ModerationReview } from '../types/admin.js';
 import type { TitleDetail } from '../types/title.js';
-import { ApiError } from './client.js';
+import { ApiError, apiFetch } from './client.js';
+import { mapSubmission } from './mappers.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 10;
@@ -31,13 +32,27 @@ export const adminApi = {
   },
 
   async pendingTitles(): Promise<TitleDetail[]> {
-    if (!useMock) notWired('GET /admin/titles?status=PENDING (RA)');
+    if (!useMock) {
+      const res = await apiFetch<Paginated<SubmissionDTO>>(
+        '/admin/titles?status=PENDING&pageSize=50',
+      );
+      return res.data.map((dto) => mapSubmission(dto).title);
+    }
     await delay();
     return clone(db.titles.filter((t) => t.status === TitleStatus.PENDING));
   },
 
   async setTitleStatus(id: string, status: TitleStatus, reason?: string): Promise<void> {
-    if (!useMock) notWired('PATCH /admin/titles/:id/status (RA)');
+    if (!useMock) {
+      await apiFetch<SubmissionDTO>(`/admin/titles/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status,
+          ...(reason !== undefined && { rejectionReason: reason }),
+        }),
+      });
+      return;
+    }
     await delay();
     const title = db.titles.find((t) => t.id === id);
     if (!title) throw new ApiError(404, 'Title not found');

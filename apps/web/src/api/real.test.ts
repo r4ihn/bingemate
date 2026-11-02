@@ -6,6 +6,7 @@ import {
   TitleStatus,
 } from '@bingemate/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { adminApi } from './admin.js';
 import { ApiError, setUnauthorizedHandler } from './client.js';
 import { creatorApi } from './creator.js';
 import { listsApi } from './lists.js';
@@ -737,4 +738,53 @@ describe('creatorApi submissions (real)', () => {
       expect(fetchMock).toHaveBeenCalledTimes(1);
     },
   );
+});
+
+
+describe('adminApi title queue (real)', () => {
+  const dto = {
+    ...summary,
+    status: TitleStatus.PENDING,
+    description: 'Sand.',
+    rejectionReason: null,
+  };
+
+  it('pendingTitles asks for PENDING with pageSize 50 and maps rows', async () => {
+    fetchMock.mockReturnValueOnce(
+      json({ data: [dto, { ...dto, id: 't2', description: null }], page: 1, pageSize: 50, total: 2 }),
+    );
+    expect(await adminApi.pendingTitles()).toEqual([
+      { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.' },
+      { ...summary, id: 't2', status: TitleStatus.PENDING, synopsis: '' },
+    ]);
+    expect(lastCall().url).toBe('/api/admin/titles?status=PENDING&pageSize=50');
+    expect(lastCall().init.method).toBeUndefined();
+    expect(lastCall().init.credentials).toBe('include');
+  });
+
+  it('setTitleStatus patches status and reason', async () => {
+    fetchMock.mockReturnValueOnce(
+      json({ ...dto, status: TitleStatus.REJECTED, rejectionReason: 'Fix it' }),
+    );
+    await expect(
+      adminApi.setTitleStatus('a/b c', TitleStatus.REJECTED, 'Fix it'),
+    ).resolves.toBeUndefined();
+    expect(lastCall().url).toBe('/api/admin/titles/a%2Fb%20c/status');
+    expect(lastCall().init.method).toBe('PATCH');
+    expect(lastCall().init.credentials).toBe('include');
+    expect(JSON.parse(lastCall().init.body as string)).toEqual({
+      status: 'REJECTED',
+      rejectionReason: 'Fix it',
+    });
+  });
+
+  it('setTitleStatus omits the rejectionReason key when no reason is given', async () => {
+    fetchMock.mockReturnValueOnce(json({ ...dto, status: TitleStatus.APPROVED }));
+    await expect(adminApi.setTitleStatus('t1', TitleStatus.APPROVED)).resolves.toBeUndefined();
+    expect(lastCall().url).toBe('/api/admin/titles/t1/status');
+    expect(lastCall().init.method).toBe('PATCH');
+    const body = JSON.parse(lastCall().init.body as string);
+    expect(body).toEqual({ status: 'APPROVED' });
+    expect(body).not.toHaveProperty('rejectionReason');
+  });
 });

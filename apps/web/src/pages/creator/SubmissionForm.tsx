@@ -24,6 +24,7 @@ interface ChosenPoster {
 function Form({
   initial,
   initialPosterUrl = null,
+  editing = false,
   editingApproved,
   submitLabel,
   onSave,
@@ -31,6 +32,7 @@ function Form({
   initial: SubmissionInput;
   /** The image the title has now (edit only). */
   initialPosterUrl?: string | null;
+  editing?: boolean;
   editingApproved: boolean;
   submitLabel: string;
   onSave: (input: SubmissionInput) => Promise<void>;
@@ -51,6 +53,7 @@ function Form({
   // the creator removes it, belongs to an older number and its result is dropped.
   const latestPick = useRef(0);
   const helpId = useId();
+  const typeHelpId = useId();
   // Release the preview's local address when it is replaced and when the form closes. Closing also
   // counts as a newer pick, so an image still being prepared is dropped instead of kept in memory.
   const previewUrl = useRef<string | null>(null);
@@ -160,6 +163,8 @@ function Form({
         </Field>
         <Field label="Type">
           <select
+            disabled={editing}
+            aria-describedby={editing ? typeHelpId : undefined}
             value={mediaType}
             onChange={(e) => setMediaType(e.target.value as MediaType)}
             className={inputClass}
@@ -171,6 +176,11 @@ function Form({
             ))}
           </select>
         </Field>
+        {editing && (
+          <p id={typeHelpId} className="text-xs text-muted">
+            The type cannot change after a title is created
+          </p>
+        )}
         <Field label="Synopsis">
           <textarea
             rows={4}
@@ -261,9 +271,10 @@ function EditForm({ id }: { id: string }) {
     <Form
       initial={{ name: title.name, mediaType: title.mediaType, synopsis: title.synopsis }}
       initialPosterUrl={title.posterUrl ?? null}
+      editing
       editingApproved={title.status === TitleStatus.APPROVED}
       submitLabel="Save changes"
-      onSave={async (input) => {
+      onSave={async ({ mediaType: _mediaType, ...input }) => {
         await creatorApi.update(id, input);
         navigate('/creator');
       }}
