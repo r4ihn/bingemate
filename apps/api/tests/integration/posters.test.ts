@@ -8,7 +8,7 @@ process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 
 // No databases in CI: both stores are replaced and the tests check what the module asks of them.
 const calls: string[] = [];
-const prisma = { title: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() } };
+const prisma = { title: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn(), updateMany: vi.fn() } };
 const poster = { findOneAndUpdate: vi.fn(), findById: vi.fn(), deleteOne: vi.fn() };
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
 vi.mock('../../src/mongo/models/titlePoster.model.js', () => ({ TitlePoster: poster }));
@@ -41,6 +41,7 @@ beforeEach(() => {
   Object.values(prisma.title).forEach((fn) => fn.mockReset());
   Object.values(poster).forEach((fn) => fn.mockReset());
   prisma.title.findUnique.mockResolvedValue({ createdById: 'c1' });
+  prisma.title.updateMany.mockImplementation(async () => { calls.push('pg-pending'); return { count: 1 }; });
   prisma.title.update.mockImplementation(async () => calls.push('pg-update'));
   poster.findOneAndUpdate.mockImplementation(() => {
     calls.push('mongo-save');
@@ -116,7 +117,7 @@ describe('PUT /api/titles/:titleId/poster', () => {
     const res = await put(PNG);
 
     expect(res.status).toBe(200);
-    expect(calls).toEqual(['mongo-save', 'pg-update']);
+    expect(calls).toEqual(['pg-pending', 'mongo-save', 'pg-update']);
     const [filter, update, options] = poster.findOneAndUpdate.mock.calls[0] ?? [];
     expect(filter).toEqual({ _id: 't1' });
     expect(update.$set.data.equals(PNG)).toBe(true);
@@ -127,6 +128,17 @@ describe('PUT /api/titles/:titleId/poster', () => {
       where: { id: 't1' },
       data: { posterUrl: res.body.posterUrl },
     });
+  });
+
+  it('does not change moderation status for an admin upload', async () => {
+    expect((await put(PNG, as('a1', 'ADMIN'))).status).toBe(200);
+    expect(prisma.title.updateMany).not.toHaveBeenCalled();
+  });
+
+  it('does not overwrite bytes when hiding the title fails', async () => {
+    prisma.title.updateMany.mockRejectedValue(new Error('postgres unavailable'));
+    expect((await put(PNG)).status).toBe(500);
+    expect(poster.findOneAndUpdate).not.toHaveBeenCalled();
   });
 
   it('hands out the version MongoDB kept, not this request’s own clock, when uploads overlap', async () => {
@@ -208,20 +220,31 @@ describe('GET /api/titles/:titleId/poster', () => {
     expect(res.status).toBe(404);
     expect(prisma.title.findFirst.mock.calls[0]?.[0].where).toEqual({
       id: 't1',
-      status: 'APPROVED',
+      OR: [{ status: 'APPROVED' }],
     });
     expect(poster.findById).not.toHaveBeenCalled();
   });
 
+  it.each([['c1', 'CREATOR'], ['a1', 'ADMIN']] as const)('allows a private preview for %s', async (id, role) => {
+    prisma.title.findFirst.mockResolvedValue({ id: 't1', status: 'PENDING' });
+    poster.findById.mockReturnValue({ lean: async () => ({ contentType: 'image/png', data: PNG, version: STORED_VERSION }) });
+    const res = await request(app).get(`/api/titles/t1/poster?v=${STORED_VERSION}`).set(as(id, role));
+    expect(res.status).toBe(200);
+    expect(res.headers['cache-control']).toBe('private, no-store');
+    const where = prisma.title.findFirst.mock.calls[0]?.[0].where;
+    if (role === 'CREATOR') expect(where.OR).toContainEqual({ createdById: id });
+    else expect(where).toEqual({ id: 't1' });
+  });
+
   it('answers 404 for a title without an image', async () => {
-    prisma.title.findFirst.mockResolvedValue({ id: 't1' });
+    prisma.title.findFirst.mockResolvedValue({ id: 't1', status: 'APPROVED' });
     poster.findById.mockReturnValue({ lean: async () => null });
 
     expect((await request(app).get('/api/titles/t1/poster')).status).toBe(404);
   });
 
   it('serves the bytes with their real type and no sniffing', async () => {
-    prisma.title.findFirst.mockResolvedValue({ id: 't1' });
+    prisma.title.findFirst.mockResolvedValue({ id: 't1', status: 'APPROVED' });
     poster.findById.mockReturnValue({
       lean: async () => ({ contentType: 'image/png', data: PNG, version: STORED_VERSION }),
     });
@@ -240,7 +263,7 @@ describe('GET /api/titles/:titleId/poster', () => {
     ['an old version', '?v=1', 'no-cache'],
     ['a version that is not a number', '?v=abc', 'no-cache'],
   ])('caches for a year only when asked for the current version: %s', async (_label, qs, cache) => {
-    prisma.title.findFirst.mockResolvedValue({ id: 't1' });
+    prisma.title.findFirst.mockResolvedValue({ id: 't1', status: 'APPROVED' });
     poster.findById.mockReturnValue({
       lean: async () => ({ contentType: 'image/png', data: PNG, version: STORED_VERSION }),
     });
@@ -252,7 +275,7 @@ describe('GET /api/titles/:titleId/poster', () => {
   });
 
   it('copes with the driver handing back its Binary wrapper', async () => {
-    prisma.title.findFirst.mockResolvedValue({ id: 't1' });
+    prisma.title.findFirst.mockResolvedValue({ id: 't1', status: 'APPROVED' });
     poster.findById.mockReturnValue({
       lean: async () => ({
         contentType: 'image/jpeg',
