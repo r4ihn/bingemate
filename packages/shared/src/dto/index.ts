@@ -30,6 +30,11 @@ export interface TitleSummary {
   createdById?: string | null;
 }
 
+export interface SubmissionDTO extends TitleSummary {
+  description: string | null;
+  rejectionReason: string | null;
+}
+
 export interface Paginated<T> {
   data: T[];
   page: number;
