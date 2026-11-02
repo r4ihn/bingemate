@@ -3,6 +3,9 @@ import { Role } from '@bingemate/shared';
 import type { AuthUser, SubmissionDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
+import { ReviewBody } from '../../mongo/models/reviewBody.model.js';
+import { Reply } from '../../mongo/models/reply.model.js';
+import { TitlePoster } from '../../mongo/models/titlePoster.model.js';
 import type { CreateSubmissionInput, UpdateSubmissionInput } from './submissions.schema.js';
 import { summarySelect, toSummary } from './titles.service.js';
 
@@ -64,4 +67,42 @@ export async function updateSubmission(
     select: submissionSelect,
   });
   return toSubmission(row);
+}
+
+export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
+  const title = await prisma.title.findUnique({
+    where: { id },
+    select: { createdById: true },
+  });
+  if (!title) throw new HttpError(404, 'Title not found');
+  if (
+    user.role !== Role.ADMIN &&
+    (user.role !== Role.CREATOR || title.createdById !== user.id)
+  ) {
+    throw new HttpError(403, 'You can only delete your own submission');
+  }
+
+  // Capture reply parent ids before PostgreSQL cascades the reviews away.
+  const reviews = await prisma.review.findMany({
+    where: { titleId: id },
+    select: { id: true },
+  });
+  const ids = reviews.map((review) => review.id);
+  await prisma.title.delete({ where: { id } });
+
+  try {
+    await ReviewBody.deleteMany({ titleId: id });
+  } catch (err) {
+    console.error(`Title ${id} was deleted but its review bodies were not:`, err);
+  }
+  try {
+    if (ids.length > 0) await Reply.deleteMany({ reviewId: { $in: ids } });
+  } catch (err) {
+    console.error(`Title ${id} was deleted but its replies were not:`, err);
+  }
+  try {
+    await TitlePoster.deleteOne({ _id: id });
+  } catch (err) {
+    console.error(`Title ${id} was deleted but its poster was not:`, err);
+  }
 }

@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 
 // Minimal env so config/env.ts validation passes when app is imported.
@@ -6,9 +6,27 @@ process.env.DATABASE_URL ??= 'postgresql://u:p@localhost:5432/db?schema=public';
 process.env.MONGO_URI ??= 'mongodb://localhost:27017/bingemate';
 process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 
-// No database: check the write arguments and return the selected title fields.
-const prisma = { title: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn() } };
+// No databases: check the write arguments and return the selected title fields.
+const calls: string[] = [];
+const prisma = {
+  title: { create: vi.fn(), findUnique: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  review: { findMany: vi.fn() },
+};
+const mongo = {
+  bodyDeleteMany: vi.fn(),
+  replyDeleteMany: vi.fn(),
+  posterDeleteOne: vi.fn(),
+};
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
+vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({
+  ReviewBody: { deleteMany: mongo.bodyDeleteMany },
+}));
+vi.mock('../../src/mongo/models/reply.model.js', () => ({
+  Reply: { deleteMany: mongo.replyDeleteMany },
+}));
+vi.mock('../../src/mongo/models/titlePoster.model.js', () => ({
+  TitlePoster: { deleteOne: mongo.posterDeleteOne },
+}));
 
 const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
@@ -19,6 +37,16 @@ const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
 });
 
 beforeEach(() => {
+  calls.length = 0;
+  prisma.title.delete.mockReset().mockImplementation(async () => calls.push('pg-delete'));
+  prisma.review.findMany.mockReset().mockImplementation(async () => {
+    calls.push('review-ids');
+    return [{ id: 'r1' }, { id: 'r2' }];
+  });
+  mongo.bodyDeleteMany.mockReset().mockImplementation(async () => calls.push('mongo-bodies'));
+  mongo.replyDeleteMany.mockReset().mockImplementation(async () => calls.push('mongo-replies'));
+  mongo.posterDeleteOne.mockReset().mockImplementation(async () => calls.push('mongo-poster'));
+  vi.spyOn(console, 'error').mockImplementation(() => undefined);
   prisma.title.findUnique.mockReset().mockResolvedValue({ createdById: 'c1', status: 'PENDING' });
   prisma.title.update.mockReset().mockImplementation(async ({ where, data }) => ({
     id: where.id,
@@ -42,6 +70,151 @@ beforeEach(() => {
     rejectionReason: null,
     ...data,
   }));
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
+describe('DELETE /api/titles/:id', () => {
+  const del = (cookie = as(), id = 't1') =>
+    request(app).delete(`/api/titles/${id}`).set(cookie);
+
+  const expectNoDelete = () => {
+    expect(prisma.review.findMany).not.toHaveBeenCalled();
+    expect(prisma.title.delete).not.toHaveBeenCalled();
+    for (const fn of Object.values(mongo)) expect(fn).not.toHaveBeenCalled();
+  };
+
+  it('needs a signed-in user', async () => {
+    const res = await request(app).delete('/api/titles/t1');
+
+    expect(res.status).toBe(401);
+    expect(prisma.title.findUnique).not.toHaveBeenCalled();
+    expectNoDelete();
+  });
+
+  it('refuses a consumer even when their id matches the owner', async () => {
+    const res = await del(as('c1', 'CONSUMER'));
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBeTypeOf('string');
+    expectNoDelete();
+  });
+
+  it('404 for a missing title', async () => {
+    prisma.title.findUnique.mockResolvedValue(null);
+
+    const res = await del();
+
+    expect(res.status).toBe(404);
+    expect(res.body.error).toBeTypeOf('string');
+    expect(prisma.title.findUnique).toHaveBeenCalledWith({
+      where: { id: 't1' },
+      select: { createdById: true },
+    });
+    expectNoDelete();
+  });
+
+  it.each([
+    ['refuses a creator who does not own it', 'someone-else'],
+    ['refuses an imported title to a creator', null],
+  ])('%s', async (_label, createdById) => {
+    prisma.title.findUnique.mockResolvedValue({ createdById });
+
+    const res = await del();
+
+    expect(res.status).toBe(403);
+    expect(res.body.error).toBeTypeOf('string');
+    expectNoDelete();
+  });
+
+  it('rejects an invalid title id before touching the stores', async () => {
+    const res = await del(as(), 'x'.repeat(41));
+
+    expect(res.status).toBe(400);
+    expect(prisma.title.findUnique).not.toHaveBeenCalled();
+    expectNoDelete();
+  });
+
+  it('lets the owner delete', async () => {
+    const res = await del();
+
+    expect(res.status).toBe(204);
+    expect(res.text).toBe('');
+    expect(prisma.title.delete).toHaveBeenCalledTimes(1);
+    expect(prisma.title.delete).toHaveBeenCalledWith({ where: { id: 't1' } });
+  });
+
+  it.each(['someone-else', null])('lets an admin delete a title owned by %s', async (createdById) => {
+    prisma.title.findUnique.mockResolvedValue({ createdById });
+
+    const res = await del(as('a1', 'ADMIN'));
+
+    expect(res.status).toBe(204);
+    expect(prisma.title.delete).toHaveBeenCalledTimes(1);
+  });
+
+  it('reads review ids first and removes MongoDB leftovers after the PostgreSQL delete', async () => {
+    const res = await del();
+
+    expect(res.status).toBe(204);
+    expect(prisma.review.findMany).toHaveBeenCalledWith({
+      where: { titleId: 't1' },
+      select: { id: true },
+    });
+    expect(mongo.bodyDeleteMany).toHaveBeenCalledWith({ titleId: 't1' });
+    expect(mongo.replyDeleteMany).toHaveBeenCalledWith({ reviewId: { $in: ['r1', 'r2'] } });
+    expect(mongo.posterDeleteOne).toHaveBeenCalledWith({ _id: 't1' });
+    expect(calls).toEqual([
+      'review-ids', 'pg-delete', 'mongo-bodies', 'mongo-replies', 'mongo-poster',
+    ]);
+  });
+
+  it('skips deleting replies when there are no review ids', async () => {
+    prisma.review.findMany.mockResolvedValue([]);
+
+    const res = await del();
+
+    expect(res.status).toBe(204);
+    expect(mongo.replyDeleteMany).not.toHaveBeenCalled();
+    expect(mongo.bodyDeleteMany).toHaveBeenCalledWith({ titleId: 't1' });
+    expect(mongo.posterDeleteOne).toHaveBeenCalledWith({ _id: 't1' });
+  });
+
+  it.each(['bodyDeleteMany', 'replyDeleteMany', 'posterDeleteOne'] as const)(
+    'a MongoDB failure in %s does not fail the delete or skip other cleanup',
+    async (method) => {
+      const error = new Error('mongo is down');
+      mongo[method].mockRejectedValue(error);
+
+      const res = await del();
+
+      expect(res.status).toBe(204);
+      expect(prisma.title.delete).toHaveBeenCalledTimes(1);
+      for (const fn of Object.values(mongo)) expect(fn).toHaveBeenCalledTimes(1);
+      expect(console.error).toHaveBeenCalledWith(expect.any(String), error);
+    },
+  );
+
+  it('does not delete anything when reading review ids fails', async () => {
+    prisma.review.findMany.mockRejectedValue(new Error('PostgreSQL is down'));
+
+    const res = await del();
+
+    expect(res.status).toBe(500);
+    expect(prisma.title.delete).not.toHaveBeenCalled();
+    for (const fn of Object.values(mongo)) expect(fn).not.toHaveBeenCalled();
+  });
+
+  it('does not clear MongoDB leftovers when the PostgreSQL delete fails', async () => {
+    prisma.title.delete.mockRejectedValue(new Error('PostgreSQL is down'));
+
+    const res = await del();
+
+    expect(res.status).toBe(500);
+    for (const fn of Object.values(mongo)) expect(fn).not.toHaveBeenCalled();
+  });
 });
 
 describe('PATCH /api/titles/:id', () => {

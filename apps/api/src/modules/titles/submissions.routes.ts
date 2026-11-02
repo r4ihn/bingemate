@@ -5,7 +5,7 @@ import { authorize } from '../../middleware/authorize.js';
 import { validate } from '../../middleware/validate.js';
 import { route, userOf } from '../../utils/asyncRoute.js';
 import { createSubmissionSchema, updateSubmissionSchema } from './submissions.schema.js';
-import { createSubmission, updateSubmission } from './submissions.service.js';
+import { createSubmission, deleteTitle, updateSubmission } from './submissions.service.js';
 import { idParamSchema } from './titles.schema.js';
 
 /** Mounted at /titles. Only creators can submit a title for approval. */
@@ -29,5 +29,15 @@ submissionsRouter.patch(
   validate(updateSubmissionSchema),
   route(async (req, res) => {
     res.json(await updateSubmission(userOf(req), req.params['id'] as string, req.body));
+  }),
+);
+
+submissionsRouter.delete(
+  '/:id',
+  authenticate,
+  validate(idParamSchema, 'params'),
+  route(async (req, res) => {
+    await deleteTitle(userOf(req), req.params['id'] as string);
+    res.status(204).end();
   }),
 );
