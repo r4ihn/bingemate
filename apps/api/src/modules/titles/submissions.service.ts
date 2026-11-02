@@ -93,6 +93,19 @@ export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
     throw new HttpError(403, 'You can only delete your own submission');
   }
 
+  if (user.role !== Role.ADMIN) {
+    const [reviewCount, listEntryCount] = await Promise.all([
+      prisma.review.count({ where: { titleId: id } }),
+      prisma.listEntry.count({ where: { titleId: id, userId: { not: user.id } } }),
+    ]);
+    if (reviewCount > 0 || listEntryCount > 0) {
+      throw new HttpError(
+        409,
+        'Other users have reviewed or listed this title, so it cannot be deleted by its creator. Ask an admin to remove it.',
+      );
+    }
+  }
+
   // Capture reply parent ids before PostgreSQL cascades the reviews away.
   const reviews = await prisma.review.findMany({
     where: { titleId: id },
