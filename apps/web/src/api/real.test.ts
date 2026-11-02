@@ -1,6 +1,7 @@
-import { MediaType, Role, TitleStatus } from '@bingemate/shared';
+import { ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ApiError, setUnauthorizedHandler } from './client.js';
+import { listsApi } from './lists.js';
 import { repliesApi, reviewsApi } from './reviews.js';
 import { titlesApi } from './titles.js';
 
@@ -41,6 +42,102 @@ const summary = {
   reviewCount: 2,
 };
 const author = { id: 'u1', name: 'Ann', role: Role.CONSUMER };
+
+describe('listsApi (real)', () => {
+  const entry = { id: 'l1', titleId: 't1', status: ListStatus.COMPLETED, title: summary };
+
+  it('list sends only the filters that are set', async () => {
+    fetchMock.mockReturnValueOnce(json({ data: [], page: 2, pageSize: 12, total: 0 }));
+
+    await listsApi.list({ page: 2 });
+
+    expect(lastCall().url).toBe('/api/me/lists?page=2&pageSize=12');
+    expect(lastCall().init.method).toBeUndefined();
+    expect(lastCall().init.credentials).toBe('include');
+
+    fetchMock.mockReturnValueOnce(json({ data: [], page: 1, pageSize: 12, total: 0 }));
+
+    await listsApi.list({ status: ListStatus.PLAN_TO, mediaType: MediaType.BOOK, page: 1 });
+
+    const url = new URL(lastCall().url, 'http://x');
+    expect(url.pathname).toBe('/api/me/lists');
+    expect(Object.fromEntries(url.searchParams)).toEqual({
+      status: 'PLAN_TO',
+      mediaType: 'BOOK',
+      page: '1',
+      pageSize: '12',
+    });
+  });
+
+  it('list returns the page as sent', async () => {
+    const page = { data: [entry], page: 2, pageSize: 12, total: 31 };
+    fetchMock.mockReturnValue(json(page));
+
+    expect(await listsApi.list({ page: 2 })).toEqual(page);
+  });
+
+  it('forTitle returns null when the title is not on the list', async () => {
+    fetchMock.mockReturnValue(json(null));
+
+    expect(await listsApi.forTitle('a/b c')).toBeNull();
+    expect(lastCall().url).toBe('/api/me/lists/by-title/a%2Fb%20c');
+    expect(lastCall().init.method).toBeUndefined();
+    expect(lastCall().init.credentials).toBe('include');
+  });
+
+  it('forTitle returns the entry as sent', async () => {
+    fetchMock.mockReturnValue(json(entry));
+
+    expect(await listsApi.forTitle('t1')).toEqual(entry);
+    expect(lastCall().url).toBe('/api/me/lists/by-title/t1');
+  });
+
+  it('add posts titleId and status', async () => {
+    fetchMock.mockReturnValue(json(entry, 201));
+
+    expect(await listsApi.add('t1', ListStatus.COMPLETED)).toEqual(entry);
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/me/lists');
+    expect(init.method).toBe('POST');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({ titleId: 't1', status: 'COMPLETED' });
+  });
+
+  it("a second add shows the server's 409 message", async () => {
+    fetchMock.mockReturnValue(json({ error: 'This title is already on your list' }, 409));
+
+    await expect(listsApi.add('t1', ListStatus.COMPLETED)).rejects.toMatchObject({
+      status: 409,
+      message: 'This title is already on your list',
+    });
+  });
+
+  it('setStatus patches only the status', async () => {
+    const updated = { ...entry, status: ListStatus.PLAN_TO };
+    fetchMock.mockReturnValue(json(updated));
+
+    expect(await listsApi.setStatus('l/1 c', ListStatus.PLAN_TO)).toEqual(updated);
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/me/lists/l%2F1%20c');
+    expect(init.method).toBe('PATCH');
+    expect(init.credentials).toBe('include');
+    expect(JSON.parse(init.body as string)).toEqual({ status: 'PLAN_TO' });
+  });
+
+  it('remove sends DELETE and resolves undefined on 204', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(listsApi.remove('l/1 c')).resolves.toBeUndefined();
+
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/me/lists/l%2F1%20c');
+    expect(init.method).toBe('DELETE');
+    expect(init.credentials).toBe('include');
+    expect(init.body).toBeUndefined();
+  });
+});
 
 describe('titlesApi (real)', () => {
   it('get calls GET /titles/:id with cookies and maps the detail', async () => {

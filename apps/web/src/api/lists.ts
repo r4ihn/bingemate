@@ -1,14 +1,19 @@
 import type { ListStatus, Paginated } from '@bingemate/shared';
 import { db, newId } from '../mocks/db.js';
 import type { ListItem, ListQuery } from '../types/list.js';
-import { ApiError } from './client.js';
-import { clone, delay, notWired, useMock } from './mockMode.js';
+import { ApiError, apiFetch } from './client.js';
+import { clone, delay, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 12;
 
 export const listsApi = {
   async list(q: ListQuery): Promise<Paginated<ListItem>> {
-    if (!useMock) notWired('/me/lists (JW)');
+    if (!useMock) {
+      const params = new URLSearchParams({ page: String(q.page), pageSize: String(PAGE_SIZE) });
+      if (q.status !== undefined) params.set('status', q.status);
+      if (q.mediaType !== undefined) params.set('mediaType', q.mediaType);
+      return apiFetch<Paginated<ListItem>>(`/me/lists?${params}`);
+    }
     await delay();
     const all = db.lists.filter(
       (e) =>
@@ -25,14 +30,21 @@ export const listsApi = {
 
   /** The signed-in user's entry for a title, or null when it is not on their list. */
   async forTitle(titleId: string): Promise<ListItem | null> {
-    if (!useMock) notWired('/me/lists (JW)');
+    if (!useMock) {
+      return apiFetch<ListItem | null>(`/me/lists/by-title/${encodeURIComponent(titleId)}`);
+    }
     await delay();
     const entry = db.lists.find((e) => e.titleId === titleId);
     return entry ? clone(entry) : null;
   },
 
   async add(titleId: string, status: ListStatus): Promise<ListItem> {
-    if (!useMock) notWired('/me/lists (JW)');
+    if (!useMock) {
+      return apiFetch<ListItem>('/me/lists', {
+        method: 'POST',
+        body: JSON.stringify({ titleId, status }),
+      });
+    }
     await delay();
     const title = db.titles.find((t) => t.id === titleId);
     if (!title) throw new ApiError(404, 'Title not found');
@@ -45,7 +57,12 @@ export const listsApi = {
   },
 
   async setStatus(entryId: string, status: ListStatus): Promise<ListItem> {
-    if (!useMock) notWired('/me/lists (JW)');
+    if (!useMock) {
+      return apiFetch<ListItem>(`/me/lists/${encodeURIComponent(entryId)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status }),
+      });
+    }
     await delay();
     const entry = db.lists.find((e) => e.id === entryId);
     if (!entry) throw new ApiError(404, 'List entry not found');
@@ -54,7 +71,9 @@ export const listsApi = {
   },
 
   async remove(entryId: string): Promise<void> {
-    if (!useMock) notWired('/me/lists (JW)');
+    if (!useMock) {
+      return apiFetch<void>(`/me/lists/${encodeURIComponent(entryId)}`, { method: 'DELETE' });
+    }
     await delay();
     db.lists = db.lists.filter((e) => e.id !== entryId);
   },
