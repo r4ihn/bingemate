@@ -12,6 +12,8 @@ const prisma = {
   title: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
   review: { findMany: vi.fn(), count: vi.fn() },
   listEntry: { count: vi.fn() },
+  $queryRaw: vi.fn(),
+  $transaction: vi.fn(),
 };
 const mongo = {
   bodyDeleteMany: vi.fn(),
@@ -41,10 +43,22 @@ const updatedAt = new Date('2026-11-02T01:02:03.456Z');
 
 beforeEach(() => {
   calls.length = 0;
+  prisma.$queryRaw.mockReset().mockImplementation(async () => calls.push('lock'));
+  prisma.$transaction
+    .mockReset()
+    .mockImplementation(async (arg: unknown) =>
+      typeof arg === 'function' ? arg(prisma) : Promise.all(arg as Promise<unknown>[]),
+    );
   prisma.title.findMany.mockReset().mockResolvedValue([]);
   prisma.title.delete.mockReset().mockImplementation(async () => calls.push('pg-delete'));
-  prisma.review.count.mockReset().mockResolvedValue(0);
-  prisma.listEntry.count.mockReset().mockResolvedValue(0);
+  prisma.review.count.mockReset().mockImplementation(async () => {
+    calls.push('review-count');
+    return 0;
+  });
+  prisma.listEntry.count.mockReset().mockImplementation(async () => {
+    calls.push('list-count');
+    return 0;
+  });
   prisma.review.findMany.mockReset().mockImplementation(async () => {
     calls.push('review-ids');
     return [{ id: 'r1' }, { id: 'r2' }];
@@ -161,6 +175,8 @@ describe('DELETE /api/titles/:id', () => {
     request(app).delete(`/api/titles/${id}`).set(cookie);
 
   const expectNoDelete = () => {
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+    expect(prisma.$queryRaw).not.toHaveBeenCalled();
     expect(prisma.review.count).not.toHaveBeenCalled();
     expect(prisma.listEntry.count).not.toHaveBeenCalled();
     expect(prisma.review.findMany).not.toHaveBeenCalled();
@@ -219,6 +235,20 @@ describe('DELETE /api/titles/:id', () => {
     expectNoDelete();
   });
 
+  it('locks before counting, reading review ids and deleting for the owner', async () => {
+    const res = await del();
+
+    expect(res.status).toBe(204);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(calls).toEqual([
+      'lock', 'review-count', 'list-count', 'review-ids', 'pg-delete',
+      'mongo-bodies', 'mongo-replies', 'mongo-poster',
+    ]);
+    const [sql, titleId] = prisma.$queryRaw.mock.calls[0] ?? [];
+    expect((sql as string[]).join('?')).toBe('SELECT "id" FROM "Title" WHERE "id" = ? FOR UPDATE');
+    expect(titleId).toBe('t1');
+  });
+
   it('lets the owner delete', async () => {
     prisma.review.findMany.mockResolvedValue([]);
 
@@ -275,6 +305,10 @@ describe('DELETE /api/titles/:id', () => {
           : { titleId: 't1' },
       });
       expect(prisma.title.delete).not.toHaveBeenCalled();
+      expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+      expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+      expect(calls[0]).toBe('lock');
+      expect(prisma.review.findMany).not.toHaveBeenCalled();
       for (const fn of Object.values(mongo)) expect(fn).not.toHaveBeenCalled();
     },
   );
@@ -295,6 +329,9 @@ describe('DELETE /api/titles/:id', () => {
     const res = await del(as('a1', 'ADMIN'));
 
     expect(res.status).toBe(204);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(1);
+    expect(prisma.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.title.delete).toHaveBeenCalledWith({ where: { id: 't1' } });
     expect(prisma.review.count).not.toHaveBeenCalled();
     expect(prisma.listEntry.count).not.toHaveBeenCalled();
     expect(prisma.review.findMany).toHaveBeenCalledWith({
@@ -305,7 +342,7 @@ describe('DELETE /api/titles/:id', () => {
     expect(mongo.replyDeleteMany).toHaveBeenCalledWith({ reviewId: { $in: ['r1', 'r2'] } });
     expect(mongo.posterDeleteOne).toHaveBeenCalledWith({ _id: 't1' });
     expect(calls).toEqual([
-      'review-ids', 'pg-delete', 'mongo-bodies', 'mongo-replies', 'mongo-poster',
+      'lock', 'review-ids', 'pg-delete', 'mongo-bodies', 'mongo-replies', 'mongo-poster',
     ]);
   });
 

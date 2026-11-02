@@ -6,6 +6,7 @@ import { HttpError } from '../../middleware/errorHandler.js';
 import { ReviewBody } from '../../mongo/models/reviewBody.model.js';
 import { Reply } from '../../mongo/models/reply.model.js';
 import { TitlePoster } from '../../mongo/models/titlePoster.model.js';
+import { lockTitle } from '../reviews/rating.js';
 import type { CreateSubmissionInput, UpdateSubmissionInput } from './submissions.schema.js';
 import { summarySelect, toSummary } from './titles.service.js';
 
@@ -93,26 +94,29 @@ export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
     throw new HttpError(403, 'You can only delete your own submission');
   }
 
-  if (user.role !== Role.ADMIN) {
-    const [reviewCount, listEntryCount] = await Promise.all([
-      prisma.review.count({ where: { titleId: id } }),
-      prisma.listEntry.count({ where: { titleId: id, userId: { not: user.id } } }),
-    ]);
-    if (reviewCount > 0 || listEntryCount > 0) {
-      throw new HttpError(
-        409,
-        'Other users have reviewed or listed this title, so it cannot be deleted by its creator. Ask an admin to remove it.',
-      );
+  const ids = await prisma.$transaction(async (tx) => {
+    await lockTitle(tx, id);
+    if (user.role !== Role.ADMIN) {
+      const [reviewCount, listEntryCount] = await Promise.all([
+        tx.review.count({ where: { titleId: id } }),
+        tx.listEntry.count({ where: { titleId: id, userId: { not: user.id } } }),
+      ]);
+      if (reviewCount > 0 || listEntryCount > 0) {
+        throw new HttpError(
+          409,
+          'Other users have reviewed or listed this title, so it cannot be deleted by its creator. Ask an admin to remove it.',
+        );
+      }
     }
-  }
 
-  // Capture reply parent ids before PostgreSQL cascades the reviews away.
-  const reviews = await prisma.review.findMany({
-    where: { titleId: id },
-    select: { id: true },
+    // Capture reply parent ids before PostgreSQL cascades the reviews away.
+    const reviews = await tx.review.findMany({
+      where: { titleId: id },
+      select: { id: true },
+    });
+    await tx.title.delete({ where: { id } });
+    return reviews.map((review) => review.id);
   });
-  const ids = reviews.map((review) => review.id);
-  await prisma.title.delete({ where: { id } });
 
   try {
     await ReviewBody.deleteMany({ titleId: id });
