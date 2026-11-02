@@ -22,7 +22,7 @@ Nothing is waiting to merge. PRs #9 to #14 were merged on 30 Oct: undated review
 | `feat/admin-endpoints` _(RA)_                                             | Admin endpoints (§4). One commit, which only edits an older TASKS.md; no code yet. 6 commits behind `main`: rebase first |
 | `feat/api-queries`, `feat/api-reviews-replies-lists`, `feat/title-poster` | Merged; can be deleted                                                                                                   |
 
-The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm run dev` (in `apps/api`). Sign-in and every write in the website still use mock data (§8).
+The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm run dev` (in `apps/api`). Reviews, replies, My Lists and creator stats writes are wired on `feat/web-wire-writes`; the creator title forms and the admin pages still need their API endpoints.
 
 ---
 
@@ -51,7 +51,7 @@ The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm
 - [x] Dev seed uses a dataset subset; full load only for benchmarks _(JW)_. The cleaned dev set is 1,500 titles (500 movies, 500 books, 500 TV shows) with 13,490 reviews, loaded by `data/etl/load-all.ts`. Skip `prisma/seed.ts`: the load already holds the admin and creator accounts. The full 950k set is for SJ's benchmarks only
 - [ ] Move the existing prototype code (Titles/Users CRUD, browse page) into the new structure _(JW, WH)_. Most of it has been rebuilt in `modules/titles` and the web app; check whether anything in the prototype is still needed, then close this
 - [x] `npm run dev` for the API exits with "Invalid environment variables": nothing loads `apps/api/.env` (Prisma reads it, the API does not). Load it in the `dev` script, e.g. `tsx watch --env-file=.env src/server.ts` (Node 20.6+), so everyone can start the API _(RA)_. Fixed in PR #8
-- [ ] README: document how to run the website against the real API (`VITE_USE_MOCKS=false`), how to view the databases (`npx prisma studio` in `apps/api`, `docker exec -it bingemate-postgres psql -U bingemate -d bingemate`, `docker exec -it bingemate-mongo mongosh bingemate`), and the `--env-file` start command until the item above is fixed _(WH)_
+- [~] README: the run-on-real-data steps are in `README.md` (`feat/web-wire-writes`). Still to document: how to view the databases (`npx prisma studio` in `apps/api`, `docker exec -it bingemate-postgres psql -U bingemate -d bingemate`, `docker exec -it bingemate-mongo mongosh bingemate`), and the `--env-file` start command until the item above is fixed _(WH)_
 
 ## 2. Data & relational schema (JW, Week 6)
 
@@ -145,9 +145,9 @@ The list endpoints were merged in PR #10.
 
 - [ ] Browse and search page connected to the backend. Was ticked, but `main` only uses mock data
   - [x] The public reads now call the real API when `VITE_USE_MOCKS=false`: title detail, search/browse, the Home rails, a title's reviews and a review's replies (PR #13). Long reply threads are read page by page, and search text is cut to the 100 characters the API accepts
-  - [ ] Wire the writes to the real API: write/edit/delete review, the user's own review (`/mine`), replies, My Lists, the creator pages (including the image upload: `POST` the title, then `PUT` the image), creator stats and the admin pages. The endpoints exist (§5–§7) except the creator title ones and RA's; each can be tested with a signed cookie before login exists _(WH)_
+  - [~] Writes wired on `feat/web-wire-writes`: write/edit/delete review, the user's own review (`/mine`), replies, My Lists and creator stats, each with fetch-stubbed tests, and the client now shows the API's error text (it sends `error`, the client read `message`). Checked against the endpoints, not yet clicked through in a browser. Still not wired: the creator title forms (create, edit, delete, then `PUT` the image) wait on JW's title endpoints, and the admin pages wait on RA's _(WH)_
 - [x] Router, layout, typed API client, `AuthContext`, protected routes _(WH)_. Done
-  - [ ] Point sign-in, register, `me` and logout at the real `/auth/*` (on `main` since PR #8); they still use mock data _(WH)_
+  - [~] Sign-in, register, `me` and logout call the real `/auth/*` (the client uses `apiFetch`, no mock switch; `POST /auth/login` checked for the admin, creator and an imported user). Not yet clicked through in a browser _(WH)_
 - [x] Login and register pages _(WH)_. Done; the password rule (8+ characters, a letter and a digit) matches the API (RA confirmed in PR #8)
 - [ ] Home page with trending cards _(SJ)_. WH built the layout (hero, poster strip, Movies/TV/Books rails) on the titles API. `GET /api/trending` now exists (§6): swap it in
 - [ ] Browse page filters (type, genre, rating) and pagination _(SJ)_. WH built the shell: `?q`, `?type`, `?page` in the URL, type pills and pagination, plus the nav search with quick matches. `GET /api/genres` now exists (§6) for the genre filter; the rating filter can use `minRating`
