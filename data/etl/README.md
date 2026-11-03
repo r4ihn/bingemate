@@ -134,6 +134,8 @@ than its survivor, title ids identical, no text left untrimmed.
 
 ## Loading
 
+For the 947 undated reviews already loaded locally with the old `1900-01-01` placeholder, use `backfill-undated-dates.ts` to give them the same deterministic made-up 2022–2025 dates as a fresh load, without reloading either store. From the repo root, preview with `npx tsx --env-file=apps/api/.env data/etl/backfill-undated-dates.ts`, then write with `npx tsx --env-file=apps/api/.env data/etl/backfill-undated-dates.ts --apply`. It requires the existing `data/processed/reviews.csv` and `id-map.json`, refuses remote databases, and only updates matching placeholder dates, so reruns are safe; apply verifies that no targeted placeholders remain and both stores agree.
+
 Remove orphan Mongo review bodies and replies whose PostgreSQL review is gone (from the repo root): `npx tsx --env-file=apps/api/.env apps/api/src/jobs/cleanupOrphans.ts`.
 
 - Ids: the loaders generate UUIDs (`crypto.randomUUID`, no dependency) and keep the dataset-id map in
