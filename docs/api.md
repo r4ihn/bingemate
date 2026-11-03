@@ -2,6 +2,20 @@
 
 Endpoint list + required role. Fill in as modules land (TASKS.md sections 3–7).
 
+## Errors
+
+Errors return JSON with an `error` field. JSON request bodies use Express's default 100 KB limit:
+
+- Malformed JSON (`entity.parse.failed`): 400 `{ "error": "Invalid JSON" }`.
+- Oversized JSON (`entity.too.large`): 413 `{ "error": "Request body too large" }`.
+- Unsupported encoding/charset or an aborted request (`encoding.unsupported`, `charset.unsupported`, `request.aborted`): 400 `{ "error": "Could not read the request" }`.
+- Unknown routes: 404 `{ "error": "Not found" }`.
+- Unexpected errors: 500 `{ "error": "InternalServerError" }`; details are logged server-side and never included in the response.
+
+Validation errors return 400 with `error: "ValidationError"` and field `details`. Explicit application errors retain their endpoint-specific status and message. The poster upload's raw-body parser retains its own 413 `"The image must be 1 MB or smaller"` and 400 `"Could not read the image"` responses.
+
+## Routes
+
 | Method | Path | Role | Notes |
 |---|---|---|---|
 | POST | /api/auth/register | public | default role CONSUMER |

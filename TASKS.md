@@ -84,7 +84,7 @@ The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm
 - [x] `cookie-parser` + CORS with `credentials: true` restricted to the web origin (`app.ts`, origin from `WEB_ORIGIN`)
 - [x] `authenticate` middleware (read the JWT from the cookie, verify it) and `authorize(...roles)` middleware
   - [x] Bug: an expired or invalid token makes `jwt.verify` throw, which `errorHandler` turns into a **500**. Catch JWT errors and return 401. Fixed in `authenticate.ts` (PR #8)
-  - [ ] Bug: a request with malformed JSON (or a body over the parser's limit) also gives a **500**, because `errorHandler` only knows Zod and `HttpError`. Pass on the status that Express's body parser sets (400 / 413). Found on 29 Oct; affects every route
+  - [x] Bug: malformed JSON / oversized bodies gave **500**. Fixed by parser type: malformed JSON → 400, oversized JSON → 413, unsupported encoding/charset or aborted request → 400, all with fixed `{error}` responses. Regression tests added; API Supertest execution remains pending outside the sandbox (listen EPERM)
 - [ ] Ownership checks: users edit/delete only their own reviews and replies, creators edit/delete only their own titles (`titles.created_by`), admins override all
   - [x] Reviews, replies, lists and title images already enforce their own rules inside their services (see §5, §7, §2), tested per role. Titles and users still need it
 - [x] Reply permission: `CONSUMER` and `CREATOR` can reply to a review; `ADMIN` can delete any reply but never writes one. Enforced in the reply endpoints (§5)
@@ -192,6 +192,8 @@ The list endpoints were merged in PR #10.
 ## 12. Known gaps and follow-ups (found in code review, 29–30 Oct)
 
 Fixed on 30 Oct (merged in PRs #10 to #13): stored ratings now come from the `title_rating_stats` view, so they round exactly like it (JS rounding stored 1.02 for 41 stars over 40 reviews, the view 1.03); a failed review edit undoes its rating only if no other edit has saved since; deleting a review clears its replies even when the body delete fails; the creator form drops an image still being prepared when it closes.
+
+- [x] **500 on malformed JSON** — fixed on 3 Nov: parser errors return fixed 400/413 JSON responses; unknown routes return 404 `{error: 'Not found'}`. Unexpected errors still log `Unhandled error:` and return only 500 `{error: 'InternalServerError'}`. Regression tests added; API Supertest execution remains pending outside the sandbox (listen EPERM) _(WH)_
 
 - [ ] **A reply posted while its review is being deleted can be left behind.** The reply check passes, the review and its replies are deleted, then the reply is saved. It needs two requests at nearly the same moment and nothing lists the leftover; a periodic cleanup of replies whose review is gone would cover it, together with the title/user delete leftovers below _(HS)_
 
