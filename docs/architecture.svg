@@ -62,8 +62,8 @@
 <text class="ts" x="52" y="451">2. Mongo ReviewBody._id = Review.id → 3. If 2 fails: undo header + totals (best effort)</text>
 </g>
 <g class="c-gray"><rect x="40" y="478" width="600" height="64" rx="8" stroke-width="0.5"/>
-<text class="th" x="52" y="498">Trending refresh: built • server timers + refreshTrending.ts CLI</text>
-<text class="ts" x="52" y="516">Immediate + every 1 min; also startup-if-empty + TRENDING_REFRESH_MINUTES</text>
+<text class="th" x="52" y="498">Trending refresh: built • server timer + refreshTrending.ts CLI</text>
+<text class="ts" x="52" y="516">Startup check if empty + timer every TRENDING_REFRESH_MINUTES (default 10, 0 = off)</text>
 <text class="ts" x="52" y="531">SQL trending_titles + Mongo recent-count aggregation → upsert cards → refresh ranks</text>
 </g>
 <line x1="182" y1="554" x2="182" y2="588" class="arr" marker-end="url(#arrow)"/>

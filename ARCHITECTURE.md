@@ -46,7 +46,6 @@ bingemate/
 │   │   │   │       └── titlePoster.model.ts
 │   │   │   ├── jobs/
 │   │   │   │   ├── refreshTrending.ts    # cards + title ranks, CLI, startup check + configurable timer
-│   │   │   │   ├── scheduleTrending.ts   # immediate refresh + every-minute scheduler
 │   │   │   │   └── cleanupOrphans.ts     # standalone maintenance, outside runtime
 │   │   │   ├── utils/
 │   │   │   │   ├── jwt.ts                # sign/verify, 2h expiry
@@ -144,7 +143,7 @@ bingemate/
 | Store               | Holds                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL (Prisma) | users (+ role, bcrypt hash), titles (+ status PENDING/APPROVED/REJECTED, created_by, rejection_reason), movie_details, tv_details, book_details (one optional row per title, type enforced by a composite foreign key), genres, people, title_genres, title_people, list_entries, reviews header (id, user_id, title_id, rating, timestamps), rating aggregates |
-| MongoDB (Mongoose)  | review bodies (`_id` = PG `Review.id`, `titleId`, `userId`, copied `mediaType`, `body` text, `createdAt`, `updatedAt`; one shape for all media types), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                                                                                                    |
+| MongoDB (Mongoose)  | review bodies (`_id` = PG `Review.id`, `titleId`, `userId`, copied `mediaType`, `body` text, `createdAt`, `updatedAt`; one shape for all media types), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                           |
 
 Cross-database link: PostgreSQL `Review.id` equals MongoDB `ReviewBody._id`; replies store `reviewId` / `userId`. Review creation first commits a PostgreSQL transaction that locks the Title row, inserts the Review header and recomputes `avgRating` / `reviewCount` from `title_rating_stats`. It then writes the Mongo body with the same id. If that fails, a compensating transaction locks the title, removes the header and recomputes the totals; compensation failures are logged. There is no cross-store transaction or foreign key. Deleting a title or review also attempts to remove its Mongo body and replies.
 
@@ -154,13 +153,9 @@ The `admin` module implements title listing and status changes. Separate admin u
 
 ## Trending refresh lifecycle
 
-`server.ts` also calls `startTrendingRefresh()` before listening: it runs immediately
-and every minute via `scheduleTrending.ts`, independently of the configurable timer below.
-The two schedulers each guard only their own pending run, so they can overlap.
-
 After the API starts listening, `server.ts` calls `refreshIfEmpty()` to populate an empty
 `TrendingCard` collection and starts `startTrendingTimer(env.TRENDING_REFRESH_MINUTES)`.
-The env value is an integer from 0 to 1440, default 10; 0 disables only this configurable timer; the every-minute scheduler still runs.
+The env value is an integer from 0 to 1440, default 10; 0 disables the timer (the empty-collection startup check still runs).
 The first scheduled refresh runs after the first interval. The interval is unrefed, skips
 pending runs, logs failures and continues; SIGINT/SIGTERM clear it before process exit.
 Startup count/refresh failures are logged without preventing the API from serving.

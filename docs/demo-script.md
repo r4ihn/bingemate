@@ -1,6 +1,6 @@
 # Demo script (10 minutes, all five members speak)
 
-Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member has a timed segment. Rehearse it at least twice with a stopwatch: the click paths for the creator and admin screens have **not** yet been checked in a real browser (see `docs/manual-test-checklist.md` once it exists), so treat every "click" below as a plan, not a fact.
+Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member has a timed segment. Rehearse it at least twice with a stopwatch: the creator, admin and reader click paths were run in a real browser on 3 Nov (`docs/manual-test-checklist.md`, 23 of 23 steps), but a scripted run is not a rehearsal: practise the timing and the handovers by hand.
 
 ## Before you record
 
@@ -54,7 +54,7 @@ Show `docs/architecture.svg`. Say: React single-page app, Express API, PostgreSQ
 ### SJ, 5:30-7:30: queries, plans and benchmarks
 
 - **Show:** the title page rank line ("#N in Movies, top X%"). In `psql`: `select title_id, rank_in_type, pct_rank from title_rank_in_type where "mediaType"='MOVIE' order by rank_in_type limit 5;`. Say: a materialized view using `RANK()` and `PERCENT_RANK()`, refreshed with the trending job.
-- **Show trending as JSON, not as a page:** open `http://localhost:4000/api/trending?type=MOVIE&limit=5` and `...&sort=recent` in the browser. The website does not use the trending API yet (Home's "Trending now" strip lists titles in name order) and Browse has no genre or sort controls, so do not say "on the site"; say "from the API". Show the same sorted browse as `http://localhost:4000/api/titles?type=MOVIE&sort=rating`.
+- **Show trending on the site and as JSON:** Home's "Trending now" strip now reads the trending API (run the trending job once before the demo so it is not empty). Then open `http://localhost:4000/api/trending?type=MOVIE&limit=5` and `...&sort=recent` to show the raw cards. On Browse, pick a genre and **Top rated** in the two selects and show the matching `http://localhost:4000/api/titles?type=MOVIE&genre=Drama&sort=rating` call.
 - **Show:** `docs/benchmarks/explain.md`, the before and after table: browse by rating 22.6 ms to 0.07 ms after a composite index; the partial index that Prisma's queries never used.
 - **Show:** `docs/benchmarks/results.md`, the conclusions: single reads and inserts tie between the stores; precomputed trending is about 900 times faster than computing it, which is a design result; the two-store review path costs about 6 to 9 times a single-store read.
 - **Say:** the data is synthetic (no 950k-title source exists), and the repeatability target was missed on sub-millisecond rows.

@@ -53,7 +53,7 @@ Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the r
 - Method and honesty: synthetic 950,000-title and 999,372-review data, one laptop, warm cache, noise up to about 35% on sub-millisecond rows, the 15% repeatability target missed and why that matters.
 - Table: before and after plans (browse by rating 22.6 ms to 0.07 ms; reviews sort 51.7 ms to 0.02 ms; year sort left alone because Prisma 5.20 cannot declare `NULLS LAST`). Finding: a partial index on `status` was never used by Prisma's bound-parameter queries; the likely cause is a hypothesis, the behaviour is measured.
 - SQL against NoSQL: five scenarios, one conclusion each (four ties; trending precompute about 900 times faster, a design result; the two-store path costs about 6 to 9 times a single-store read). Do not write that MongoDB is faster for reads: the data does not say that.
-- Load tests (autocannon): trending 2,033 req/s, reviews 1,228, browse 478; browse limited by the `COUNT(*)` for the page total (about 25 ms). Add the caveat that an older every-minute trending scheduler was running.
+- Load tests (autocannon): trending 1,960 req/s, reviews 1,194, browse 496; browse limited by the `COUNT(*)` for the page total (about 25 ms). Mention that the load tests were run twice, once before and once after an extra every-minute trending scheduler was removed, and agreed within 5%.
 - Source: `docs/benchmarks/explain.md`, `docs/benchmarks/results.md`.
 
 ### 8. Testing and CI (WH)
@@ -62,7 +62,7 @@ Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the r
 
 ### 9. Limitations and next steps (ALL)
 
-Admin user and role management and review moderation; the two trending schedulers; `pg_trgm` for rare-term search (95 to 101 ms on 950,000 titles); cached or approximate page totals; the missing year-sort index; Eraser diagrams to refresh; cold-cache benchmarks; browser checks of the creator and admin flows.
+Admin user and role management and review moderation; `pg_trgm` for rare-term search (95 to 101 ms on 950,000 titles); cached or approximate page totals; the missing year-sort index; Eraser diagrams to refresh; cold-cache benchmarks; browser checks of the creator and admin flows.
 
 ### 10. Contributions (ALL)
 
@@ -74,8 +74,7 @@ One line per member, matching `TASKS.md` owners: WH frontend and integration, JW
 
 ## Things not to write
 
-- That the creator or admin screens were tested in a real browser (not done yet).
+- That the creator or admin screens were tested with every browser or with assistive technology (only headless Chromium was used; see `docs/manual-test-checklist.md`).
 - That MongoDB beat PostgreSQL on single reads or inserts (they tied).
 - That the Prisma partial-index mechanism is proven (it is a hypothesis).
 - That the benchmark data is real (it is synthetic and labelled so).
-- That `TRENDING_REFRESH_MINUTES=0` turns the trending refresh off (it does not today).

@@ -94,7 +94,7 @@ For a persistent web setting, optionally run `cp apps/web/.env.example apps/web/
 
 ## 4. Using the site
 
-The steps below come from routes, components and API rules in the source. Creator and admin flows have not been clicked through in a real browser. Do not treat these instructions as evidence of browser testing.
+The steps below come from routes, components and API rules in the source. The creator, admin and reader flows (submit with an image, approve, reject, the stale-version message, review, reply, lists, delete) were also run in a real browser on 3 Nov 2026; see `docs/manual-test-checklist.md` for exactly what was and was not covered.
 
 ### Visitor
 
@@ -102,22 +102,22 @@ Open **Browse**, or use **Menu** on a narrow screen. Choose **All**, **Movies**,
 
 Choose **Search** in the top bar and enter part of a title's name. Search ignores case. You can choose a media type in the search scope. Choose a suggestion to open its title page. Press Enter without a selected suggestion, or choose **See all results for…**, to open Browse results. The real API client limits search text to 100 characters.
 
-Browse currently has no genre filter or sort control. Adding `genre` or `sort` to the website's Browse URL does not enable those controls. You can inspect the API directly in your browser instead:
+Under the type buttons, Browse has two selects. **Genre** lists **All genres** plus the genres that have enough approved titles for the chosen type, most titles first. **Sort** offers **Name** (alphabetical, the default), **Top rated**, **Newest** and **Most reviewed**. Both are kept in the page address (for example `/browse?genre=Drama&sort=rating`), so you can bookmark a view, and changing the type, the genre or the sort returns you to page 1. If you change the type and the chosen genre is not offered for it, the genre is cleared. A minimum rating and an exact release year are still API-only:
 
 ```text
 http://localhost:4000/api/genres?type=MOVIE
-http://localhost:4000/api/titles?type=MOVIE&genre=Drama&sort=rating
+http://localhost:4000/api/titles?type=MOVIE&genre=Drama&sort=rating&minRating=4&year=1999
 ```
 
-The API accepts genre names without regard to case. Its sorts are `name` (alphabetical, default), `rating` (highest first), `year` (newest first, missing years last) and `reviews` (most first). It also accepts `minRating` and an exact `year`. These API options are not yet exposed by Browse.
+The API accepts genre names without regard to case. Its sorts are `name` (alphabetical, default), `rating` (highest first), `year` (newest first, missing years last) and `reviews` (most first).
 
 Choose a title card to open `/titles/:id`. You can read the synopsis, available facts, average rating out of 5, and reviews. Reviews are newest first. Long review text has a **Read more** control. Missing optional facts are hidden.
 
 When ranking data exists, you see a line such as `#3 in Movies · top 1%`. This is the requested “#N in Movies - top X%” rank line; the screen uses a middle dot. The media label changes for books and TV shows. The line is hidden when the title is unranked or its rank lookup fails. Ranks refresh with the trending job.
 
-There is no dedicated trending page or `/trending` website route yet. Home has a **Trending now** strip, but its hero, strip and media rails use the first approved titles from the titles API, in name order. They do not use the trending API.
+On Home, the **Trending now** strip shows the top cards from the trending API. If the trending refresh has not run yet, or the call fails, the strip falls back to the first approved titles in name order, so Home is never empty. The large title at the top of Home is still the first approved title by name, not a trending one. There is no separate trending page or `/trending` website route.
 
-To inspect actual cached trending data, open `http://localhost:4000/api/trending`. You receive JSON, not a website page. The API supports `type=MOVIE|TV_SHOW|BOOK`, `limit=1` through `50`, and `sort=score|recent`. Score is the default. Recent sorting uses counts over a fixed 1460-day window calculated during refresh. You cannot change that window with a `days` parameter. The candidates remain the SQL score view's top 50 per type. Deleted or unapproved titles are excluded from the response.
+To see the raw trending data, open `http://localhost:4000/api/trending`. You receive JSON, not a website page. The API supports `type=MOVIE|TV_SHOW|BOOK`, `limit=1` through `50`, and `sort=score|recent`. Score is the default. Recent sorting uses counts over a fixed 1460-day window calculated during refresh. You cannot change that window with a `days` parameter. The candidates remain the SQL score view's top 50 per type. Deleted or unapproved titles are excluded from the response.
 
 ### Signed-in reader
 
@@ -137,7 +137,7 @@ Open **My Lists** or **Save** to see your entries at `/me/lists`. Choose a statu
 
 ### Creator
 
-Sign in with the creator account. Open **Creator** at `/creator`. You see **My submissions**, with status and a **Note** column for the rejection reason.
+Sign in with the creator account. Open **Creator** at `/creator`. The page is headed **Creator** and says "Your submissions". A table lists each title with its type, status and a **Note** column for the rejection reason, and each row has **Edit** and **Delete**.
 
 Choose **New submission**. Enter **Title**, choose **Type**, and enter **Synopsis** if needed. You may choose a **Poster image (optional)**. The form accepts JPEG, PNG or WebP and rejects files over 8 MB. It shrinks the image before uploading; the API accepts at most 1 MB. Wait for image preparation to finish, then choose **Submit for approval**.
 
@@ -161,7 +161,7 @@ Choose **Stats** at `/creator/stats`. You see your approved titles with **Avg ra
 
 Sign in with the admin account and open **Admin**, then **Approval queue** at `/admin/queue`. The queue lists pending titles oldest first. The web client requests up to 50 titles at once. After decisions, it reloads the queue.
 
-Choose **Approve** to publish a title. To reject it, enter a reason in **Rejection reason**, then choose **Reject**. You should give the creator a useful reason. The field is optional in the code, with a limit of 500 characters; it is not mandatory. A rejection hides the title and makes the reason available to its creator.
+Choose **Approve** to publish a title. To reject it, type a reason in the box in the **Rejection reason** column (it shows the hint "Optional"), then choose **Reject**. You should give the creator a useful reason. The field is optional in the code, with a limit of 500 characters; it is not mandatory. A rejection hides the title and makes the reason available to its creator.
 
 If two admins act on the same version of a title, the later request receives HTTP 409: **This title changed after you opened it. Reload the queue and review it again.** The screen displays this message and reloads. Review the current title before deciding again.
 
@@ -177,7 +177,7 @@ The trending refresh copies the SQL view's top 50 reviewed, approved titles per 
 npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
 ```
 
-The API performs an empty-collection startup check. Its configurable timer defaults to 10 minutes and accepts `TRENDING_REFRESH_MINUTES` from 0 to 1440. **Setting 0 does not currently switch refreshing off.** An older scheduler also runs immediately and every minute. Both run independently and can overlap. See [TASKS.md section 6](../TASKS.md#6-search-filtering-trending-queries-sj-week-910).
+The API performs an empty-collection startup check. Its configurable timer defaults to 10 minutes and accepts `TRENDING_REFRESH_MINUTES` from 0 to 1440. Setting it to 0 switches the timer off; the startup check still runs. (Until 3 Nov 2026 an older every-minute scheduler also ran and ignored this setting; it has been removed.)
 
 Orphan cleanup removes MongoDB review bodies and replies whose PostgreSQL review no longer exists, in bounded batches. It covers a reply posted during review deletion. It is not scheduled automatically.
 
@@ -260,7 +260,7 @@ The seed refuses non-empty targets unless you request `--reset`, which deletes b
 | HTTP 409 `Email already in use`                                                              | Log in with that email or register a different email. Email is trimmed and lowercased.                                                                                                                                                                      |
 | HTTP 409 while deleting your title                                                           | Other users have reviewed or listed it. Ask an admin to remove it. Retrying as the creator cannot bypass this restriction.                                                                                                                                  |
 | HTTP 409 while deciding an approval                                                          | Reload and review the current title. The exact stale-version message is in the admin instructions above.                                                                                                                                                    |
-| Creator image upload fails after title creation                                              | Return to My submissions and edit the saved title. Retry with JPEG, PNG or WebP. Do not submit a duplicate title.                                                                                                                                           |
+| Creator image upload fails after title creation                                              | Return to the Creator page and edit the saved title. Retry with JPEG, PNG or WebP. Do not submit a duplicate title.                                                                                                                                         |
 | Users or Moderation fails to load with mocks off                                             | Those real admin endpoints are missing. Use the implemented Approval queue; there is no setup command that enables the missing screens.                                                                                                                     |
 
 ## Known gaps
@@ -280,7 +280,6 @@ The following tracker entries are copied from [TASKS.md section 12](../TASKS.md#
 Additional open problems from the tracker and current code:
 
 - Admin user/role and review-moderation endpoints are not built. Their screens have mock implementations only. Title approval endpoints are implemented.
-- The older every-minute trending scheduler still runs alongside the configurable timer. Setting `TRENDING_REFRESH_MINUTES=0` does not stop it (section 6).
 - Search uses `ILIKE`. Whether to add the `pg_trgm` extension is still a team decision after rare-term searches approached 100 ms on synthetic scale data (section 6).
 - Browse still performs a total count for pagination. The tracker records about 25 ms on the synthetic benchmark data, now the largest part of a browse request (section 6).
-- Genre/rating/sort controls and the real trending website view remain incomplete. Creator and admin browser walkthroughs, manual keyboard checks and the phone layout pass remain pending (section 8).
+- Browse has no minimum-rating or release-year control (API only), and the large title at the top of Home is not a trending one. The creator, admin and reader flows were walked through in a real browser on 3 Nov 2026 (`docs/manual-test-checklist.md`); keyboard-only use, screen readers and the phone layout of the creator and admin screens are still unchecked.
