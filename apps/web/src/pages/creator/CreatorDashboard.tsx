@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { creatorApi } from '../../api/creator.js';
 import { StateMessage } from '../../components/StateMessage.js';
+import { Button } from '../../components/ui/Button.js';
 import { StatusBadge } from '../../components/ui/Badge.js';
 import { Table, Td } from '../../components/ui/Table.js';
 import { useAsync } from '../../hooks/useAsync.js';
@@ -13,6 +15,21 @@ export const secondaryLink =
   'inline-flex rounded-full border border-white px-6 py-3 font-semibold text-white';
 
 export function CreatorDashboard() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const incomingNotice = (location.state as { notice?: string } | null)?.notice;
+  const [notice, setNotice] = useState(incomingNotice);
+
+  // Consume the navigation notice so refreshing or returning to this history entry cannot repeat it.
+  useEffect(() => {
+    if (incomingNotice) {
+      navigate(`${location.pathname}${location.search}${location.hash}`, {
+        replace: true,
+        state: null,
+      });
+    }
+  }, [incomingNotice, location.pathname, location.search, location.hash, navigate]);
+
   const { state, reload } = useAsync(() => creatorApi.submissions(), []);
 
   return (
@@ -21,6 +38,14 @@ export function CreatorDashboard() {
       <p className="mt-2 text-muted">
         Your submissions. New and edited titles stay hidden until an admin approves them.
       </p>
+      {notice && (
+        <div role="alert" className="mt-6 rounded-xl border border-warn p-4 text-warn">
+          <p>{notice}</p>
+          <Button variant="secondary" className="mt-3" onClick={() => setNotice(undefined)}>
+            Dismiss
+          </Button>
+        </div>
+      )}
       <div className="mt-6 flex gap-3">
         <Link to="/creator/new" className={primaryLink}>
           New submission

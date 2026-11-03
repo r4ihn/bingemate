@@ -115,12 +115,12 @@ export function Browse() {
             className={`${inputClass} min-w-0 w-full`}
             value={
               genreOptions.find((option) => option.name.toLowerCase() === genre?.toLowerCase())
-                ?.name ?? ''
+                ?.name ?? (genresReady ? '' : (genre ?? ''))
             }
-            disabled={!genresReady}
             onChange={(event) => update({ genre: event.target.value || undefined })}
           >
             <option value="">All genres</option>
+            {!genresReady && genre && <option value={genre}>{genre}</option>}
             {genreOptions.map((option) => (
               <option key={option.id} value={option.name}>
                 {option.name}

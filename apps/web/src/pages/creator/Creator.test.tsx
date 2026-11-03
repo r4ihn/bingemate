@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
-import { creatorApi } from '../../api/creator.js';
+import { creatorApi, PosterUploadError } from '../../api/creator.js';
 import * as image from '../../image.js';
 import { MOCK_USER, db, resetDb } from '../../mocks/db.js';
 import { renderWithProviders } from '../../test/utils.js';
@@ -12,15 +12,28 @@ import { CreatorDashboard } from './CreatorDashboard.js';
 import { CreatorStats } from './CreatorStats.js';
 import { SubmissionForm } from './SubmissionForm.js';
 
-function renderCreator(route: string) {
+function Where() {
+  const location = useLocation();
+  return <p data-testid="location">{JSON.stringify(location)}</p>;
+}
+
+function renderCreator(route: string, state?: unknown) {
   renderWithProviders(
     <Routes>
-      <Route path="/creator" element={<CreatorDashboard />} />
+      <Route
+        path="/creator"
+        element={
+          <>
+            <CreatorDashboard />
+            <Where />
+          </>
+        }
+      />
       <Route path="/creator/new" element={<SubmissionForm />} />
       <Route path="/creator/:id/edit" element={<SubmissionForm />} />
       <Route path="/creator/stats" element={<CreatorStats />} />
     </Routes>,
-    { route, role: Role.CREATOR },
+    { route, state, role: Role.CREATOR },
   );
   return userEvent.setup();
 }
@@ -49,6 +62,28 @@ const hugePicture = () => {
 };
 
 describe('CreatorDashboard', () => {
+  it('shows no notice when location state has none', async () => {
+    renderCreator('/creator');
+    await screen.findByRole('table');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('consumes the notice from router state so remounting after a reload does not show it', async () => {
+    const notice =
+      'Your title was saved, but its image could not be uploaded. Choose Edit on it to try the image again.';
+    renderCreator('/creator', { notice });
+    expect(await screen.findByRole('alert')).toHaveTextContent(notice);
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('location').textContent!).state).toBeNull();
+    });
+    const location = JSON.parse(screen.getByTestId('location').textContent!);
+    cleanup();
+    renderCreator(location.pathname, location.state);
+    await screen.findByRole('table');
+    expect(screen.queryByText(notice)).not.toBeInTheDocument();
+  });
+
   it('lists own submissions with their status', async () => {
     renderCreator('/creator');
     const approved = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
@@ -147,6 +182,28 @@ describe('CreatorDashboard', () => {
 });
 
 describe('SubmissionForm (new)', () => {
+  it('leaves the new form after a partial upload failure, preventing a duplicate retry', async () => {
+    const submission = { title: title('mock-25') };
+    const submit = vi
+      .spyOn(creatorApi, 'submit')
+      .mockRejectedValue(new PosterUploadError(413, 'Image too large', submission));
+    const user = renderCreator('/creator/new');
+    await user.type(screen.getByLabelText('Title'), 'Saved title');
+    await user.upload(screen.getByLabelText(/Poster image/), picture());
+    const button = screen.getByRole('button', { name: 'Submit for approval' });
+    await user.click(button);
+    const notice = await screen.findByRole('alert');
+    expect(notice).toHaveTextContent(
+      'Your title was saved, but its image could not be uploaded. Choose Edit on it to try the image again.',
+    );
+    expect(JSON.parse(screen.getByTestId('location').textContent!).pathname).toBe('/creator');
+    expect(screen.queryByRole('button', { name: 'Submit for approval' })).not.toBeInTheDocument();
+    await user.click(button);
+    expect(submit).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText(/Your title was saved/)).not.toBeInTheDocument();
+  });
+
   it('enables the media type control for a new submission', () => {
     renderCreator('/creator/new');
     expect(screen.getByRole('combobox', { name: 'Type' })).toBeEnabled();

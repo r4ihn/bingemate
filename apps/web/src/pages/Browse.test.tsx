@@ -186,10 +186,36 @@ it('shows genre loading and retry states without hiding titles', async () => {
     .mockResolvedValue([{ id: 'drama', name: 'Drama', titleCount: 8 }]);
   const user = renderBrowse('/browse');
   expect(screen.getByText('Loading genres…')).toBeInTheDocument();
-  expect(screen.getByLabelText('Genre')).toBeDisabled();
+  expect(screen.getByLabelText('Genre')).toBeEnabled();
   expect(await screen.findByText('Genres could not be loaded.')).toBeInTheDocument();
   await user.click(screen.getByRole('button', { name: 'Retry' }));
   await screen.findByRole('option', { name: 'Drama' });
   expect(list).toHaveBeenCalledTimes(2);
   expect(screen.getByLabelText('Genre')).toBeEnabled();
 });
+
+it.each(['failed', 'pending'] as const)(
+  'can clear the URL genre while genres are %s',
+  async (state) => {
+    const list = vi.spyOn(genresApi, 'list');
+    if (state === 'failed') list.mockRejectedValue(new Error('offline'));
+    else list.mockReturnValue(new Promise(() => undefined));
+    const search = vi.spyOn(titlesApi, 'search').mockResolvedValue({ items: [], total: 0 });
+    const user = renderBrowse('/browse?genre=Drama&page=3');
+    if (state === 'failed') await screen.findByText('Genres could not be loaded.');
+    else expect(screen.getByText('Loading genres…')).toBeInTheDocument();
+    const select = screen.getByRole('combobox', { name: 'Genre' });
+    expect(select).toBeEnabled();
+    expect(select).toHaveValue('Drama');
+    expect(screen.getByRole('option', { name: 'Drama' })).toBeInTheDocument();
+    expect(search).toHaveBeenCalledWith(expect.objectContaining({ genre: 'Drama', page: 3 }));
+    await user.selectOptions(select, '');
+    expect(screen.getByTestId('where').textContent).toBe('');
+    await waitFor(() =>
+      expect(search).toHaveBeenLastCalledWith(
+        expect.objectContaining({ genre: undefined, page: 1 }),
+      ),
+    );
+    expect(select).toHaveValue('');
+  },
+);

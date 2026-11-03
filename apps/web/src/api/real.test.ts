@@ -8,7 +8,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminApi } from './admin.js';
 import { ApiError, setUnauthorizedHandler } from './client.js';
-import { creatorApi } from './creator.js';
+import { creatorApi, PosterUploadError } from './creator.js';
 import { listsApi } from './lists.js';
 import { repliesApi, reviewsApi } from './reviews.js';
 import { titlesApi } from './titles.js';
@@ -717,6 +717,25 @@ describe('creatorApi submissions (real)', () => {
       rejectionReason: undefined,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws PosterUploadError carrying the created submission when the poster returns 413', async () => {
+    fetchMock
+      .mockReturnValueOnce(json(dto, 201))
+      .mockReturnValueOnce(json({ error: 'Image too large' }, 413));
+    const error: unknown = await creatorApi
+      .submit({ ...input, poster: new Blob(['image'], { type: 'image/png' }) })
+      .catch((error: unknown) => error);
+    expect(error).toBeInstanceOf(PosterUploadError);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      status: 413,
+      submission: {
+        title: { id: dto.id, name: dto.name, synopsis: 'Sand.', status: TitleStatus.PENDING },
+      },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastCall().init.method).toBe('PUT');
   });
 
   it('submit tells the user the title exists when only the image fails', async () => {

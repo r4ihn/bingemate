@@ -3,7 +3,7 @@ import type { ChangeEvent, FormEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { MediaType, TitleStatus } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
-import { creatorApi } from '../../api/creator.js';
+import { creatorApi, PosterUploadError } from '../../api/creator.js';
 import { ConfirmDialog } from '../../components/ConfirmDialog.js';
 import { StateMessage } from '../../components/StateMessage.js';
 import { Button } from '../../components/ui/Button.js';
@@ -302,8 +302,18 @@ export function SubmissionForm() {
           editingApproved={false}
           submitLabel="Submit for approval"
           onSave={async (input) => {
-            await creatorApi.submit(input);
-            navigate('/creator');
+            try {
+              await creatorApi.submit(input);
+              navigate('/creator');
+            } catch (error) {
+              if (!(error instanceof PosterUploadError)) throw error;
+              navigate('/creator', {
+                state: {
+                  notice:
+                    'Your title was saved, but its image could not be uploaded. Choose Edit on it to try the image again.',
+                },
+              });
+            }
           }}
         />
       )}
