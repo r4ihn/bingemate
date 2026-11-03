@@ -3,7 +3,9 @@
 This folder holds the SQL-vs-MongoDB benchmark seed script, safety guard, workload
 scenarios, runner, and recorded results. `scenarios/` covers reviews for a title,
 top-N trending, inserting a review, reading a review's **flat replies collection**,
-and filtered title browsing. `results/` holds measurements and report artifacts.
+and filtered title browsing. `results/` holds raw runner output (gitignored). The curated,
+committed write-ups are `docs/benchmarks/explain.md` (query plans, indexes, before and after)
+and `docs/benchmarks/results.md` (SQL against NoSQL, load tests, conclusions).
 
 The scale dataset is **SYNTHETIC**. The proposed 950k-film source does not exist in
 the repository. Instead, the seed generates 950,000 titles cycling through movies,
@@ -91,3 +93,64 @@ Include the application's two-store path as its own measurement. Throwaway
 `bench_*` comparison objects belong only in the benchmark databases and must be
 removed by scenario teardown. Run twice and investigate medians differing by
 more than 15%; load-test runs containing any non-2xx response are invalid.
+
+## Running the benchmarks
+
+Run from the repository root against the synthetic benchmark databases only:
+
+```sh
+BENCH_DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public' BENCH_MONGO_URI='mongodb://localhost:27017/bingemate_bench' npx tsx benchmarks/run.ts --scenario all --runs 200 --warmup 20
+npx tsx benchmarks/run.ts --list
+```
+
+`--scenario` accepts `all` (default) or one of the five names below. `--runs` and
+`--warmup` override scenario defaults: 200 measured calls and 20 untimed warmup
+calls, except trending uses 20 and 3. Calls run sequentially, with each store's
+warmup followed by its measured calls. Percentiles (including median) use the
+nearest-rank method. PostgreSQL defaults to `connection_limit=10` if absent;
+MongoDB uses `maxPoolSize=10`. Reports state the effective pool sizes and include
+Prisma client overhead on the SQL side; Mongo uses native driver collections.
+
+- `reviews-for-title`: alternates the hottest title and a title with one review,
+  reading the newest 20. SQL includes ratings and copied bodies; Mongo contains
+  bodies only. `app` measures PG headers followed by Mongo bodies by shared ids.
+- `top-n-trending`: computes the top 50 per media type from `trending_titles`
+  versus reading precomputed `bench_trendingcards`, sorted by `score`. Setup's
+  card refresh duration (including indexes and recent-review counts) is reported
+  as the price of precomputation; it excludes the separate title-rank refresh.
+- `insert-review`: SQL text-row insert, Mongo body insert, and the application's
+  two-store write path, including the locked header transaction and rating
+  recomputation. Random pairs use existing tail users and least-reviewed titles.
+- `replies-of-review`: oldest 20 flat replies under the busiest review, using
+  the same Mongo replies copied to an indexed SQL table.
+- `filtered-browse`: approved movies in Drama, first 20 plus a separate total
+  count in each store. Mirrors the app's rating order: average rating descending,
+  review count descending, id ascending. Mongo embeds the canonical seeded genre
+  names; the requested compound index does not cover the review-count tie-break.
+
+The console prints a table. `benchmarks/results/<YYYY-MM-DD>.md` and `.csv` use
+UTC dates and are overwritten on another run that day; preserve a copy before a
+repeat if needed. The Markdown includes synthetic-data labeling, live counts,
+git SHA, runtime, descriptions, and setup notes, without conclusions. Cold-cache
+measurements need a separate manual container restart and run; the harness does
+not reset caches. Warmup inserts are real writes and are cleaned up as well.
+
+Setup copies stream in batches of 5,000. Throwaway PostgreSQL tables and MongoDB
+collections are named `bench_*` and removed by teardown, including when a scenario
+fails. `--keep-setup` skips teardown and allows setup to reuse existing objects;
+only reuse a completed setup on unchanged seed data. Inserted `bench-ins-` rows
+also remain with this flag. The insert scenario can create `bench_review_text`
+empty when run alone; remove it before reusing a reviews-for-title setup.
+
+To clean all throwaway objects and inserted rows after a kept or interrupted run:
+
+```sh
+BENCH_DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public' BENCH_MONGO_URI='mongodb://localhost:27017/bingemate_bench' npx tsx benchmarks/run.ts --drop-only
+```
+
+`--drop-only` ignores scenario selection, drops all `bench_*` tables in the current
+PostgreSQL schema and Mongo collections, deletes `bench-ins-` review rows/bodies,
+and recomputes affected title ratings. It cannot be combined with `--keep-setup`.
+`--list` and argument validation require neither credentials nor connections.
+All database modes validate both `BENCH_*` URLs before constructing clients and
+never fall back to the application's environment variables.

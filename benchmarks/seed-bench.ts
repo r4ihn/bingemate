@@ -302,6 +302,9 @@ export async function main(args = process.argv.slice(2), env: NodeJS.ProcessEnv 
       await phase('PostgreSQL ANALYZE', async () => {
         await pg.$executeRaw`ANALYZE "User", "Genre", "Title", "TitleGenre", "Review"`;
       });
+      await phase('PostgreSQL rank view refresh', async () => {
+        await pg.$executeRaw`REFRESH MATERIALIZED VIEW "title_rank_in_type"`;
+      });
       if (await replies.countDocuments() !== o.replies) throw new Error('Reply count does not match requested count');
     }
     await phase('Cross-store verification and sizes', () => verify(pg, connection!, bodies, replies));
