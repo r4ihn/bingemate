@@ -4,14 +4,18 @@ const { prisma, cards } = vi.hoisted(() => ({
   prisma: { $queryRaw: vi.fn(), title: { findMany: vi.fn() } },
   cards: { estimatedDocumentCount: vi.fn(), bulkWrite: vi.fn(), deleteMany: vi.fn() },
 }));
+const recentReviewCounts = vi.fn();
+vi.mock('../../src/modules/reviewStats/reviewStats.service.js', () => ({ recentReviewCounts }));
+
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
 vi.mock('../../src/mongo/models/trendingCard.model.js', () => ({ TrendingCard: cards }));
 
-const { refreshTrending, refreshIfEmpty, startTrendingTimer } =
+const { refreshTrending, refreshIfEmpty, startTrendingTimer, TRENDING_WINDOW_DAYS } =
   await import('../../src/jobs/refreshTrending.js');
 
 beforeEach(() => {
   vi.resetAllMocks();
+  recentReviewCounts.mockResolvedValue(new Map());
   vi.useFakeTimers();
   prisma.$queryRaw.mockResolvedValue([]);
   cards.estimatedDocumentCount.mockResolvedValue(0);
@@ -117,6 +121,7 @@ describe('refreshTrending empty view', () => {
   it('keeps existing cards without writes or deletion and warns', async () => {
     await expect(refreshTrending()).resolves.toEqual({ upserted: 0, removed: 0 });
 
+    expect(recentReviewCounts).not.toHaveBeenCalled();
     expect(cards.bulkWrite).not.toHaveBeenCalled();
     expect(cards.deleteMany).not.toHaveBeenCalled();
     expect(prisma.title.findMany).not.toHaveBeenCalled();
@@ -159,5 +164,85 @@ describe('refreshIfEmpty', () => {
 
     await expect(refreshIfEmpty()).resolves.toBeUndefined();
     expect(console.error).toHaveBeenCalledWith('Initial trending refresh failed:', error);
+  });
+});
+
+const viewRow = (id: string) => ({
+  id,
+  name: `Title ${id}`,
+  mediaType: 'MOVIE',
+  review_count: 10n,
+  avg_rating: '4.5',
+  trending_score: '4.2',
+});
+
+describe('refreshTrending recent reviews', () => {
+  beforeEach(() => {
+    prisma.$queryRaw.mockResolvedValue([viewRow('t1'), viewRow('t2')]);
+    prisma.title.findMany.mockResolvedValue([]);
+    cards.bulkWrite.mockResolvedValue({});
+    cards.deleteMany.mockResolvedValue({ deletedCount: 1 });
+  });
+
+  it('aggregates once with the fixed window and writes counts in the same upserts', async () => {
+    recentReviewCounts.mockResolvedValue(new Map([['t1', 7]]));
+
+    await expect(refreshTrending()).resolves.toEqual({ upserted: 2, removed: 1 });
+
+    expect(TRENDING_WINDOW_DAYS).toBe(1460);
+    expect(recentReviewCounts).toHaveBeenCalledExactlyOnceWith(TRENDING_WINDOW_DAYS);
+    expect(cards.bulkWrite).toHaveBeenCalledExactlyOnceWith([
+      ...['t1', 't2'].map((titleId) => ({
+        updateOne: {
+          filter: { titleId },
+          update: {
+            $set: {
+              name: `Title ${titleId}`,
+              mediaType: 'MOVIE',
+              reviewCount: 10,
+              recentReviews: titleId === 't1' ? 7 : 0,
+              avgRating: 4.5,
+              score: 4.2,
+            },
+            $unset: { posterUrl: '' },
+          },
+          upsert: true,
+        },
+      })),
+    ]);
+    expect(cards.deleteMany).toHaveBeenCalledWith({ titleId: { $nin: ['t1', 't2'] } });
+    expect(cards.bulkWrite.mock.invocationCallOrder[0]).toBeLessThan(
+      cards.deleteMany.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('writes numeric zero on every card when the window contains no reviews', async () => {
+    await refreshTrending();
+
+    const ops = cards.bulkWrite.mock.calls[0]![0];
+    expect(ops).toHaveLength(2);
+    for (const op of ops) {
+      expect(op.updateOne.update.$set.recentReviews).toBe(0);
+      expect(Number.isFinite(op.updateOne.update.$set.score)).toBe(true);
+    }
+  });
+
+  it('rejects aggregation failure without any card writes or deletion', async () => {
+    const error = new Error('Aggregation failed');
+    recentReviewCounts.mockRejectedValue(error);
+
+    await expect(refreshTrending()).rejects.toBe(error);
+
+    expect(cards.bulkWrite).not.toHaveBeenCalled();
+    expect(cards.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('does not delete stale cards if upserting fails', async () => {
+    const error = new Error('Write failed');
+    cards.bulkWrite.mockRejectedValue(error);
+
+    await expect(refreshTrending()).rejects.toBe(error);
+
+    expect(cards.deleteMany).not.toHaveBeenCalled();
   });
 });

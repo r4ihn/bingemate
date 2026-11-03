@@ -58,3 +58,10 @@ Validation errors return 400 with `error: "ValidationError"` and field `details`
 
 Empty query strings use defaults. Invalid months, limit, type or titleId return 400 `{ "error": "ValidationError", "details": { ... } }` through the shared validation middleware. Named exported pipeline builders (`reviewActivityPipeline`, `topReviewersPipeline`, `recentReviewCountsPipeline`) live in `apps/api/src/modules/reviewStats/reviewStats.service.ts`. `recentReviewCounts(days)` returns a Map of title IDs to counts over a rolling day window; the trending refresh calls it once per non-empty run with 1460 days.
 
+## Trending (public)
+
+`GET /api/trending?type=BOOK&limit=20&sort=recent` returns `{ data: TrendingCardDTO[] }` from precomputed MongoDB cards. Optional `type` accepts MOVIE, BOOK or TV_SHOW; `limit` remains an integer from 1 to 50, default 20. `sort` accepts `score` (default: score descending, titleId ascending) or `recent` (recentReviews descending, score descending, titleId ascending). Empty query strings use defaults; unknown sorts return 400 `ValidationError`.
+
+Each card contains `titleId`, `name`, `mediaType`, optional `posterUrl`, `avgRating`, `reviewCount`, `recentReviews` and `score`. `recentReviews` is the numeric count within the rolling **1460-day** window computed at job time, defaulting to 0 for titles with no reviews in that window and older cards without the field. There is no `days` query parameter: reading precomputed cards cannot change their window. The candidate set remains the top 50 per media type from the SQL score view. Reads re-check APPROVED status after applying the limit, so fewer cards may be returned.
+
+The refresh aggregates counts before any card writes. If aggregation fails, it rejects without upserts or stale-card deletion. Successful runs upsert cards with their counts before deleting stale cards; an empty SQL view keeps existing cards.

@@ -139,5 +139,6 @@ export interface TrendingCardDTO {
   posterUrl?: string;
   avgRating: number;
   reviewCount: number;
+  recentReviews: number;
   score: number;
 }

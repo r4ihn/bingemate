@@ -6,6 +6,11 @@ const optional = <T extends z.ZodTypeAny>(schema: T) =>
   z.preprocess((v) => (v === '' ? undefined : v), schema.optional());
 
 export const trendingQuerySchema = z.object({
+  // The rolling window is fixed when the job precomputes cards; there is no days parameter.
+  sort: z.preprocess(
+    (v) => (v === '' ? undefined : v),
+    z.enum(['score', 'recent']).default('score'),
+  ),
   type: optional(z.nativeEnum(MediaType)),
   limit: z.preprocess(
     (v) => (v === '' ? undefined : v),

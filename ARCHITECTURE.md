@@ -157,6 +157,10 @@ Startup count/refresh failures are logged without preventing the API from servin
 
 `refreshTrending()` upserts the top 50 per media type from PostgreSQL's `trending_titles`
 view before deleting stale cards, so the collection is never wiped before rebuilding.
+Before writing, it calls MongoDB's `recentReviewCounts(1460)` once and stores `recentReviews`
+on every card (0 for absent counts). Aggregation failure leaves existing cards untouched.
+`GET /api/trending` sorts by score by default, or by `recentReviews`, score and titleId
+with `sort=recent`; the 1460-day window is fixed at refresh time, with no `days` query parameter.
 If the view returns no rows, it warns and keeps existing cards. To fill an empty collection
 manually or refresh on demand, run from the repo root:
 `npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`.

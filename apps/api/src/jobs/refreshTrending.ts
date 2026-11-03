@@ -2,10 +2,14 @@ import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { recentReviewCounts } from '../modules/reviewStats/reviewStats.service.js';
 import { TrendingCard } from '../mongo/models/trendingCard.model.js';
 
 /** How many cards are kept per media type. */
 export const TRENDING_PER_TYPE = 50;
+
+/** Rolling review window stored on every card at refresh time. */
+export const TRENDING_WINDOW_DAYS = 1460;
 
 interface TrendingRow {
   id: string;
@@ -46,6 +50,7 @@ export async function refreshTrending(): Promise<RefreshResult> {
     console.warn('Trending view returned no rows; keeping existing cards');
     return { upserted: 0, removed: 0 };
   }
+  const recentCounts = await recentReviewCounts(TRENDING_WINDOW_DAYS);
   const ids = rows.map((r) => r.id);
 
   if (rows.length > 0) {
@@ -61,6 +66,7 @@ export async function refreshTrending(): Promise<RefreshResult> {
                 mediaType: r.mediaType,
                 avgRating: Number(r.avg_rating),
                 reviewCount: Number(r.review_count),
+                recentReviews: recentCounts.get(r.id) ?? 0,
                 score: Number(r.trending_score),
                 ...(posterUrl ? { posterUrl } : {}),
               },
