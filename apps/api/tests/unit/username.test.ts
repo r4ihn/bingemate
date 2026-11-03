@@ -12,18 +12,40 @@ describe('username', () => {
   ])('NFKC folds %s to %s', (raw, normalized) => {
     expect(normalizeUsername(raw)).toBe(normalized);
   });
-  it.each(['Admin', 'A D M I N', 'a.d.m.i.n', 'ad-min', 'ad_min', 'A_.-D M I N', 'ａｄｍｉｎ'])(
-    'rejects reserved form %s',
-    (name) => {
-      expect(usernameError(name)).toBe('This username is reserved');
-    },
-  );
-  it.each(['аdmin', 'Pаul', 'Αlex', 'Дмитрий Ελένη', 'Ｃаsey'])(
-    'rejects mixed scripts in %s',
-    (name) => {
-      expect(usernameError(name)).toBe('Username cannot mix Latin, Cyrillic and Greek letters');
-    },
-  );
+  it.each([
+    'Admin',
+    'A D M I N',
+    'a.d.m.i.n',
+    'ad-min',
+    'ad_min',
+    'A_.-D M I N',
+    'ａｄｍｉｎ',
+    'ѕуѕтем',
+    'моԁегатог',
+    'adm1n',
+    'Supp0rt',
+    'b1ngemate',
+    'syst3m',
+    'A d m 1 n',
+  ])('rejects reserved form %s', (name) => {
+    expect(usernameError(name)).toBe('This username is reserved');
+  });
+  it.each([
+    'аdmin',
+    'Pаul',
+    'Αlex',
+    'Дмитрий Ελένη',
+    'Ｃаsey',
+    'Sam محمد',
+    'Дима 李',
+    '雪 김 さ',
+    'Mori 김 カ',
+  ])('rejects mixed scripts in %s', (name) => {
+    expect(usernameError(name)).toBe('Username cannot mix letters from different alphabets');
+  });
+  it.each(['Արամ', 'Suppօrt', 'Ꭺlex', 'Ⲁⲃⲅ'])('rejects unsupported alphabets in %s', (name) => {
+    expect(usernameError(name)).toBe('Username contains letters from an unsupported alphabet');
+  });
   it.each([
     'Padmini',
     'BingeMate Fan',
@@ -34,8 +56,30 @@ describe('username', () => {
     'Yuki 雪',
     '李小龍',
     'Ελένη',
-  ])('allows %s without substring matching or restricting other scripts', (name) => {
+    'محمد',
+    'שרה',
+    'さくら Mori',
+    '김민수',
+    'Nina5',
+    'Leo 7',
+    'कमल',
+    'ภาษาไทย',
+    'カタカナ',
+    'さくら 雪 カナ Mori',
+    '김민수 李 Mori',
+    'カナ Mori',
+    'ー カナ',
+  ])('allows %s with supported alphabets and whole-skeleton matching', (name) => {
     expect(usernameError(name)).toBeNull();
+  });
+  it.each([
+    ['օ', 'Username must be between 3 and 30 characters'],
+    ['օ!?', 'Username may only contain letters, digits, spaces, underscores, hyphens and periods'],
+    ['.օa', 'Username must start and end with a letter or digit'],
+    ['аdmin', 'Username cannot mix letters from different alphabets'],
+    ['օаa', 'Username contains letters from an unsupported alphabet'],
+  ])('preserves validation precedence for %s', (name, message) => {
+    expect(usernameError(name)).toBe(message);
   });
   it.each(['Casey Lee', '李小龍', 'User_1-2.3', 'a'.repeat(30)])('accepts %s', (name) => {
     expect(usernameError(name)).toBeNull();

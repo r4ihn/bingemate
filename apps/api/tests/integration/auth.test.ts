@@ -121,8 +121,10 @@ describe('POST /api/auth/register', () => {
   });
 
   it.each([
-    ['аdmin', 'Username cannot mix Latin, Cyrillic and Greek letters'],
+    ['аdmin', 'Username cannot mix letters from different alphabets'],
     ['a.d.m.i.n', 'This username is reserved'],
+    ['Suppօrt', 'Username contains letters from an unsupported alphabet'],
+    ['adm1n', 'This username is reserved'],
   ])('refuses impersonating username %s with a 400', async (username, message) => {
     const res = await request(app).post('/api/auth/register').send({ ...credentials, username });
     expect(res.status).toBe(400);

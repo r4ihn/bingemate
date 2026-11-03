@@ -10,6 +10,65 @@ export const RESERVED_USERNAMES = [
 ] as const;
 export const MAX_PENDING_SUBMISSIONS = 10;
 
+const USERNAME_SCRIPTS = {
+  Latin: /\p{Script_Extensions=Latin}/u,
+  Cyrillic: /\p{Script_Extensions=Cyrillic}/u,
+  Greek: /\p{Script_Extensions=Greek}/u,
+  Han: /\p{Script_Extensions=Han}/u,
+  Hiragana: /\p{Script_Extensions=Hiragana}/u,
+  Katakana: /\p{Script_Extensions=Katakana}/u,
+  Hangul: /\p{Script_Extensions=Hangul}/u,
+  Arabic: /\p{Script_Extensions=Arabic}/u,
+  Hebrew: /\p{Script_Extensions=Hebrew}/u,
+  Devanagari: /\p{Script_Extensions=Devanagari}/u,
+  Thai: /\p{Script_Extensions=Thai}/u,
+} as const;
+
+// A pragmatic subset of Unicode TR39 confusables, not the full table.
+const USERNAME_LOOKALIKES: Readonly<Record<string, string>> = {
+  // Cyrillic
+  а: 'a',
+  в: 'b',
+  е: 'e',
+  к: 'k',
+  м: 'm',
+  н: 'h',
+  о: 'o',
+  р: 'p',
+  с: 'c',
+  т: 't',
+  у: 'y',
+  х: 'x',
+  ѕ: 's',
+  і: 'i',
+  ј: 'j',
+  ԁ: 'd',
+  ԛ: 'q',
+  ԝ: 'w',
+  ѵ: 'v',
+  г: 'r',
+  ь: 'b',
+  // Greek
+  α: 'a',
+  β: 'b',
+  ε: 'e',
+  ι: 'i',
+  κ: 'k',
+  ν: 'v',
+  ο: 'o',
+  ρ: 'p',
+  τ: 't',
+  υ: 'u',
+  χ: 'x',
+  // Leetspeak
+  '0': 'o',
+  '1': 'i',
+  '3': 'e',
+  '4': 'a',
+  '5': 's',
+  '7': 't',
+};
+
 export function normalizeUsername(raw: string): string {
   return raw.trim().normalize('NFKC').replace(/\s+/gu, ' ');
 }
@@ -26,13 +85,31 @@ export function usernameError(raw: string): string | null {
   if (!/^[\p{L}\p{N}].*[\p{L}\p{N}]$/u.test(name)) {
     return 'Username must start and end with a letter or digit';
   }
-  const scripts = [/\p{Script=Latin}/u, /\p{Script=Cyrillic}/u, /\p{Script=Greek}/u];
-  if (scripts.filter((script) => script.test(name)).length > 1) {
-    return 'Username cannot mix Latin, Cyrillic and Greek letters';
+  const scripts = new Set<string>();
+  for (const letter of name) {
+    if (!/\p{L}/u.test(letter)) continue;
+    const script = Object.entries(USERNAME_SCRIPTS).find(([, pattern]) => pattern.test(letter));
+    if (!script) return 'Username contains letters from an unsupported alphabet';
+    scripts.add(script[0]);
   }
-  const lowerName = name.toLowerCase().normalize('NFKC');
-  const compactName = lowerName.replace(/[ _.-]/gu, '');
-  if (RESERVED_USERNAMES.some((reserved) => reserved === lowerName || reserved === compactName)) {
+  const japanese = ['Latin', 'Han', 'Hiragana', 'Katakana'];
+  const korean = ['Latin', 'Han', 'Hangul'];
+  if (
+    scripts.size > 1 &&
+    ![...scripts].every((script) => japanese.includes(script)) &&
+    ![...scripts].every((script) => korean.includes(script))
+  ) {
+    return 'Username cannot mix letters from different alphabets';
+  }
+  const skeleton = [
+    ...name
+      .toLowerCase()
+      .normalize('NFKC')
+      .replace(/[ _.-]/gu, ''),
+  ]
+    .map((character) => USERNAME_LOOKALIKES[character] ?? character)
+    .join('');
+  if (RESERVED_USERNAMES.some((reserved) => reserved === skeleton)) {
     return 'This username is reserved';
   }
   return null;
