@@ -28,7 +28,7 @@ cp apps/web/.env.example apps/web/.env.local   # optional
 npm run prisma:migrate
 npm run prisma:generate
 
-# 5. Seed demo data (admin / creator / consumer, sample titles)
+# 5. Seed demo data (admin / two members, sample titles)
 npm run seed
 
 # 6. Run both apps
@@ -39,6 +39,8 @@ npm run dev:web      # http://localhost:5173
 ```
 
 Demo accounts (password `Password123!`): `admin@bingemate.dev`, `creator@bingemate.dev`, `consumer@bingemate.dev`.
+The seed usernames are **BingeMate Admin** (admin), **Demo Maker** and **Demo Viewer**. `creator@bingemate.dev` and `consumer@bingemate.dev` are ordinary members; their email names are historical. Loaded dataset accounts keep their usernames: `admin` and `demo_creator`, respectively for `admin@bingemate.dev` and `creator@bingemate.dev`.
+
 After the dataset load (`data/etl/load-all.ts`) there is no `consumer@bingemate.dev`; any imported user works instead, for example `user4@seed.bingemate.local`.
 
 ### Run the website on real data
@@ -52,9 +54,11 @@ cd apps/api && npm run dev                      # API on :4000
 cd apps/web && VITE_USE_MOCKS=false npm run dev # website on :5173, real data
 ```
 
-With mocks off, browsing, search, reviews, replies, My Lists and creator stats use the API. The creator title
-forms (create, edit, delete, image upload) and the admin pages still need their API endpoints and show
-"Real API not wired yet".
+With mocks off, browsing, search, reviews, replies, My Lists, Creator submissions and stats, image uploads and the admin approval queue use the API. Admin Users and Moderation remain mock-only.
+
+Visitors browse approved titles. Signup collects Email, Username and Password and signs in a `MEMBER`; every member can use **Creator** to submit titles. Admins never submit titles or write reviews or replies. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap.
+
+Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. Registration conflicts return 409 `Email already in use` or `Username already taken`. See [the manual](docs/user-manual.md) for ownership and moderation rules.
 
 ### Trending refresh
 
