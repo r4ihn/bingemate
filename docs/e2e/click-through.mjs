@@ -403,6 +403,46 @@ await step('reader: delete own review (and its replies)', reader, async () => {
   if (mine) throw new Error('review still there');
 });
 
+// ---------- A failed image upload must not leave a form that duplicates the title ----------
+await step(
+  'creator: a failed image upload (forced 413) lands on the dashboard with one notice and one title',
+  creator,
+  async () => {
+    const NAME_PARTIAL = `E2E Delta ${stamp}`;
+    await creator.route('**/api/titles/*/poster', (r) =>
+      r.request().method() === 'PUT'
+        ? r.fulfill({
+            status: 413,
+            contentType: 'application/json',
+            body: JSON.stringify({ error: 'Image too large' }),
+          })
+        : r.continue(),
+    );
+    try {
+      await submitTitle(creator, NAME_PARTIAL, true);
+    } finally {
+      await creator.unroute('**/api/titles/*/poster');
+    }
+    await creator
+      .getByText(/saved, but its image could not be uploaded/i)
+      .first()
+      .waitFor({ timeout: 8000 });
+    const made = (await api(creatorCtx, '/creator/titles')).filter((r) => r.name === NAME_PARTIAL);
+    if (made.length !== 1) throw new Error(`expected 1 title, found ${made.length}`);
+    await creator.reload();
+    await creator.waitForLoadState('networkidle');
+    if (await creator.getByText(/saved, but its image could not be uploaded/i).count())
+      throw new Error('the notice survived a reload');
+    const row = creator.locator('tr', { hasText: NAME_PARTIAL }).first();
+    await row.getByRole('button', { name: /^delete$/i }).click();
+    await creator.getByRole('button', { name: /confirm/i }).click();
+    await creator.waitForTimeout(1200);
+    if ((await api(creatorCtx, '/creator/titles')).some((r) => r.name === NAME_PARTIAL))
+      throw new Error('test title still listed');
+    return 'one title, notice shown once';
+  },
+);
+
 // ---------- Cleanup through the UI (also a test) ----------
 for (const [label, id] of [
   ['approved', okId],
