@@ -13,6 +13,14 @@ describe('username', () => {
     expect(normalizeUsername(raw)).toBe(normalized);
   });
   it.each([
+    'ádmin',
+    'Ádmín',
+    'admiń',
+    'ᴀᴅᴍɪɴ',
+    'admın',
+    'ꜱyꜱtem',
+    // Deliberate false positive: unlisted Latin ø becomes a wildcard in support.
+    'suppørt',
     'Admin',
     'A D M I N',
     'a.d.m.i.n',
@@ -30,6 +38,12 @@ describe('username', () => {
   ])('rejects reserved form %s', (name) => {
     expect(usernameError(name)).toBe('This username is reserved');
   });
+  it.each(['admㅤin', 'admᅟin', 'admᅠin', 'admﾠin', 'Sam\u00aduel', 'Sa\u200bm'])(
+    'rejects invisible characters in %s',
+    (name) => {
+      expect(usernameError(name)).toBe('Username cannot contain invisible characters');
+    },
+  );
   it.each([
     'аdmin',
     'Pаul',
@@ -53,6 +67,12 @@ describe('username', () => {
     'Sam Support Fan',
     'Дмитрий',
     'Müller',
+    'Søren',
+    'Zoë',
+    'Łukasz',
+    '管理員',
+    '系统管理员账号',
+    '管理员账号',
     'Yuki 雪',
     '李小龍',
     'Ελένη',
@@ -74,6 +94,12 @@ describe('username', () => {
   });
   it.each([
     ['օ', 'Username must be between 3 and 30 characters'],
+    ['\u115f', 'Username must be between 3 and 30 characters'],
+    [
+      'a\u115f!',
+      'Username may only contain letters, digits, spaces, underscores, hyphens and periods',
+    ],
+    ['.a\u115f', 'Username cannot contain invisible characters'],
     ['օ!?', 'Username may only contain letters, digits, spaces, underscores, hyphens and periods'],
     ['.օa', 'Username must start and end with a letter or digit'],
     ['аdmin', 'Username cannot mix letters from different alphabets'],

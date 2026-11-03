@@ -209,9 +209,10 @@ await step(
     signup.on('request', onRequest);
     try {
       for (const [username, message] of [
-        ['аdmin', 'Username cannot mix Latin, Cyrillic and Greek letters'], // Cyrillic а + Latin dmin
+        ['аdmin', 'Username cannot mix letters from different alphabets'], // Cyrillic а + Latin dmin
         ['a.d.m.i.n', 'This username is reserved'],
         ['ab', 'Username must be between 3 and 30 characters'],
+        ['admㅤin', 'Username cannot contain invisible characters'],
       ]) {
         await signup.getByLabel('Username', { exact: true }).fill(username);
         await signup.getByRole('button', { name: 'Create account', exact: true }).click();

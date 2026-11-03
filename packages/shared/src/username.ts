@@ -60,6 +60,34 @@ const USERNAME_LOOKALIKES: Readonly<Record<string, string>> = {
   τ: 't',
   υ: 'u',
   χ: 'x',
+  // Latin small capitals and dotless forms
+  ᴀ: 'a',
+  ʙ: 'b',
+  ᴄ: 'c',
+  ᴅ: 'd',
+  ᴇ: 'e',
+  ꜰ: 'f',
+  ɢ: 'g',
+  ʜ: 'h',
+  ɪ: 'i',
+  ᴊ: 'j',
+  ᴋ: 'k',
+  ʟ: 'l',
+  ᴍ: 'm',
+  ɴ: 'n',
+  ᴏ: 'o',
+  ᴘ: 'p',
+  ʀ: 'r',
+  ꜱ: 's',
+  ᴛ: 't',
+  ᴜ: 'u',
+  ᴠ: 'v',
+  ᴡ: 'w',
+  ʏ: 'y',
+  ᴢ: 'z',
+  ı: 'i',
+  ȷ: 'j',
+  ɡ: 'g',
   // Leetspeak
   '0': 'o',
   '1': 'i',
@@ -79,8 +107,12 @@ export function usernameError(raw: string): string | null {
   if (length < USERNAME_MIN || length > USERNAME_MAX) {
     return `Username must be between ${USERNAME_MIN} and ${USERNAME_MAX} characters`;
   }
-  if (!/^[\p{L}\p{N} _.-]+$/u.test(name)) {
+  // Defer default-ignorable characters to the dedicated error below.
+  if (!/^[\p{L}\p{N}\p{Default_Ignorable_Code_Point} _.-]+$/u.test(name)) {
     return 'Username may only contain letters, digits, spaces, underscores, hyphens and periods';
+  }
+  if (/\p{Default_Ignorable_Code_Point}/u.test(name)) {
+    return 'Username cannot contain invisible characters';
   }
   if (!/^[\p{L}\p{N}].*[\p{L}\p{N}]$/u.test(name)) {
     return 'Username must start and end with a letter or digit';
@@ -104,12 +136,23 @@ export function usernameError(raw: string): string | null {
   const skeleton = [
     ...name
       .toLowerCase()
-      .normalize('NFKC')
+      .normalize('NFKD')
+      .replace(/\p{M}/gu, '')
       .replace(/[ _.-]/gu, ''),
-  ]
-    .map((character) => USERNAME_LOOKALIKES[character] ?? character)
-    .join('');
-  if (RESERVED_USERNAMES.some((reserved) => reserved === skeleton)) {
+  ].map((character) => {
+    const lookalike = USERNAME_LOOKALIKES[character];
+    if (lookalike) return lookalike;
+    // Conservatively cover unlisted Latin lookalikes only for reserved words.
+    if (character.codePointAt(0)! > 0x7f && /\p{Script=Latin}/u.test(character)) return '?';
+    return character;
+  });
+  if (
+    RESERVED_USERNAMES.some(
+      (reserved) =>
+        reserved.length === skeleton.length &&
+        skeleton.every((character, index) => character === '?' || character === reserved[index]),
+    )
+  ) {
     return 'This username is reserved';
   }
   return null;

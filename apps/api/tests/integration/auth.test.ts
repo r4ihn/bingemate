@@ -16,7 +16,11 @@ interface FakeUser {
   username: string | null;
 }
 
-const db = vi.hoisted(() => ({ users: [] as FakeUser[], target: undefined as unknown, omitMeta: false }));
+const db = vi.hoisted(() => ({
+  users: [] as FakeUser[],
+  target: undefined as unknown,
+  omitMeta: false,
+}));
 
 vi.mock('../../src/db/prisma.js', async () => {
   const { Prisma } = await import('@prisma/client');
@@ -25,10 +29,15 @@ vi.mock('../../src/db/prisma.js', async () => {
       user: {
         findUnique: async ({ where }: { where: { id?: string; email?: string } }) =>
           db.users.find((u) => (where.id ? u.id === where.id : u.email === where.email)) ?? null,
-        create: async ({ data }: { data: { email: string; passwordHash: string; username: string } }) => {
+        create: async ({
+          data,
+        }: {
+          data: { email: string; passwordHash: string; username: string };
+        }) => {
           if (db.target !== undefined || db.omitMeta) {
             throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-              code: 'P2002', clientVersion: 'test',
+              code: 'P2002',
+              clientVersion: 'test',
               ...(db.omitMeta ? {} : { meta: { modelName: 'User', target: db.target } }),
             });
           }
@@ -70,7 +79,12 @@ describe('POST /api/auth/register', () => {
     const res = await request(app).post('/api/auth/register').send(credentials);
 
     expect(res.status).toBe(201);
-    expect(res.body).toEqual({ id: expect.any(String), email: credentials.email, role: 'MEMBER', username: credentials.username });
+    expect(res.body).toEqual({
+      id: expect.any(String),
+      email: credentials.email,
+      role: 'MEMBER',
+      username: credentials.username,
+    });
     expect(res.body.passwordHash).toBeUndefined();
 
     const cookie = String(res.headers['set-cookie']);
@@ -79,20 +93,34 @@ describe('POST /api/auth/register', () => {
   });
 
   it('stores the normalised username', async () => {
-    const res = await request(app).post('/api/auth/register').send({ ...credentials, username: '  Casey  Lee ' });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, username: '  Casey  Lee ' });
     expect(res.status).toBe(201);
     expect(res.body.username).toBe('Casey Lee');
     expect(db.users[0]?.username).toBe('Casey Lee');
   });
 
-  it.each(['User_username_lower_key', ['User_username_lower_key'], ['username'], ['lower(username)'], ['LOWER(USERNAME)']].map(target => [target]))('returns username conflict for target %j', async target => {
+  it.each(
+    [
+      'User_username_lower_key',
+      ['User_username_lower_key'],
+      ['username'],
+      ['lower(username)'],
+      ['LOWER(USERNAME)'],
+    ].map((target) => [target]),
+  )('returns username conflict for target %j', async (target) => {
     db.target = target;
     const res = await request(app).post('/api/auth/register').send(credentials);
     expect(res.status).toBe(409);
     expect(res.body).toEqual({ error: 'Username already taken' });
   });
 
-  it.each([['email'], 'User_email_key', ['User_email_key'], ['EMAIL'], ['username', 'email']].map(target => [target]))('returns email conflict for target %j', async target => {
+  it.each(
+    [['email'], 'User_email_key', ['User_email_key'], ['EMAIL'], ['username', 'email']].map(
+      (target) => [target],
+    ),
+  )('returns email conflict for target %j', async (target) => {
     db.target = target;
     const res = await request(app).post('/api/auth/register').send(credentials);
     expect(res.status).toBe(409);
@@ -114,9 +142,14 @@ describe('POST /api/auth/register', () => {
   });
 
   it('returns the shared username validation message in a 400', async () => {
-    const res = await request(app).post('/api/auth/register').send({ ...credentials, username: 'AdMiN' });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, username: 'AdMiN' });
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'ValidationError', details: { formErrors: [], fieldErrors: { username: ['This username is reserved'] } } });
+    expect(res.body).toEqual({
+      error: 'ValidationError',
+      details: { formErrors: [], fieldErrors: { username: ['This username is reserved'] } },
+    });
     expect(db.users).toHaveLength(0);
   });
 
@@ -125,10 +158,17 @@ describe('POST /api/auth/register', () => {
     ['a.d.m.i.n', 'This username is reserved'],
     ['Suppօrt', 'Username contains letters from an unsupported alphabet'],
     ['adm1n', 'This username is reserved'],
+    ['admㅤin', 'Username cannot contain invisible characters'],
+    ['ᴀᴅᴍɪɴ', 'This username is reserved'],
   ])('refuses impersonating username %s with a 400', async (username, message) => {
-    const res = await request(app).post('/api/auth/register').send({ ...credentials, username });
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, username });
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ error: 'ValidationError', details: { formErrors: [], fieldErrors: { username: [message] } } });
+    expect(res.body).toEqual({
+      error: 'ValidationError',
+      details: { formErrors: [], fieldErrors: { username: [message] } },
+    });
     expect(db.users).toHaveLength(0);
   });
 
@@ -236,7 +276,12 @@ describe('GET /api/auth/me', () => {
     const res = await agent.get('/api/auth/me');
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: expect.any(String), email: credentials.email, role: 'MEMBER', username: credentials.username });
+    expect(res.body).toEqual({
+      id: expect.any(String),
+      email: credentials.email,
+      role: 'MEMBER',
+      username: credentials.username,
+    });
   });
 });
 
