@@ -81,6 +81,14 @@ npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
 | `npm run format`            | Prettier write                    |
 | `npm run db:up` / `db:down` | start / stop local databases      |
 
+## Real-database tests
+
+Create the isolated PostgreSQL database: `docker exec bingemate-postgres createdb -U bingemate bingemate_test`.
+Export `export TEST_DATABASE_URL=postgresql://bingemate:bingemate@localhost:5432/bingemate_test?schema=public` (adjust credentials).
+Export `export TEST_MONGO_URI=mongodb://localhost:27017/bingemate_test` with MongoDB running locally.
+Run `npm run test:real --workspace apps/api`; global setup deploys migrations automatically.
+This suite truncates every app table and drops every Mongo collection in that `_test` database; `npm test` stays stubbed.
+
 ## Git workflow
 
 Feature branches (`feat/…`, `fix/…`) → PR into `main`. Direct pushes to `main` are blocked;

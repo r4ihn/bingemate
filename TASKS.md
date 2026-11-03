@@ -179,7 +179,7 @@ The list endpoints were merged in PR #10.
 
 - [ ] Unit tests for services; integration tests (Supertest) against test DBs
   - [x] Every new endpoint has Supertest tests with Prisma and MongoDB replaced by stubs (CI has no database), and each permission rule was checked by breaking it on purpose and watching a test fail. Each module was also run by hand against the real local databases
-  - [ ] CI has no PostgreSQL or MongoDB, so nothing in CI runs the real SQL, the views or the Mongo writes. Add both as CI services and a small real-database test run _(RA, ALL)_
+  - [~] Real-database tests: `npm run test:real --workspace apps/api` runs 14 tests with no stubs against `bingemate_test` (views and their rounding, the trending and rank views, the two-store review lifecycle with a shared id, moderation with the `updatedAt` check, creator and admin delete cleanup, and a real concurrent delete-versus-list race). They pass locally, three runs in a row, and each was checked by breaking the code on purpose (removing the row lock fails the race test on every run). `.github/workflows/ci.yml` has a new `verify-real-db` job with `postgres:16-alpine` and `mongo:7` services; the existing job is unchanged and `npm test` stays stubbed. **Not done until that job has run green on GitHub**; it has not run there yet _(RA, ALL)_
 - [ ] Each owner covers their own module; CI must pass before merge
 - [ ] `prettier --check` fails on `apps/api/prisma/seed.ts` and `apps/api/src/utils/pagination.ts` (CI does not run prettier). Format them once, then decide whether CI should check formatting
 
