@@ -11,8 +11,17 @@ describe('ETL users', () => {
   });
   it('deduplicates ignoring case in input order and loops past occupied suffixes', () => {
     const seen = new Set<string>();
-    expect(['Casey Lee', 'Casey Lee (2)', 'casey lee', 'Casey Lee', "O'Neil", "o'neil"].map(name => uniqueUsername(name, seen))).toEqual([
-      'Casey Lee', 'Casey Lee (2)', 'casey lee (3)', 'Casey Lee (4)', "O'Neil", "o'neil (2)",
+    expect(
+      ['Casey Lee', 'Casey Lee (2)', 'casey lee', 'Casey Lee', "O'Neil", "o'neil"].map((name) =>
+        uniqueUsername(name, seen),
+      ),
+    ).toEqual([
+      'Casey Lee',
+      'Casey Lee (2)',
+      'casey lee (3)',
+      'Casey Lee (4)',
+      "O'Neil",
+      "o'neil (2)",
     ]);
   });
 });

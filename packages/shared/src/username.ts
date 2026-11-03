@@ -1,10 +1,17 @@
 export const USERNAME_MIN = 3;
 export const USERNAME_MAX = 30;
-export const RESERVED_USERNAMES = ['admin', 'administrator', 'moderator', 'bingemate', 'support', 'system'] as const;
+export const RESERVED_USERNAMES = [
+  'admin',
+  'administrator',
+  'moderator',
+  'bingemate',
+  'support',
+  'system',
+] as const;
 export const MAX_PENDING_SUBMISSIONS = 10;
 
 export function normalizeUsername(raw: string): string {
-  return raw.trim().normalize('NFC').replace(/\s+/gu, ' ');
+  return raw.trim().normalize('NFKC').replace(/\s+/gu, ' ');
 }
 
 export function usernameError(raw: string): string | null {
@@ -19,7 +26,13 @@ export function usernameError(raw: string): string | null {
   if (!/^[\p{L}\p{N}].*[\p{L}\p{N}]$/u.test(name)) {
     return 'Username must start and end with a letter or digit';
   }
-  if (RESERVED_USERNAMES.some(reserved => reserved === name.toLowerCase())) {
+  const scripts = [/\p{Script=Latin}/u, /\p{Script=Cyrillic}/u, /\p{Script=Greek}/u];
+  if (scripts.filter((script) => script.test(name)).length > 1) {
+    return 'Username cannot mix Latin, Cyrillic and Greek letters';
+  }
+  const lowerName = name.toLowerCase().normalize('NFKC');
+  const compactName = lowerName.replace(/[ _.-]/gu, '');
+  if (RESERVED_USERNAMES.some((reserved) => reserved === lowerName || reserved === compactName)) {
     return 'This username is reserved';
   }
   return null;

@@ -120,6 +120,16 @@ describe('POST /api/auth/register', () => {
     expect(db.users).toHaveLength(0);
   });
 
+  it.each([
+    ['аdmin', 'Username cannot mix Latin, Cyrillic and Greek letters'],
+    ['a.d.m.i.n', 'This username is reserved'],
+  ])('refuses impersonating username %s with a 400', async (username, message) => {
+    const res = await request(app).post('/api/auth/register').send({ ...credentials, username });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ error: 'ValidationError', details: { formErrors: [], fieldErrors: { username: [message] } } });
+    expect(db.users).toHaveLength(0);
+  });
+
   it('stores a bcrypt hash, not the plain password', async () => {
     await request(app).post('/api/auth/register').send(credentials);
 

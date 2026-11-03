@@ -22,17 +22,24 @@ describe('register unique constraint errors', () => {
     { target: ['EMAIL'], message: 'Email already in use' },
     { target: ['username', 'email'], message: 'Email already in use' },
   ])('maps $target to $message', async ({ target, message }) => {
-    create.mockRejectedValue(new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-      code: 'P2002', clientVersion: 'test', meta: { modelName: 'User', target },
-    }));
+    create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: 'test',
+        meta: { modelName: 'User', target },
+      }),
+    );
 
     await expect(register()).rejects.toEqual(new HttpError(409, message));
   });
 
   it.each([{ modelName: 'User', target: ['something_else'] }, undefined])(
-    'rethrows the original error for meta %j', async meta => {
+    'rethrows the original error for meta %j',
+    async (meta) => {
       const error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
-        code: 'P2002', clientVersion: 'test', ...(meta === undefined ? {} : { meta }),
+        code: 'P2002',
+        clientVersion: 'test',
+        ...(meta === undefined ? {} : { meta }),
       });
       create.mockRejectedValue(error);
 

@@ -14,6 +14,12 @@ Errors return JSON with an `error` field. JSON request bodies use Express's defa
 
 Validation errors return 400 with `error: "ValidationError"` and field `details`. Explicit application errors retain their endpoint-specific status and message. The poster upload's raw-body parser retains its own 413 `"The image must be 1 MB or smaller"` and 400 `"Could not read the image"` responses.
 
+## Username rules
+
+Usernames are NFKC-normalised, trimmed and have whitespace runs collapsed to one space. They must contain 3–30 Unicode characters, use only letters, digits, spaces, `_`, `-` and `.`, and start and end with a letter or digit. Names cannot mix letters from more than one of Latin, Cyrillic and Greek; other scripts are unaffected. Mixed names return `Username cannot mix Latin, Cyrillic and Greek letters`.
+
+The reserved words `admin`, `administrator`, `moderator`, `bingemate`, `support` and `system` are refused when either the full lower-cased, NFKC-normalised name or its compact form (all spaces, underscores, hyphens and periods removed) equals a reserved word, returning `This username is reserved`. This is exact matching, so `Padmini` and `BingeMate Fan` remain valid. Lookalikes within a single script (for example all-Cyrillic names) are not detected. Usernames are unique ignoring case.
+
 ## Routes
 
 | Method | Path                         | Role                                                     | Notes                                                                                                                                                                                                                                                                                                                                       |
