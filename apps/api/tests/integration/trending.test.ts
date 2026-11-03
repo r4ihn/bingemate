@@ -302,16 +302,16 @@ describe('refreshTrending', () => {
     expect(result).toEqual({ upserted: 2, removed: 1 });
   });
 
-  it('clears every card when nothing is trending, and writes nothing', async () => {
+  it('keeps existing cards when nothing is trending, and writes nothing', async () => {
     store.set('old', { titleId: 'old' });
 
     const result = await refreshTrending();
 
     expect(trendingCard.bulkWrite).not.toHaveBeenCalled();
     expect(prisma.title.findMany).not.toHaveBeenCalled();
-    expect(trendingCard.deleteMany).toHaveBeenCalledWith({ titleId: { $nin: [] } });
-    expect(store.size).toBe(0);
-    expect(result).toEqual({ upserted: 0, removed: 1 });
+    expect(trendingCard.deleteMany).not.toHaveBeenCalled();
+    expect(store.get('old')).toEqual({ titleId: 'old' });
+    expect(result).toEqual({ upserted: 0, removed: 0 });
   });
 
   it('is idempotent: a second run leaves the same cards and removes nothing', async () => {

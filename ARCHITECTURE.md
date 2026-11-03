@@ -45,7 +45,7 @@ bingemate/
 │   │   │   │       ├── reply.model.ts
 │   │   │   │       └── trendingCard.model.ts
 │   │   │   ├── jobs/
-│   │   │   │   └── refreshTrending.ts    # rebuild denormalised trending cards
+│   │   │   │   └── refreshTrending.ts    # refresh cards, startup empty check + timer helpers
 │   │   │   ├── utils/
 │   │   │   │   ├── jwt.ts                # sign/verify, 2h expiry
 │   │   │   │   ├── authCookie.ts         # set/clear httpOnly SameSite=Lax cookie
@@ -145,3 +145,18 @@ bingemate/
 | MongoDB (Mongoose)  | review bodies (`_id` = PG `reviews.id`: review text plus a `mediaType` copy), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                                                                                                    |
 
 Cross-database link: a review's PostgreSQL row and its Mongo body share one id; comments store `reviewId` / `userId`. There are no FKs across the two stores, so the reviews service writes PostgreSQL first, then Mongo, and undoes the PostgreSQL row if the Mongo write fails. Deleting a title or review must also delete the Mongo body and comments.
+
+## Trending refresh lifecycle
+
+After the API starts listening, `server.ts` calls `refreshIfEmpty()` to populate an empty
+`TrendingCard` collection and starts `startTrendingTimer(env.TRENDING_REFRESH_MINUTES)`.
+The env value is an integer from 0 to 1440, default 10; 0 disables only the recurring timer.
+The first scheduled refresh runs after the first interval. The interval is unrefed, skips
+pending runs, logs failures and continues; SIGINT/SIGTERM clear it before process exit.
+Startup count/refresh failures are logged without preventing the API from serving.
+
+`refreshTrending()` upserts the top 50 per media type from PostgreSQL's `trending_titles`
+view before deleting stale cards, so the collection is never wiped before rebuilding.
+If the view returns no rows, it warns and keeps existing cards. To fill an empty collection
+manually or refresh on demand, run from the repo root:
+`npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`.
