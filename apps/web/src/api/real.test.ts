@@ -39,6 +39,7 @@ beforeEach(() => vi.stubGlobal('fetch', fetchMock));
 afterEach(() => {
   fetchMock.mockReset();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 const summary = {
@@ -98,6 +99,35 @@ describe('creatorApi.stats (real)', () => {
 
 describe('listsApi (real)', () => {
   const entry = { id: 'l1', titleId: 't1', status: ListStatus.COMPLETED, title: summary };
+
+  it.each(['list', 'forTitle', 'add', 'setStatus'] as const)(
+    '%s resolves poster URLs against the API host without mutating the response',
+    async (method) => {
+      vi.stubEnv('VITE_API_URL', 'https://api.example.com/api');
+      const posterUrl = '/api/titles/t1/poster?v=1';
+      const row = Object.freeze({ ...entry, title: Object.freeze({ ...summary, posterUrl }) });
+      const page = { data: [row], page: 1, pageSize: 12, total: 1 };
+      fetchMock.mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: async () => (method === 'list' ? page : row),
+      });
+
+      const result =
+        method === 'list'
+          ? (await listsApi.list({ page: 1 })).data[0]!
+          : method === 'forTitle'
+            ? (await listsApi.forTitle('t1'))!
+            : method === 'add'
+              ? await listsApi.add('t1', ListStatus.COMPLETED)
+              : await listsApi.setStatus('l1', ListStatus.COMPLETED);
+
+      expect(result.title.posterUrl).toBe('https://api.example.com/api/titles/t1/poster?v=1');
+      expect(result).not.toBe(row);
+      expect(result.title).not.toBe(row.title);
+      expect(row.title.posterUrl).toBe(posterUrl);
+    },
+  );
 
   it('list sends only the filters that are set', async () => {
     fetchMock.mockReturnValueOnce(json({ data: [], page: 2, pageSize: 12, total: 0 }));
@@ -570,6 +600,21 @@ describe('creatorApi submissions (real)', () => {
     rejectionReason: null,
   };
   const input = { name: 'Dune', mediaType: MediaType.MOVIE, synopsis: 'Sand.' };
+
+  it.each(['submit', 'update'] as const)('%s resolves the uploaded poster URL', async (method) => {
+    vi.stubEnv('VITE_API_URL', 'https://api.example.com/api');
+    fetchMock
+      .mockReturnValueOnce(json(dto))
+      .mockReturnValueOnce(json({ posterUrl: '/api/titles/t1/poster?v=1' }));
+    const withPoster = { ...input, poster: new Blob(['image'], { type: 'image/png' }) };
+
+    const result =
+      method === 'submit'
+        ? await creatorApi.submit(withPoster)
+        : await creatorApi.update('t1', withPoster);
+
+    expect(result.title.posterUrl).toBe('https://api.example.com/api/titles/t1/poster?v=1');
+  });
 
   it('submissions maps rows and the rejection reason', async () => {
     fetchMock.mockReturnValueOnce(

@@ -8,8 +8,21 @@ import type {
   TitleSummary,
 } from '@bingemate/shared';
 import type { Submission } from '../types/creator.js';
+import type { ListItem } from '../types/list.js';
 import type { Reply, Review } from '../types/review.js';
 import type { TitleDetail } from '../types/title.js';
+
+export function mapListItem(item: ListItem): ListItem {
+  return {
+    ...item,
+    title: {
+      ...item.title,
+      ...(item.title.posterUrl !== undefined && {
+        posterUrl: resolvePosterUrl(item.title.posterUrl),
+      }),
+    },
+  };
+}
 
 /** The list endpoint returns summaries only: no description or year, so synopsis stays empty. */
 export function summaryToTitle(s: TitleSummary): TitleDetail {

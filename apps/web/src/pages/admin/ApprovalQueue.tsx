@@ -31,6 +31,7 @@ export function ApprovalQueue() {
         status === TitleStatus.REJECTED ? reasons[t.id]?.trim() || undefined : undefined;
       await adminApi.setTitleStatus(t.id, status, reason, t.version);
       setDecided((d) => new Set(d).add(t.id));
+      reload();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
         setError(err.message);

@@ -42,6 +42,25 @@ describe('AdminDashboard', () => {
 });
 
 describe('ApprovalQueue', () => {
+  it('reloads after approval and shows a title beyond the first response', async () => {
+    const pending = title('mock-25');
+    const next = title('mock-28');
+    const load = vi.spyOn(adminApi, 'pendingTitles')
+      .mockResolvedValueOnce([pending])
+      .mockResolvedValue([next]);
+    vi.spyOn(adminApi, 'setTitleStatus').mockResolvedValue();
+    const u = renderAdmin('/admin/queue');
+    const approve = await screen.findByRole('button', { name: `Approve ${pending.name}` });
+    expect(screen.queryByRole('cell', { name: next.name })).not.toBeInTheDocument();
+
+    await u.click(approve);
+
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('cell', { name: next.name })).toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: pending.name })).not.toBeInTheDocument();
+    expect(screen.queryByText('Queue is empty')).not.toBeInTheDocument();
+  });
+
   it('lists the pending titles only', async () => {
     renderAdmin('/admin/queue');
     const cell = (id: string) => ({ name: title(id).name });

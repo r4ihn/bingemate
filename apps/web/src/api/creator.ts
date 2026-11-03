@@ -9,6 +9,7 @@ import type { CreatorStat, Submission, SubmissionInput } from '../types/creator.
 import { ApiError, apiFetch } from './client.js';
 import { mapSubmission } from './mappers.js';
 import { clone, delay, useMock } from './mockMode.js';
+import { resolvePosterUrl } from './posterUrl.js';
 
 // The seeded demo titles belong to MOCK_USER; every creator sees them alongside their own submissions
 const own = () =>
@@ -59,7 +60,7 @@ export const creatorApi = {
               headers: { 'Content-Type': input.poster.type },
             },
           );
-          submission.title.posterUrl = posterUrl;
+          submission.title.posterUrl = resolvePosterUrl(posterUrl);
         } catch (error) {
           if (error instanceof ApiError) {
             throw new ApiError(
@@ -118,7 +119,7 @@ export const creatorApi = {
           body: input.poster,
           headers: { 'Content-Type': input.poster.type },
         });
-        submission.title.posterUrl = posterUrl;
+        submission.title.posterUrl = resolvePosterUrl(posterUrl);
       } else if (input.removePoster) {
         await apiFetch<void>(`${path}/poster`, { method: 'DELETE' });
         submission.title.posterUrl = undefined;
