@@ -9,20 +9,29 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - `[~]` = built and tested on a branch or open PR, waiting to merge (see "Where the work is")
 - `[ ]` = not done
 
-Last checked on 3 Nov 2026. `main` ends at PR #14. Every branch from the 30 Oct list (PRs #9 to #14) is merged, so nothing is marked `[~]` right now.
+Last checked on 3 Nov 2026 (evening). `main` ends at PR #16. Four stacked pull requests, #17 to #20, hold everything built since; they are open for review and not yet merged, so the items they deliver are marked `[x]` once tested and the PR number is given below.
 
 ---
 
-## Where the work is (3 Nov 2026)
+## Where the work is (3 Nov 2026, evening)
 
-Nothing is waiting to merge. PRs #9 to #14 were merged on 30 Oct: undated reviews (#9), review, reply and list endpoints (#10), title images (#11), genre options, creator stats and trending (#12), the website reading real data (#13) and the last task list (#14).
+Four stacked pull requests are open. Merge them in order; after each merge GitHub retargets the next one to `main`.
 
-| Branch                                                                    | State                                                                                                                    |
+| PR  | Branch                         | Based on                       | Contents                                                                                                                                                                   |
+| --- | ------------------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #17 | `feat/title-details`           | `main`                         | Per-media-type details tables, posters                                                                                                                                     |
+| #18 | `refactor/review-body-details` | `feat/title-details`           | A review is a star rating and text for every media type. **Needs HS and JW to sign off on the data-model change**                                                          |
+| #19 | `feat/web-wire-writes`         | `refactor/review-body-details` | Website writes on the real API, creator upload and admin approval, and the code-review fixes                                                                               |
+| #20 | `feat/remaining-work`          | `feat/web-wire-writes`         | Rank view, aggregation pipelines, indexes, benchmarks, real-database tests and CI job, single trending scheduler, Browse and Home wiring, manual, demo script and diagrams |
+
+CI on 3 Nov: `verify` passed on #17, and both `verify` and the new `verify-real-db` passed on the whole stack (draft PR #21, closed afterwards; Actions only runs for PRs into `main`).
+
+| Other branch                                                              | State                                                                                                                    |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
 | `feat/admin-endpoints` _(RA)_                                             | Admin endpoints (§4). One commit, which only edits an older TASKS.md; no code yet. 6 commits behind `main`: rebase first |
 | `feat/api-queries`, `feat/api-reviews-replies-lists`, `feat/title-poster` | Merged; can be deleted                                                                                                   |
 
-The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm run dev` (in `apps/api`). Reviews, replies, My Lists and creator stats writes are wired on `feat/web-wire-writes`; the creator title forms and the admin pages still need their API endpoints.
+Local clean-up after the stack merges: delete `backup/pre-rebase/*`, `backup/pre-review-fixes/*` and `demo/live-test`.
 
 ---
 
@@ -179,7 +188,7 @@ The list endpoints were merged in PR #10.
 
 - [ ] Unit tests for services; integration tests (Supertest) against test DBs
   - [x] Every new endpoint has Supertest tests with Prisma and MongoDB replaced by stubs (CI has no database), and each permission rule was checked by breaking it on purpose and watching a test fail. Each module was also run by hand against the real local databases
-  - [~] Real-database tests: `npm run test:real --workspace apps/api` runs 14 tests with no stubs against `bingemate_test` (views and their rounding, the trending and rank views, the two-store review lifecycle with a shared id, moderation with the `updatedAt` check, creator and admin delete cleanup, and a real concurrent delete-versus-list race). They pass locally, three runs in a row, and each was checked by breaking the code on purpose (removing the row lock fails the race test on every run). `.github/workflows/ci.yml` has a new `verify-real-db` job with `postgres:16-alpine` and `mongo:7` services; the existing job is unchanged and `npm test` stays stubbed. **Not done until that job has run green on GitHub**; it has not run there yet _(RA, ALL)_
+  - [x] Real-database tests: `npm run test:real --workspace apps/api` runs 14 tests with no stubs against `bingemate_test` (views and their rounding, the trending and rank views, the two-store review lifecycle with a shared id, moderation with the `updatedAt` check, creator and admin delete cleanup, and a real concurrent delete-versus-list race). They pass locally, three runs in a row, and each was checked by breaking the code on purpose (removing the row lock fails the race test on every run). `.github/workflows/ci.yml` has a new `verify-real-db` job with `postgres:16-alpine` and `mongo:7` services; the existing job is unchanged and `npm test` stays stubbed. **It ran green on GitHub on 3 Nov 2026** (draft PR #21 into `main`: all six migrations applied to a fresh PostgreSQL service and the 14 tests passed) _(RA, ALL)_
 - [ ] Each owner covers their own module; CI must pass before merge
 - [ ] `prettier --check` fails on `apps/api/prisma/seed.ts` and `apps/api/src/utils/pagination.ts` (CI does not run prettier). Format them once, then decide whether CI should check formatting
 
