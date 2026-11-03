@@ -50,7 +50,7 @@ const summary = {
   avgRating: 4,
   reviewCount: 2,
 };
-const author = { id: 'u1', name: 'Ann', role: Role.CONSUMER };
+const author = { id: 'u1', name: 'Ann', role: Role.MEMBER };
 
 describe('creatorApi.stats (real)', () => {
   it('maps rows and keeps only approved titles', async () => {

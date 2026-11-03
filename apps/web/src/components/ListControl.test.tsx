@@ -11,7 +11,7 @@ import { ListControl } from './ListControl.js';
 // mock-1 is on the seeded list (Completed); mock-20 is not
 function setup(titleId: string, signedIn = true) {
   renderWithProviders(<ListControl titleId={titleId} titleName="Some Title" />, {
-    role: signedIn ? Role.CONSUMER : undefined,
+    role: signedIn ? Role.MEMBER : undefined,
   });
   return userEvent.setup();
 }

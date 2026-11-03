@@ -9,7 +9,7 @@ import { renderWithProviders, choose } from '../test/utils.js';
 import { MyLists } from './MyLists.js';
 
 function setup() {
-  renderWithProviders(<MyLists />, { role: Role.CONSUMER, route: '/me/lists' });
+  renderWithProviders(<MyLists />, { role: Role.MEMBER, route: '/me/lists' });
   return userEvent.setup();
 }
 

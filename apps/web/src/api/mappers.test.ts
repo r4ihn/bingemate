@@ -127,7 +127,7 @@ describe('detailToTitle', () => {
   });
 });
 
-const author = { id: 'u1', name: 'Ann', role: Role.CREATOR };
+const author = { id: 'u1', name: 'Ann', role: Role.MEMBER };
 
 describe('mapReview', () => {
   const dto: ReviewDTO = {

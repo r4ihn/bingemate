@@ -16,7 +16,7 @@ export interface Db {
   reviews: Review[];
   replies: Reply[];
   lists: ListItem[];
-  users: AdminUser[];
+  users: (AdminUser & { username: string | null })[];
 }
 
 export const MOCK_USER = 'mock-user';
@@ -27,7 +27,7 @@ export interface MockActor {
   role: Role;
 }
 
-const DEMO_ACTOR: MockActor = { id: MOCK_USER, name: 'You', role: Role.CONSUMER };
+const DEMO_ACTOR: MockActor = { id: MOCK_USER, name: 'You', role: Role.MEMBER };
 let actor: MockActor = DEMO_ACTOR;
 
 /** Who the mock writes are attributed to: the signed-in user, or the demo user when nobody is. */
@@ -80,9 +80,9 @@ const RUNTIME: Record<MediaType, string> = {
 };
 
 const AUTHORS: Author[] = [
-  { id: 'u-maya', name: 'maya_r', role: Role.CONSUMER },
-  { id: 'u-studio', name: 'studio_north', role: Role.CREATOR },
-  { id: 'u-dev', name: 'dev_k', role: Role.CONSUMER },
+  { id: 'u-maya', name: 'maya_r', role: Role.MEMBER },
+  { id: 'u-studio', name: 'studio_north', role: Role.MEMBER },
+  { id: 'u-dev', name: 'dev_k', role: Role.MEMBER },
 ];
 
 function seedTitles(): StoredTitle[] {
@@ -178,11 +178,12 @@ function seedLists(titles: StoredTitle[]): ListItem[] {
   }));
 }
 
-function seedUsers(): AdminUser[] {
+function seedUsers(): Db['users'] {
   return Array.from({ length: 25 }, (_, i) => ({
     id: `user-${i + 1}`,
     email: `user${i + 1}@mock.dev`,
-    role: i === 0 ? Role.ADMIN : i === 1 ? Role.CREATOR : Role.CONSUMER,
+    username: `member${i + 1}`,
+    role: i === 0 ? Role.ADMIN : Role.MEMBER,
   }));
 }
 

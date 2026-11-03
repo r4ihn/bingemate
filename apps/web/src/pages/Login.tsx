@@ -8,7 +8,7 @@ export function Login() {
       title="Log in"
       submitLabel="Log in"
       strict={false}
-      submit={(email, password) => authApi.login({ email, password })}
+      submit={authApi.login}
       footer={
         <>
           New here?{' '}

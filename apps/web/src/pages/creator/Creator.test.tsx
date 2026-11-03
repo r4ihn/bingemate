@@ -33,7 +33,7 @@ function renderCreator(route: string, state?: unknown) {
       <Route path="/creator/:id/edit" element={<SubmissionForm />} />
       <Route path="/creator/stats" element={<CreatorStats />} />
     </Routes>,
-    { route, state, role: Role.CREATOR },
+    { route, state, role: Role.MEMBER },
   );
   return userEvent.setup();
 }

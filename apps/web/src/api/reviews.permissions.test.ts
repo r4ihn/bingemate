@@ -38,7 +38,7 @@ describe('admins read and moderate but do not write', () => {
 
 describe('the creator of a title', () => {
   beforeEach(() => {
-    asRole(Role.CREATOR, 'creator-1');
+    asRole(Role.MEMBER, 'creator-1');
     db.titles.find((t) => t.id === 'mock-2')!.createdBy = 'creator-1';
   });
 
@@ -50,7 +50,7 @@ describe('the creator of a title', () => {
     db.reviews.push({
       ...db.reviews.find((r) => r.id === REVIEW)!,
       id: 'r-self',
-      author: { id: 'creator-1', name: 'creator', role: Role.CREATOR },
+      author: { id: 'creator-1', name: 'creator', role: Role.MEMBER },
     });
     await refused(reviewsApi.update('r-self', input), 403);
   });
@@ -67,7 +67,7 @@ describe('the creator of a title', () => {
 
 describe('editing a reply', () => {
   // rp1 was written by AUTHORS[0] ('u-maya')
-  const asWriter = () => asRole(Role.CONSUMER, 'u-maya');
+  const asWriter = () => asRole(Role.MEMBER, 'u-maya');
 
   it('lets the writer change the text, keeps the date and marks it edited', async () => {
     asWriter();
@@ -79,9 +79,9 @@ describe('editing a reply', () => {
   });
 
   it('refuses everyone else, including a creator and the title creator', async () => {
-    asRole(Role.CONSUMER, 'someone-else');
+    asRole(Role.MEMBER, 'someone-else');
     await refused(repliesApi.update('rp1', 'hijack'), 403);
-    asRole(Role.CREATOR, 'creator-1');
+    asRole(Role.MEMBER, 'creator-1');
     await refused(repliesApi.update('rp1', 'hijack'), 403);
     expect(db.replies.find((r) => r.id === 'rp1')?.body).toBe('Great pacing in the second half.');
   });

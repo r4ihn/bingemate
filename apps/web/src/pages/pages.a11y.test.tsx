@@ -25,12 +25,12 @@ const pages: [string, string, string, ReactElement, Role?][] = [
   ['TitleDetail', '/titles/:id', '/titles/mock-1', <TitleDetail />],
   ['Login', '/login', '/login', <Login />],
   ['Register', '/register', '/register', <Register />],
-  ['MyLists', '/me/lists', '/me/lists', <MyLists />, Role.CONSUMER],
+  ['MyLists', '/me/lists', '/me/lists', <MyLists />, Role.MEMBER],
   ['Forbidden', '/forbidden', '/forbidden', <Forbidden />],
   ['NotFound', '*', '/nope', <NotFound />],
-  ['CreatorDashboard', '/creator', '/creator', <CreatorDashboard />, Role.CREATOR],
-  ['SubmissionForm', '/creator/new', '/creator/new', <SubmissionForm />, Role.CREATOR],
-  ['CreatorStats', '/creator/stats', '/creator/stats', <CreatorStats />, Role.CREATOR],
+  ['CreatorDashboard', '/creator', '/creator', <CreatorDashboard />, Role.MEMBER],
+  ['SubmissionForm', '/creator/new', '/creator/new', <SubmissionForm />, Role.MEMBER],
+  ['CreatorStats', '/creator/stats', '/creator/stats', <CreatorStats />, Role.MEMBER],
   ['AdminDashboard', '/admin', '/admin', <AdminDashboard />, Role.ADMIN],
 ];
 
@@ -73,4 +73,17 @@ it('Home trending strip retains named keyboard-focusable title links', async () 
     expect(link).toHaveAccessibleName();
     expect(link.tabIndex).toBe(0);
   }
+});
+
+it('Register username has a visible label, described hint and keyboard order', async () => {
+  renderWithProviders(<Register />, { route: '/register' });
+  const input = screen.getByRole('textbox', { name: 'Username' });
+  expect(input.closest('label')).toHaveTextContent('Username');
+  expect(input).toHaveAccessibleDescription(/characters: letters, digits/);
+  const u = userEvent.setup();
+  screen.getByLabelText('Email').focus();
+  await u.tab();
+  expect(input).toHaveFocus();
+  await u.tab();
+  expect(screen.getByLabelText('Password')).toHaveFocus();
 });
