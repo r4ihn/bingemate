@@ -186,10 +186,12 @@ The list endpoints were merged in PR #10.
 ## 11. Final deliverables (ALL, Week 13)
 
 - [ ] Final report: each member writes up their own component
-- [ ] Updated ER diagram + architecture diagram. `docs/architecture.svg` (in `main`) shows a global rate-limit and auth pipeline the code does not have; `docs/eraser-diagrams.md` holds anyone-can-edit Eraser links, so decide whether to keep it in the repo _(WH)_
-- [ ] User manual (the project spec asks for one with the submission) _(ALL)_
+- [~] Updated ER diagram + architecture diagram. `docs/architecture.svg` is redrawn from the code (per-route middleware, the cross-store review write, the trending refresh, the rank view, tooling) and `ARCHITECTURE.md` matches. The Eraser ER and MongoDB diagrams are still stale (no `title_rank_in_type`, the two new `Title` indexes, the two new `ReviewBody` indexes, or the new review body shape). `docs/eraser-diagrams.md` holds anyone-can-edit Eraser links, so decide whether to keep it in the repo _(WH)_
+- [~] User manual (the project spec asks for one with the submission): drafted in `docs/user-manual.md`, checked against the source. The creator and admin steps have not been clicked through in a real browser, and setup commands were not run from a fresh clone. Each member should read their part _(ALL)_
 - [ ] Slides
-- [ ] Video presentation and demo script
+- [~] Video presentation and demo script: the 9.5-minute script with one timed segment per member is in `docs/demo-script.md`; it has not been rehearsed and the video is not recorded
+- [~] Report: the 10-page outline with page budgets, authors and evidence is in `docs/report-outline.md`; nobody has written their section yet
+- [ ] Web gaps that affect the demo (found 3 Nov): Browse has no genre filter or sort control, and Home's "Trending now" strip lists titles in name order instead of reading `GET /api/trending`. The trending, genre-options and sort endpoints are built and tested but have no screen, so the demo shows them as API JSON _(WH)_
 - [x] README with setup steps (docker compose → migrate → seed → run). Update it if the local Postgres port change to `5433` (uncommitted) is kept, and see the README item in §1
 
 ## 12. Known gaps and follow-ups (found in code review, 29–30 Oct)
