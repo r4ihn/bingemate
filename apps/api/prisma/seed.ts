@@ -47,7 +47,11 @@ async function main() {
     });
   }
 
-  console.log('Seeded users:', { admin: admin.email, creator: creator.email, consumer: consumer.email });
+  console.log('Seeded users:', {
+    admin: admin.email,
+    creator: creator.email,
+    consumer: consumer.email,
+  });
 }
 
 main()
