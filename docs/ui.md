@@ -133,6 +133,8 @@ Same tokens, same pill and dock language. Proposed:
 | Admin | Tables for users and the approval queue, using the same badge styles |
 | Forbidden / 404 | Giant ghost text (`403`, `404`) in the style of the surname word |
 
+Submissions (all statuses) and approved-title stats have a Delete button with inline “Delete this title? This cannot be undone.” and Confirm / Cancel. Controls are disabled during deletion; success refreshes the table, while a server error appears inline and keeps the row.
+
 ## B5. Components (our spec)
 - **Primary button:** `--accent` fill, `--accent-ink` text, pill.
 - **Secondary button:** outlined pill like the reference's tags.

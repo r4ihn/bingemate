@@ -142,6 +142,15 @@ export const creatorApi = {
     return clone(toSubmission(title));
   },
 
+  async remove(id: string): Promise<void> {
+    if (!useMock) {
+      return apiFetch<void>(`/titles/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
+    await delay();
+    if (!own().some((title) => title.id === id)) throw new ApiError(404, 'Title not found');
+    db.titles = db.titles.filter((title) => title.id !== id);
+  },
+
   async stats(): Promise<CreatorStat[]> {
     if (!useMock) {
       const rows = await apiFetch<CreatorTitleStatsDTO[]>('/creator/stats');

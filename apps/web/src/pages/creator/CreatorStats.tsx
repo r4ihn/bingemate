@@ -4,6 +4,7 @@ import { StateMessage } from '../../components/StateMessage.js';
 import { Table, Td } from '../../components/ui/Table.js';
 import { formatRating } from '../../format.js';
 import { useAsync } from '../../hooks/useAsync.js';
+import { DeleteTitleButton } from './DeleteTitleButton.js';
 
 export function CreatorStats() {
   const { state, reload } = useAsync(() => creatorApi.stats(), []);
@@ -32,7 +33,7 @@ export function CreatorStats() {
           ) : (
             <Table
               caption="Stats per title"
-              columns={['Title', 'Avg rating', 'Reviews', 'List adds']}
+              columns={['Title', 'Avg rating', 'Reviews', 'List adds', '']}
             >
               {state.data.map((s) => (
                 <tr key={s.titleId}>
@@ -40,6 +41,9 @@ export function CreatorStats() {
                   <Td>{formatRating(s.avgRating)}</Td>
                   <Td>{s.reviewCount}</Td>
                   <Td>{s.listAdds}</Td>
+                  <Td>
+                    <DeleteTitleButton id={s.titleId} onDeleted={reload} />
+                  </Td>
                 </tr>
               ))}
             </Table>

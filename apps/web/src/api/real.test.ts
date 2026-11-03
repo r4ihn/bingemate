@@ -593,6 +593,25 @@ describe('repliesApi writes (real)', () => {
 });
 
 describe('creatorApi submissions (real)', () => {
+  it('remove sends DELETE with credentials and resolves undefined on 204', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(creatorApi.remove('a/b c')).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/titles/a%2Fb%20c');
+    expect(init.method).toBe('DELETE');
+    expect(init.credentials).toBe('include');
+    expect(init.body).toBeUndefined();
+  });
+
+  it('remove preserves the server conflict message', async () => {
+    const message = 'Other users have reviewed or listed this title. Ask an admin to delete it.';
+    fetchMock.mockReturnValueOnce(json({ error: message }, 409));
+    await expect(creatorApi.remove('t1')).rejects.toMatchObject({ status: 409, message });
+  });
+
   const dto = {
     ...summary,
     status: TitleStatus.PENDING,
@@ -785,7 +804,6 @@ describe('creatorApi submissions (real)', () => {
   );
 });
 
-
 describe('adminApi title queue (real)', () => {
   const dto = {
     ...summary,
@@ -797,7 +815,12 @@ describe('adminApi title queue (real)', () => {
 
   it('pendingTitles asks for PENDING with pageSize 50 and maps rows', async () => {
     fetchMock.mockReturnValueOnce(
-      json({ data: [dto, { ...dto, id: 't2', description: null }], page: 1, pageSize: 50, total: 2 }),
+      json({
+        data: [dto, { ...dto, id: 't2', description: null }],
+        page: 1,
+        pageSize: 50,
+        total: 2,
+      }),
     );
     expect(await adminApi.pendingTitles()).toEqual([
       { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.', version: dto.updatedAt },
@@ -827,7 +850,9 @@ describe('adminApi title queue (real)', () => {
 
   it('setTitleStatus omits the rejectionReason key when no reason is given', async () => {
     fetchMock.mockReturnValueOnce(json({ ...dto, status: TitleStatus.APPROVED }));
-    await expect(adminApi.setTitleStatus('t1', TitleStatus.APPROVED, undefined, dto.updatedAt)).resolves.toBeUndefined();
+    await expect(
+      adminApi.setTitleStatus('t1', TitleStatus.APPROVED, undefined, dto.updatedAt),
+    ).resolves.toBeUndefined();
     expect(lastCall().url).toBe('/api/admin/titles/t1/status');
     expect(lastCall().init.method).toBe('PATCH');
     const body = JSON.parse(lastCall().init.body as string);
@@ -854,4 +879,3 @@ describe('adminApi title queue (real)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
-

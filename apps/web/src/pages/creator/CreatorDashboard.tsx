@@ -5,6 +5,7 @@ import { StatusBadge } from '../../components/ui/Badge.js';
 import { Table, Td } from '../../components/ui/Table.js';
 import { useAsync } from '../../hooks/useAsync.js';
 import { MEDIA_LABEL } from '../../labels.js';
+import { DeleteTitleButton } from './DeleteTitleButton.js';
 
 export const primaryLink =
   'inline-flex rounded-full bg-accent px-6 py-3 font-semibold text-accent-ink';
@@ -59,6 +60,7 @@ export function CreatorDashboard() {
                     <Link to={`/creator/${title.id}/edit`} className="underline">
                       Edit <span className="sr-only">{title.name}</span>
                     </Link>
+                    <DeleteTitleButton id={title.id} onDeleted={reload} />
                   </Td>
                 </tr>
               ))}

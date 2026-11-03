@@ -70,6 +70,75 @@ describe('CreatorDashboard', () => {
     expect(screen.queryByText(title('mock-28').name)).not.toBeInTheDocument();
   });
 
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'confirms before deleting %s and cancel leaves it untouched',
+    async (id) => {
+      const remove = vi.spyOn(creatorApi, 'remove');
+      const user = renderCreator('/creator');
+      const row = await screen.findByRole('row', { name: new RegExp(title(id).name) });
+      await user.click(within(row).getByRole('button', { name: 'Delete' }));
+      expect(
+        within(row).getByText('Delete this title? This cannot be undone.'),
+      ).toBeInTheDocument();
+      expect(remove).not.toHaveBeenCalled();
+      await user.click(within(row).getByRole('button', { name: 'Cancel' }));
+      expect(remove).not.toHaveBeenCalled();
+      expect(row).toBeInTheDocument();
+      expect(within(row).queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'deletes %s from submissions and stats after confirmation',
+    async (id) => {
+      const name = title(id).name;
+      const remove = vi.spyOn(creatorApi, 'remove');
+      const user = renderCreator('/creator');
+      const row = await screen.findByRole('row', { name: new RegExp(name) });
+      await user.click(within(row).getByRole('button', { name: 'Delete' }));
+      await user.click(within(row).getByRole('button', { name: 'Confirm' }));
+      await waitFor(() => expect(row).not.toBeInTheDocument());
+      expect(remove).toHaveBeenCalledExactlyOnceWith(id);
+      expect(db.titles.some((t) => t.id === id)).toBe(false);
+      await user.click(screen.getByRole('link', { name: 'Stats' }));
+      if (id === 'mock-24') await screen.findByText('No stats yet');
+      else await screen.findByRole('table');
+      expect(screen.queryByText(name)).not.toBeInTheDocument();
+    },
+  );
+
+  it('shows the server message on 409 and keeps the row', async () => {
+    const message = 'Other users have reviewed or listed this title. Ask an admin to delete it.';
+    vi.spyOn(creatorApi, 'remove').mockRejectedValue(new ApiError(409, message));
+    const user = renderCreator('/creator');
+    const row = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    await user.click(within(row).getByRole('button', { name: 'Confirm' }));
+    expect(await within(row).findByRole('alert')).toHaveTextContent(message);
+    expect(row).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Confirm' })).toBeEnabled();
+  });
+
+  it('disables confirmation and cancel while deletion runs', async () => {
+    let finish: () => void = () => undefined;
+    const remove = vi.spyOn(creatorApi, 'remove').mockReturnValue(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const user = renderCreator('/creator');
+    const row = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    const confirm = within(row).getByRole('button', { name: 'Confirm' });
+    await user.click(confirm);
+    expect(confirm).toBeDisabled();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    await user.click(confirm);
+    expect(remove).toHaveBeenCalledTimes(1);
+    finish();
+    await waitFor(() => expect(within(row).getByRole('button', { name: 'Delete' })).toBeEnabled());
+  });
+
   it('empty submissions shows an empty state', async () => {
     for (const t of db.titles) if (t.createdBy === MOCK_USER) t.createdBy = undefined;
     renderCreator('/creator');
@@ -444,6 +513,17 @@ describe('CreatorStats', () => {
     expect(within(row).getByText(stat!.avgRating.toFixed(1))).toBeInTheDocument();
     expect(within(row).getByText(String(stat!.reviewCount))).toBeInTheDocument();
     expect(within(row).getByText(String(stat!.listAdds))).toBeInTheDocument();
+  });
+
+  it('deletes an approved title and refreshes stats', async () => {
+    const stats = vi.spyOn(creatorApi, 'stats');
+    const user = renderCreator('/creator/stats');
+    const row = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    await user.click(within(row).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(row).not.toBeInTheDocument());
+    expect(stats).toHaveBeenCalledTimes(2);
+    expect(db.titles.some((t) => t.id === 'mock-24')).toBe(false);
   });
 
   it('shows an empty state when no title is approved yet', async () => {
