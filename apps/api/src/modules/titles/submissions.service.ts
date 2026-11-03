@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { Role } from '@bingemate/shared';
 import type { AuthUser, SubmissionDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
@@ -68,17 +68,24 @@ export async function updateSubmission(
     throw new HttpError(403, 'You can only edit your own submission');
   }
 
-  const row = await prisma.title.update({
-    where: { id },
-    data: {
-      ...(input.name !== undefined ? { name: input.name } : {}),
-      ...(input.description !== undefined ? { description: input.description || null } : {}),
-      status: 'PENDING',
-      rejectionReason: null,
-    },
-    select: submissionSelect,
-  });
-  return toSubmission(row);
+  try {
+    const row = await prisma.title.update({
+      where: { id },
+      data: {
+        ...(input.name !== undefined ? { name: input.name } : {}),
+        ...(input.description !== undefined ? { description: input.description || null } : {}),
+        status: 'PENDING',
+        rejectionReason: null,
+      },
+      select: submissionSelect,
+    });
+    return toSubmission(row);
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+      throw new HttpError(404, 'Title not found');
+    }
+    throw err;
+  }
 }
 
 export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
@@ -114,7 +121,14 @@ export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
       where: { titleId: id },
       select: { id: true },
     });
-    await tx.title.delete({ where: { id } });
+    try {
+      await tx.title.delete({ where: { id } });
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2025') {
+        throw new HttpError(404, 'Title not found');
+      }
+      throw err;
+    }
     return reviews.map((review) => review.id);
   });
 

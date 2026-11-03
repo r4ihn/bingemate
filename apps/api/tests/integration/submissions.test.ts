@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
+import { Prisma } from '@prisma/client';
 
 // Minimal env so config/env.ts validation passes when app is imported.
 process.env.DATABASE_URL ??= 'postgresql://u:p@localhost:5432/db?schema=public';
@@ -382,6 +383,20 @@ describe('DELETE /api/titles/:id', () => {
     for (const fn of Object.values(mongo)) expect(fn).not.toHaveBeenCalled();
   });
 
+  it('answers 404 without MongoDB cleanup when the title vanishes before deletion', async () => {
+    prisma.title.delete.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('gone', { code: 'P2025', clientVersion: 'test' }),
+    );
+
+    const res = await del();
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Title not found' });
+    expect(prisma.title.findUnique).toHaveBeenCalledTimes(1);
+    expect(prisma.title.delete).toHaveBeenCalledWith({ where: { id: 't1' } });
+    for (const fn of Object.values(mongo)) expect(fn).not.toHaveBeenCalled();
+  });
+
   it('does not clear MongoDB leftovers when the PostgreSQL delete fails', async () => {
     prisma.title.delete.mockRejectedValue(new Error('PostgreSQL is down'));
 
@@ -429,6 +444,27 @@ describe('PATCH /api/titles/:id', () => {
       select: { createdById: true, status: true },
     });
     expect(prisma.title.update).not.toHaveBeenCalled();
+  });
+
+  it('answers 404 when the title vanishes before updating', async () => {
+    prisma.title.update.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('gone', { code: 'P2025', clientVersion: 'test' }),
+    );
+
+    const res = await patch({ name: 'Dune Messiah' });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Title not found' });
+    expect(prisma.title.findUnique).toHaveBeenCalledTimes(1);
+    expect(prisma.title.update).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps unexpected update failures as server errors', async () => {
+    prisma.title.update.mockRejectedValue(new Error('PostgreSQL is down'));
+
+    const res = await patch({ name: 'Dune Messiah' });
+
+    expect(res.status).toBe(500);
   });
 
   it.each([

@@ -139,6 +139,38 @@ describe('POST /api/titles/:titleId/reviews', () => {
     });
   });
 
+  it('answers 404 without writing when the title is no longer approved after locking', async () => {
+    prisma.title.findFirst
+      .mockResolvedValueOnce({ mediaType: 'MOVIE', createdById: null })
+      .mockResolvedValueOnce(null);
+
+    const res = await post({ rating: 5, body: 'x' });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: 'Title not found' });
+    expect(calls).toEqual(['lock']);
+    expect(prisma.title.findFirst).toHaveBeenNthCalledWith(2, {
+      where: { id: 't1', status: 'APPROVED' },
+      select: { createdById: true },
+    });
+    expect(prisma.review.create).not.toHaveBeenCalled();
+    expect(mongo.create).not.toHaveBeenCalled();
+  });
+
+  it('refuses the title creator found by the read after locking', async () => {
+    prisma.title.findFirst
+      .mockResolvedValueOnce({ mediaType: 'MOVIE', createdById: null })
+      .mockResolvedValueOnce({ createdById: 'u1' });
+
+    const res = await post({ rating: 5, body: 'x' });
+
+    expect(res.status).toBe(403);
+    expect(res.body).toEqual({ error: 'You cannot review a title you created' });
+    expect(calls).toEqual(['lock']);
+    expect(prisma.review.create).not.toHaveBeenCalled();
+    expect(mongo.create).not.toHaveBeenCalled();
+  });
+
   it('answers 409 for a second review of the same title', async () => {
     prisma.review.findUnique.mockResolvedValue({ id: 'old' });
 

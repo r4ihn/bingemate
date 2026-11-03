@@ -109,6 +109,14 @@ export async function createReview(
   // 1. PostgreSQL: the header row and the new totals commit together.
   const review = await prisma.$transaction(async (tx) => {
     await lockTitle(tx, titleId);
+    const lockedTitle = await tx.title.findFirst({
+      where: { id: titleId, status: 'APPROVED' },
+      select: { createdById: true },
+    });
+    if (!lockedTitle) throw new HttpError(404, 'Title not found');
+    if (lockedTitle.createdById === user.id) {
+      throw new HttpError(403, 'You cannot review a title you created');
+    }
     const existing = await tx.review.findUnique({
       where: { userId_titleId: { userId: user.id, titleId } },
       select: { id: true },
