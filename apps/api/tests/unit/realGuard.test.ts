@@ -13,8 +13,10 @@ describe('assertTestDatabase', () => {
     'https://localhost/bingemate_test',
     'mongodb://localhost/other/bingemate_test',
   ])('refuses unsafe URL %# before any database operation', (url) => {
-    expect(() => assertTestDatabase(url, 'TEST_DATABASE_URL'), 'unsafe databases must be refused')
-      .toThrow('TEST_DATABASE_URL must name a database ending in _test');
+    expect(
+      () => assertTestDatabase(url, 'TEST_DATABASE_URL'),
+      'unsafe databases must be refused',
+    ).toThrow('TEST_DATABASE_URL must name a database ending in _test');
     try {
       assertTestDatabase(url, 'TEST_DATABASE_URL');
     } catch (error) {
@@ -28,7 +30,9 @@ describe('assertTestDatabase', () => {
     'mongodb://localhost:27017/bingemate_test',
     'mongodb+srv://cluster.example.test/bingemate_test?retryWrites=true',
   ])('accepts isolated test database %#', (url) => {
-    expect(() => assertTestDatabase(url, 'test database'), 'isolated test databases must be allowed')
-      .not.toThrow();
+    expect(
+      () => assertTestDatabase(url, 'test database'),
+      'isolated test databases must be allowed',
+    ).not.toThrow();
   });
 });

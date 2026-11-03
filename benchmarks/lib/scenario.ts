@@ -1,7 +1,12 @@
 import type { PrismaClient } from '@prisma/client';
 import type mongoose from 'mongoose';
 
-export type Ctx = { pg: PrismaClient; mongo: mongoose.Connection; keepSetup: boolean; note(msg: string): void };
+export type Ctx = {
+  pg: PrismaClient;
+  mongo: mongoose.Connection;
+  keepSetup: boolean;
+  note(msg: string): void;
+};
 export interface Scenario {
   name: string;
   description: string;

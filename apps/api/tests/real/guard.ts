@@ -7,8 +7,11 @@ export function assertTestDatabase(url: string, label: string): void {
   } catch {
     throw fail();
   }
-  if (!['postgres:', 'postgresql:', 'mongodb:', 'mongodb+srv:'].includes(parsed.protocol)
-    || !parsed.hostname || !/^\/[^/]*_test$/.test(parsed.pathname)) {
+  if (
+    !['postgres:', 'postgresql:', 'mongodb:', 'mongodb+srv:'].includes(parsed.protocol) ||
+    !parsed.hostname ||
+    !/^\/[^/]*_test$/.test(parsed.pathname)
+  ) {
     throw fail();
   }
 }

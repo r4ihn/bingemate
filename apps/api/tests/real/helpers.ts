@@ -17,7 +17,9 @@ export async function resetDatabases(): Promise<void> {
     WHERE schemaname = current_schema() AND tablename <> '_prisma_migrations'`;
   const quote = (name: string) => `"${name.replaceAll('"', '""')}"`;
   if (tables.length) {
-    await prisma.$executeRawUnsafe(`TRUNCATE TABLE ${tables.map((t) => quote(t.tablename)).join(', ')} CASCADE`);
+    await prisma.$executeRawUnsafe(
+      `TRUNCATE TABLE ${tables.map((t) => quote(t.tablename)).join(', ')} CASCADE`,
+    );
   }
   const db = mongo.connection.db;
   if (!db) throw new Error('Mongo test connection has no database');
@@ -27,28 +29,34 @@ export async function resetDatabases(): Promise<void> {
 }
 
 export function createUser(role: Role = 'CONSUMER') {
-  return prisma.user.create({ data: {
-    email: `${randomUUID()}@real-tests.example`,
-    passwordHash: 'fixed-dummy-password-hash-not-used-for-login',
-    role,
-  } });
+  return prisma.user.create({
+    data: {
+      email: `${randomUUID()}@real-tests.example`,
+      passwordHash: 'fixed-dummy-password-hash-not-used-for-login',
+      role,
+    },
+  });
 }
 
 export function as(user: Pick<User, 'id' | 'email' | 'role'>) {
   return { Cookie: `token=${signToken(user)}` };
 }
 
-export function createTitle(options: {
-  status?: TitleStatus;
-  mediaType?: MediaType;
-  createdById?: string;
-} = {}) {
-  return prisma.title.create({ data: {
-    name: `Real test ${randomUUID()}`,
-    status: 'APPROVED',
-    mediaType: 'MOVIE',
-    ...options,
-  } });
+export function createTitle(
+  options: {
+    status?: TitleStatus;
+    mediaType?: MediaType;
+    createdById?: string;
+  } = {},
+) {
+  return prisma.title.create({
+    data: {
+      name: `Real test ${randomUUID()}`,
+      status: 'APPROVED',
+      mediaType: 'MOVIE',
+      ...options,
+    },
+  });
 }
 
 export function refreshViews(): Promise<void> {

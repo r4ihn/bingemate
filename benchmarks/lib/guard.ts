@@ -6,7 +6,9 @@ export function assertBenchDatabase(url: string): void {
     const name = decodeURIComponent(parsed.pathname.slice(1));
     if (
       !['postgresql:', 'mongodb:', 'mongodb+srv:'].includes(parsed.protocol) ||
-      !parsed.hostname || !name.endsWith('_bench') || name.includes('/')
+      !parsed.hostname ||
+      !name.endsWith('_bench') ||
+      name.includes('/')
     ) {
       throw new Error(rule);
     }

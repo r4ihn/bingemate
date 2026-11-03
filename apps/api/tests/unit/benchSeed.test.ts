@@ -26,7 +26,11 @@ describe('benchmark seed offline preflight', () => {
   it.each(['BENCH_DATABASE_URL', 'BENCH_MONGO_URI'] as const)(
     'requires %s without falling back to app credentials',
     async (key) => {
-      const input = { ...env, DATABASE_URL: env.BENCH_DATABASE_URL, MONGO_URI: env.BENCH_MONGO_URI };
+      const input = {
+        ...env,
+        DATABASE_URL: env.BENCH_DATABASE_URL,
+        MONGO_URI: env.BENCH_MONGO_URI,
+      };
       delete (input as NodeJS.ProcessEnv)[key];
       await expect(main(['--dry-run'], input)).rejects.toThrow(key);
       expect(prismaConstructor).not.toHaveBeenCalled();
@@ -37,8 +41,9 @@ describe('benchmark seed offline preflight', () => {
   it.each(['BENCH_DATABASE_URL', 'BENCH_MONGO_URI'] as const)(
     'guards %s before constructing either client',
     async (key) => {
-      await expect(main([], { ...env, [key]: env[key].replace('_bench', '') }))
-        .rejects.toThrow(/database name must end in _bench/);
+      await expect(main([], { ...env, [key]: env[key].replace('_bench', '') })).rejects.toThrow(
+        /database name must end in _bench/,
+      );
       expect(prismaConstructor).not.toHaveBeenCalled();
       expect(mongoose.createConnection).not.toHaveBeenCalled();
     },
@@ -46,7 +51,10 @@ describe('benchmark seed offline preflight', () => {
 
   it('prints a synthetic plan and exits dry-run without constructing clients', async () => {
     const log = vi.spyOn(console, 'log').mockImplementation(() => undefined);
-    await main(['--dry-run', '--titles', '12', '--reviews', '24', '--users', '8', '--replies', '6'], env);
+    await main(
+      ['--dry-run', '--titles', '12', '--reviews', '24', '--users', '8', '--replies', '6'],
+      env,
+    );
     const output = log.mock.calls.flat().join(' ');
     expect(output).toMatch(/SYNTHETIC/);
     expect(output).toContain('bingemate_bench');
@@ -55,12 +63,15 @@ describe('benchmark seed offline preflight', () => {
     expect(mongoose.createConnection).not.toHaveBeenCalled();
   });
 
-  it.each([['--users', '0'], ['--titles', '-1'], ['--reviews', '1.5'], ['--replies', 'NaN'], ['--typo']])(
-    'rejects invalid options %j without connecting',
-    async (...args) => {
-      await expect(main(args, env)).rejects.toThrow();
-      expect(prismaConstructor).not.toHaveBeenCalled();
-      expect(mongoose.createConnection).not.toHaveBeenCalled();
-    },
-  );
+  it.each([
+    ['--users', '0'],
+    ['--titles', '-1'],
+    ['--reviews', '1.5'],
+    ['--replies', 'NaN'],
+    ['--typo'],
+  ])('rejects invalid options %j without connecting', async (...args) => {
+    await expect(main(args, env)).rejects.toThrow();
+    expect(prismaConstructor).not.toHaveBeenCalled();
+    expect(mongoose.createConnection).not.toHaveBeenCalled();
+  });
 });

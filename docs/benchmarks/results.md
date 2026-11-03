@@ -14,20 +14,20 @@ Five workloads run against PostgreSQL and MongoDB over the same **synthetic** da
 
 Three complete runs, back to back. The table gives the median of the three run-medians and the range between them.
 
-| Scenario | Store | Runs each | Median of 3 run-medians (ms) | Range of run-medians (ms) | p95, run 3 (ms) |
-| --- | --- | --- | --- | --- | --- |
-| reviews-for-title | PostgreSQL | 200 | 0.441 | 0.441 to 0.443 | 0.576 |
-| reviews-for-title | MongoDB | 200 | 0.436 | 0.434 to 0.464 | 0.664 |
-| reviews-for-title | Both stores (real app path) | 200 | 3.492 | 2.669 to 3.806 | 4.505 |
-| top-n-trending | PostgreSQL | 20 | 2233.005 | 2175.465 to 2248.280 | 2256.548 |
-| top-n-trending | MongoDB | 20 | 2.451 | 2.109 to 2.815 | 3.512 |
-| insert-review | PostgreSQL | 200 | 0.561 | 0.479 to 0.587 | 1.576 |
-| insert-review | MongoDB | 200 | 0.469 | 0.364 to 0.487 | 0.634 |
-| insert-review | Both stores (real app path) | 200 | 2.405 | 2.100 to 2.715 | 4.788 |
-| replies-of-review | PostgreSQL | 200 | 0.537 | 0.452 to 0.580 | 0.785 |
-| replies-of-review | MongoDB | 200 | 0.527 | 0.411 to 0.555 | 0.731 |
-| filtered-browse | PostgreSQL | 200 | 69.372 | 66.630 to 88.431 | 101.585 |
-| filtered-browse | MongoDB | 200 | 70.184 | 68.583 to 72.528 | 78.006 |
+| Scenario          | Store                       | Runs each | Median of 3 run-medians (ms) | Range of run-medians (ms) | p95, run 3 (ms) |
+| ----------------- | --------------------------- | --------- | ---------------------------- | ------------------------- | --------------- |
+| reviews-for-title | PostgreSQL                  | 200       | 0.441                        | 0.441 to 0.443            | 0.576           |
+| reviews-for-title | MongoDB                     | 200       | 0.436                        | 0.434 to 0.464            | 0.664           |
+| reviews-for-title | Both stores (real app path) | 200       | 3.492                        | 2.669 to 3.806            | 4.505           |
+| top-n-trending    | PostgreSQL                  | 20        | 2233.005                     | 2175.465 to 2248.280      | 2256.548        |
+| top-n-trending    | MongoDB                     | 20        | 2.451                        | 2.109 to 2.815            | 3.512           |
+| insert-review     | PostgreSQL                  | 200       | 0.561                        | 0.479 to 0.587            | 1.576           |
+| insert-review     | MongoDB                     | 200       | 0.469                        | 0.364 to 0.487            | 0.634           |
+| insert-review     | Both stores (real app path) | 200       | 2.405                        | 2.100 to 2.715            | 4.788           |
+| replies-of-review | PostgreSQL                  | 200       | 0.537                        | 0.452 to 0.580            | 0.785           |
+| replies-of-review | MongoDB                     | 200       | 0.527                        | 0.411 to 0.555            | 0.731           |
+| filtered-browse   | PostgreSQL                  | 200       | 69.372                       | 66.630 to 88.431          | 101.585         |
+| filtered-browse   | MongoDB                     | 200       | 70.184                       | 68.583 to 72.528          | 78.006          |
 
 **Repeatability.** The plan required two runs to agree within 15%. They did not on sub-millisecond rows: run 1 against run 2 differed by up to 29%, and run 2 against run 3 by up to 35%. I first suspected cold caches in run 1, but run 3 refuted that (it was slower than run 2 on several rows), so it is plain run-to-run noise on a shared laptop. For that reason the table shows the range, and the conclusions below rest only on differences far outside it.
 
@@ -45,11 +45,11 @@ Three complete runs, back to back. The table gives the median of the three run-m
 
 `autocannon@7.15.0`, 20 connections for 15 seconds per endpoint, against a second API instance on port 4100 pointed at the benchmark databases (trending timer off). A run with any non-2xx reply or error would be invalid; all three had none.
 
-| Endpoint | Requests/s | p50 | p97.5 | p99 | Max |
-| --- | --- | --- | --- | --- | --- |
-| `GET /api/trending` | 2,033 | 9 ms | 14 ms | 17 ms | 62 ms |
-| `GET /api/titles/bench-title-1/reviews` (the hottest title) | 1,228 | 15 ms | 24 ms | 27 ms | 53 ms |
-| `GET /api/titles?type=MOVIE&sort=rating&page=1` | 478 | 40 ms | 66 ms | 73 ms | 106 ms |
+| Endpoint                                                    | Requests/s | p50   | p97.5 | p99   | Max    |
+| ----------------------------------------------------------- | ---------- | ----- | ----- | ----- | ------ |
+| `GET /api/trending`                                         | 2,033      | 9 ms  | 14 ms | 17 ms | 62 ms  |
+| `GET /api/titles/bench-title-1/reviews` (the hottest title) | 1,228      | 15 ms | 24 ms | 27 ms | 53 ms  |
+| `GET /api/titles?type=MOVIE&sort=rating&page=1`             | 478        | 40 ms | 66 ms | 73 ms | 106 ms |
 
 Trending serves about four times the requests per second of browse because it reads precomputed cards. Browse is the slowest even after the index work, because of the pagination total: the page query is 0.06 ms and `COUNT(*)` is about 25 ms. A cached or approximate total is the obvious next step; it was not done. One run per endpoint, so these numbers carry the same laptop noise as above.
 

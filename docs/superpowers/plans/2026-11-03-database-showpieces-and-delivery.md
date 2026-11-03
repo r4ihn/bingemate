@@ -14,8 +14,8 @@
 
 ## Status entering this plan (3 Nov 2026)
 
-| Done and verified on `feat/remaining-work` (450 API tests, 482 web tests) | Not done |
-|---|---|
+| Done and verified on `feat/remaining-work` (450 API tests, 482 web tests)                                                                                                                                | Not done                               |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
 | 2b review extras removed, 3 re-moderation (main's version kept), 4 creator delete button, 5 JSON errors, 6 orphan cleanup, 7 trending timer, 8 Mongo pipelines, 9 `sort=recent`, undated-review backfill | 1 PRs, 10, 12a, 11, 12, 13, 14, 15, 16 |
 
 ## Global Constraints
@@ -30,12 +30,12 @@
 
 ## Decisions needing WH
 
-| # | Decision | Recommendation |
-|---|----------|----------------|
-| D6 | The "950k films" set does not exist in `data/raw` (the largest file is a 46 MB books file of about 40k lines). Where does benchmark scale data come from? | **Generate synthetic data** in a separate `bingemate_bench` database (Task 12a), reusing real review texts so row size is realistic, and label it synthetic in the report. Honest, repeatable, and needs no extra download. If a real 950k source exists, say where and the seed script gets a second input mode. |
-| D7 | Apply the Task 10 migration to the local dev database? | Yes, with `prisma migrate deploy` only (never `migrate reset`). |
-| D8 | Task 13 edits `.github/workflows/ci.yml` and `apps/api/package.json`. | Ask at the start of Task 13. |
-| D9 | Task 11 may need `CREATE EXTENSION pg_trgm` for `ILIKE` search. | Only if search exceeds 100 ms on the bench set. Ask then. |
+| #   | Decision                                                                                                                                                  | Recommendation                                                                                                                                                                                                                                                                                                    |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D6  | The "950k films" set does not exist in `data/raw` (the largest file is a 46 MB books file of about 40k lines). Where does benchmark scale data come from? | **Generate synthetic data** in a separate `bingemate_bench` database (Task 12a), reusing real review texts so row size is realistic, and label it synthetic in the report. Honest, repeatable, and needs no extra download. If a real 950k source exists, say where and the seed script gets a second input mode. |
+| D7  | Apply the Task 10 migration to the local dev database?                                                                                                    | Yes, with `prisma migrate deploy` only (never `migrate reset`).                                                                                                                                                                                                                                                   |
+| D8  | Task 13 edits `.github/workflows/ci.yml` and `apps/api/package.json`.                                                                                     | Ask at the start of Task 13.                                                                                                                                                                                                                                                                                      |
+| D9  | Task 11 may need `CREATE EXTENSION pg_trgm` for `ILIKE` search.                                                                                           | Only if search exceeds 100 ms on the bench set. Ask then.                                                                                                                                                                                                                                                         |
 
 ## Review Focus
 
@@ -70,6 +70,7 @@
 **Files:** migration above; `ranking.service.ts`; `titles.service.ts` (`getTitle`, line 98); `refreshTrending.ts`; shared DTO; web title page and mock; Test `apps/api/tests/integration/titles.test.ts`, `apps/api/tests/unit/ranking.test.ts`, `apps/api/tests/integration/scheduleTrending.test.ts`.
 
 **Interfaces:**
+
 - SQL: `CREATE MATERIALIZED VIEW "title_rank_in_type" AS SELECT id AS title_id, "mediaType", trending_score, RANK() OVER w AS rank_in_type, PERCENT_RANK() OVER w AS pct_rank FROM trending_titles WINDOW w AS (PARTITION BY "mediaType" ORDER BY trending_score DESC, id)`, created WITH DATA (a concurrent refresh needs a populated view), plus `CREATE UNIQUE INDEX ... ON "title_rank_in_type"(title_id)`. The `id` tie-break makes ranks deterministic.
 - `getTitleRank(id: string): Promise<{ rankInType: number; topPercent: number } | null>` with `topPercent = GREATEST(1, CEIL(pct_rank * 100))` (rank 1 is "top 1%", not 0%). A parameterised `Prisma.sql` query, no string interpolation.
 - `refreshTitleRanks(): Promise<void>` runs `REFRESH MATERIALIZED VIEW CONCURRENTLY "title_rank_in_type"`. It runs outside a transaction (PostgreSQL forbids it inside one).
@@ -90,6 +91,7 @@ Why a materialized view: a plain view would re-aggregate every review and re-ran
 **Files:** Create `benchmarks/seed-bench.ts`, `benchmarks/lib/guard.ts`; Test `apps/api/tests/unit/benchGuard.test.ts`; Modify `benchmarks/README.md`.
 
 **Interfaces:**
+
 - `assertBenchDatabase(url: string): void` throws unless the database name ends in `_bench`. Both stores use it before any write.
 - CLI: `npx tsx benchmarks/seed-bench.ts --titles 950000 --reviews 1000000 --users 100000 --replies 300000 [--reset]`. Connection strings come from `BENCH_DATABASE_URL` and `BENCH_MONGO_URI`, passed inline in the shell (no new config file).
 - Postgres is loaded with set-based SQL (`generate_series`), using `ON CONFLICT DO NOTHING` on `(userId, titleId)` so the unique rule holds. MongoDB is then streamed from the Postgres review ids with a cursor in batches of 5,000 (`insertMany`, `ordered: false`), so **the same ids exist in both stores**. Review text is sampled from the 13,490 real bodies in `data/processed/review_bodies.jsonl`, so document size matches reality. Ratings skew towards 4–5; review dates spread over 2015–2025; a small set of hot titles gets most reviews (Zipf-like) so top-N queries are meaningful.
@@ -117,13 +119,13 @@ Why a materialized view: a plain view would re-aggregate every review and re-ran
 
 **Interfaces:** each scenario exports `{ name, sql(): Promise<void>, mongo(): Promise<void>, app?(): Promise<void>, setup?(): Promise<void>, teardown?(): Promise<void> }`. `app` is the real two-store path, so the report can show what the cross-store design costs. `run.ts` takes `--runs 200 --warmup 20 --scenario <name>`, calls `assertBenchDatabase`, prints median, p95 and max in ms, and writes `benchmarks/results/<date>.md` and `.csv` including data sizes, node version and pool sizes.
 
-| Scenario | SQL side | Mongo side | Fairness note |
-|---|---|---|---|
-| reviews-for-title | page of 20 reviews with rating and text from throwaway `bench_review_text` | same page from `reviewbodies`, index `titleId_1_createdAt_-1` | `app` = Review header query then Mongo `$in` |
-| top-n-trending | `trending_titles` top 50 per type (computes over 1M reviews) | read of `trendingcards` (precomputed) | Not equal work by design. Report it as "compute on read vs precomputed", and add the refresh job's duration as the amortised price. |
-| insert-review | insert into `bench_review_text` | `insertOne` in `reviewbodies` | `app` = PG header plus Mongo body. Unique id prefix; rows deleted in `teardown`. |
-| replies-of-review | throwaway `bench_reply` | flat `replies` find sorted by `createdAt` | Needs the replies seeded in Task 12a. |
-| filtered-browse | `Title` filter by type, genre, sort | throwaway `bench_titles` collection with genres embedded and indexed | Copy made in `setup`, dropped in `teardown`. This answers "would Mongo have been better for browse?" |
+| Scenario          | SQL side                                                                   | Mongo side                                                           | Fairness note                                                                                                                       |
+| ----------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| reviews-for-title | page of 20 reviews with rating and text from throwaway `bench_review_text` | same page from `reviewbodies`, index `titleId_1_createdAt_-1`        | `app` = Review header query then Mongo `$in`                                                                                        |
+| top-n-trending    | `trending_titles` top 50 per type (computes over 1M reviews)               | read of `trendingcards` (precomputed)                                | Not equal work by design. Report it as "compute on read vs precomputed", and add the refresh job's duration as the amortised price. |
+| insert-review     | insert into `bench_review_text`                                            | `insertOne` in `reviewbodies`                                        | `app` = PG header plus Mongo body. Unique id prefix; rows deleted in `teardown`.                                                    |
+| replies-of-review | throwaway `bench_reply`                                                    | flat `replies` find sorted by `createdAt`                            | Needs the replies seeded in Task 12a.                                                                                               |
+| filtered-browse   | `Title` filter by type, genre, sort                                        | throwaway `bench_titles` collection with genres embedded and indexed | Copy made in `setup`, dropped in `teardown`. This answers "would Mongo have been better for browse?"                                |
 
 - [ ] **Step 1:** Fairness rules in `benchmarks/README.md`: same logical rows, same page size, warm-up discarded, pool size stated. A cold-cache run (restart both containers, then one pass) is reported separately and skipped if time is short.
 - [ ] **Step 2:** Implement `run.ts` and the scenarios. Throwaway objects (`bench_*`) live only in the bench databases and `teardown` drops them.
@@ -170,14 +172,14 @@ Why a materialized view: a plain view would re-aggregate every review and re-ran
 
 ## Order and Dates
 
-| When | Tasks |
-|------|-------|
-| 4 Nov | Task 1 (after yes); Task 10 |
-| 5–6 Nov | Task 12a (full load runs in the background); start Task 16 drafts |
-| 7–10 Nov | Task 11 |
-| 10–15 Nov | Task 12 |
-| 15–19 Nov | Task 13, Task 14, Task 15 |
-| 19–24 Nov | Finish Task 16; report sections written by their authors |
+| When      | Tasks                                                                         |
+| --------- | ----------------------------------------------------------------------------- |
+| 4 Nov     | Task 1 (after yes); Task 10                                                   |
+| 5–6 Nov   | Task 12a (full load runs in the background); start Task 16 drafts             |
+| 7–10 Nov  | Task 11                                                                       |
+| 10–15 Nov | Task 12                                                                       |
+| 15–19 Nov | Task 13, Task 14, Task 15                                                     |
+| 19–24 Nov | Finish Task 16; report sections written by their authors                      |
 | 24–28 Nov | Code freeze; video, final report, zip, peer review. 28 Nov is the buffer day. |
 
 Dependencies: 12a → 11 → 12 (12 can start before the last index lands but must be re-run after it). Task 10 is independent. Task 13 needs Task 10's view for its rank test.

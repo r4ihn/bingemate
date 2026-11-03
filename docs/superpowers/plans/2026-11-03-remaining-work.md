@@ -36,13 +36,13 @@
 
 ## Decisions (all made by WH, 2026-11-03)
 
-| # | Decision | Outcome |
-|---|----------|---------|
-| D1 | Does changing the image of an APPROVED title send it back to PENDING? | **Yes**, same as editing the name. Closes the moderation bypass (Task 3). |
-| D2 | When does the trending refresh run? | **A timer in `server.ts`** (default 10 min, `TRENDING_REFRESH_MINUTES`, `0` turns it off) plus the existing CLI (Task 7). |
-| D3 | Does the `{rating}` Mongo index stay on the task list? | **Dropped**: ratings live in PostgreSQL. Documentation change only (Task 14). |
-| D4 | Keep the imported review extras (review year, publication name, summary, helpfulness)? | **Removed** from the ETL, the model and the stored data (Task 2b). A review is a star rating and text, all the way down. |
-| D5 | Window for "recent" trending on dev data | **Query param `days`, default 1460**, so the 2022–2025 import shows up. Real activity dominates once it exists (Task 9). |
+| #   | Decision                                                                               | Outcome                                                                                                                   |
+| --- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| D1  | Does changing the image of an APPROVED title send it back to PENDING?                  | **Yes**, same as editing the name. Closes the moderation bypass (Task 3).                                                 |
+| D2  | When does the trending refresh run?                                                    | **A timer in `server.ts`** (default 10 min, `TRENDING_REFRESH_MINUTES`, `0` turns it off) plus the existing CLI (Task 7). |
+| D3  | Does the `{rating}` Mongo index stay on the task list?                                 | **Dropped**: ratings live in PostgreSQL. Documentation change only (Task 14).                                             |
+| D4  | Keep the imported review extras (review year, publication name, summary, helpfulness)? | **Removed** from the ETL, the model and the stored data (Task 2b). A review is a star rating and text, all the way down.  |
+| D5  | Window for "recent" trending on dev data                                               | **Query param `days`, default 1460**, so the 2022–2025 import shows up. Real activity dominates once it exists (Task 9).  |
 
 Work from here is committed on a new branch `feat/remaining-work`, stacked on `feat/web-wire-writes`, so no pushed or shared branch is rewritten.
 
@@ -155,6 +155,7 @@ Work from here is committed on a new branch `feat/remaining-work`, stacked on `f
 **Files:** Create `apps/api/src/modules/reviewStats/*`; modify `apps/api/src/routes.ts`; Test `apps/api/tests/integration/reviewStats.test.ts`; Docs `docs/api.md`.
 
 **Interfaces:**
+
 - `GET /api/titles/:titleId/review-activity?months=12` → `{ data: { month: 'YYYY-MM', reviews: number, avgBodyLength: number }[] }`. Pipeline: `$match {titleId}` → `$group` by `$dateToString` month with `$sum` and `$avg: {$strLenCP: '$body'}` → `$sort` ascending. Only for APPROVED titles (checked in PostgreSQL first, 404 otherwise). Gaps in the months are filled with zeros in the service.
 - `GET /api/reviews/top-reviewers?type=&limit=10` → `{ data: { userId, name, reviews, replies }[] }`. Pipeline: `$match {mediaType}` → `$group` by `userId` → `$sort`/`$limit` → `$lookup` from `replies` on `userId` counting replies → names fetched from PostgreSQL in one `findMany`. Admin and deleted users excluded; `limit` max 50.
 - Exports `recentReviewCounts(days: number): Promise<Map<string, number>>` (`$match {createdAt: {$gte}}` → `$group` by `titleId`), used by Task 9.
@@ -251,13 +252,13 @@ Work from here is committed on a new branch `feat/remaining-work`, stacked on `f
 
 ## Order and Dates
 
-| When | Tasks |
-|------|-------|
-| 3–5 Nov | 1, 2, 3, 4, 5 |
-| 5–9 Nov | 6, 7, 8 |
-| 9–14 Nov | 9, 10, 11, 12 (12 starts the full-set load early; it runs overnight) |
-| 12–18 Nov | 13, 14, 15 |
-| 6–24 Nov | 16 (drafts alongside) |
+| When      | Tasks                                                                           |
+| --------- | ------------------------------------------------------------------------------- |
+| 3–5 Nov   | 1, 2, 3, 4, 5                                                                   |
+| 5–9 Nov   | 6, 7, 8                                                                         |
+| 9–14 Nov  | 9, 10, 11, 12 (12 starts the full-set load early; it runs overnight)            |
+| 12–18 Nov | 13, 14, 15                                                                      |
+| 6–24 Nov  | 16 (drafts alongside)                                                           |
 | 24–28 Nov | Freeze code, record video, final report, zip, peer review. Buffer day on 28 Nov |
 
 Tasks 2–6 are independent and can go to Codex in sequence the same day. Tasks 8 → 9 are ordered (9 uses 8's helper). Task 12 needs Task 8 for the Mongo side and benefits from Task 11 first.
