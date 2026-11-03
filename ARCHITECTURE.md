@@ -23,36 +23,38 @@ bingemate/
 │   │   │   │   ├── validate.ts           # Zod request validation
 │   │   │   │   ├── rateLimit.ts
 │   │   │   │   └── errorHandler.ts
-│   │   │   ├── modules/                  # one folder per feature: routes → controller → service
+│   │   │   ├── modules/                  # feature routers → services; auth/roles/Zod applied here
 │   │   │   │   ├── auth/                 # RA: register, login, me, logout (bcrypt + JWT)
 │   │   │   │   │   ├── auth.routes.ts
-│   │   │   │   │   ├── auth.controller.ts
 │   │   │   │   │   ├── auth.service.ts
-│   │   │   │   │   └── auth.schema.ts
-│   │   │   │   ├── users/                # JW
+│   │   │   │   │   └── auth.schemas.ts
 │   │   │   │   ├── titles/               # JW (CRUD) + SJ (search/filter)
 │   │   │   │   ├── genres/
-│   │   │   │   ├── people/
 │   │   │   │   ├── lists/                # completed / in-progress / plan-to
 │   │   │   │   ├── reviews/              # HS: PG header row + Mongo body, one service writes both
-│   │   │   │   ├── comments/             # HS (MongoDB), consumers + creators, one reply level
+│   │   │   │   ├── replies/              # HS (MongoDB), flat replies under reviews
+│   │   │   │   ├── reviewStats/          # review activity + top reviewers
+│   │   │   │   ├── posters/              # image GET / PUT / DELETE
 │   │   │   │   ├── trending/             # SJ (SQL aggregates) + HS (trending cards)
 │   │   │   │   ├── creator/              # JW: own titles, submission status, stats
-│   │   │   │   └── admin/                # RA: role management, title approval queue, moderation
+│   │   │   │   └── admin/                # built: title approval; RA users/roles/moderation endpoints planned
 │   │   │   ├── mongo/
 │   │   │   │   └── models/
 │   │   │   │       ├── reviewBody.model.ts  # _id = PG reviews.id; one shape: text plus a mediaType copy
 │   │   │   │       ├── reply.model.ts
-│   │   │   │       └── trendingCard.model.ts
+│   │   │   │       ├── trendingCard.model.ts
+│   │   │   │       └── titlePoster.model.ts
 │   │   │   ├── jobs/
-│   │   │   │   └── refreshTrending.ts    # refresh cards, startup empty check + timer helpers
+│   │   │   │   ├── refreshTrending.ts    # cards + title ranks, CLI, startup check + configurable timer
+│   │   │   │   ├── scheduleTrending.ts   # immediate refresh + every-minute scheduler
+│   │   │   │   └── cleanupOrphans.ts     # standalone maintenance, outside runtime
 │   │   │   ├── utils/
 │   │   │   │   ├── jwt.ts                # sign/verify, 2h expiry
 │   │   │   │   ├── authCookie.ts         # set/clear httpOnly SameSite=Lax cookie
 │   │   │   │   ├── password.ts           # bcrypt hash/compare
 │   │   │   │   └── pagination.ts
 │   │   │   ├── routes.ts                 # mounts all module routers under /api
-│   │   │   ├── app.ts                    # Express app (no listen, so tests can import it)
+│   │   │   ├── app.ts                    # JSON/cookies/CORS → routes → final 404 + error handler
 │   │   │   └── server.ts                 # entry point: connect DBs, listen
 │   │   ├── tests/
 │   │   │   ├── unit/
@@ -123,7 +125,7 @@ bingemate/
 │
 ├── docs/
 │   ├── er-diagram.png
-│   ├── architecture.png
+│   ├── architecture.svg
 │   └── api.md                            # endpoint list + required role
 │
 ├── .github/workflows/ci.yml              # lint, typecheck, test
@@ -142,21 +144,32 @@ bingemate/
 | Store               | Holds                                                                                                                                                                                                                                                                                                                                                           |
 | ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | PostgreSQL (Prisma) | users (+ role, bcrypt hash), titles (+ status PENDING/APPROVED/REJECTED, created_by, rejection_reason), movie_details, tv_details, book_details (one optional row per title, type enforced by a composite foreign key), genres, people, title_genres, title_people, list_entries, reviews header (id, user_id, title_id, rating, timestamps), rating aggregates |
-| MongoDB (Mongoose)  | review bodies (`_id` = PG `reviews.id`: review text plus a `mediaType` copy), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                                                                                                    |
+| MongoDB (Mongoose)  | review bodies (`_id` = PG `Review.id`, `titleId`, `userId`, copied `mediaType`, `body` text, `createdAt`, `updatedAt`; one shape for all media types), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                                                                                                    |
 
-Cross-database link: a review's PostgreSQL row and its Mongo body share one id; comments store `reviewId` / `userId`. There are no FKs across the two stores, so the reviews service writes PostgreSQL first, then Mongo, and undoes the PostgreSQL row if the Mongo write fails. Deleting a title or review must also delete the Mongo body and comments.
+Cross-database link: PostgreSQL `Review.id` equals MongoDB `ReviewBody._id`; replies store `reviewId` / `userId`. Review creation first commits a PostgreSQL transaction that locks the Title row, inserts the Review header and recomputes `avgRating` / `reviewCount` from `title_rating_stats`. It then writes the Mongo body with the same id. If that fails, a compensating transaction locks the title, removes the header and recomputes the totals; compensation failures are logged. There is no cross-store transaction or foreign key. Deleting a title or review also attempts to remove its Mongo body and replies.
+
+[Architecture diagram](docs/architecture.svg): app-level middleware parses JSON and cookies and enables credentialed CORS; routers are followed by the final 404 and error handlers. `authenticate`, `optionalAuthenticate`, `authorize(role)` and Zod validation are attached to individual routes or feature routers as required, with no global authentication, validation or rate-limit pipeline. Only login/register and poster PUT/DELETE are rate limited. The React client sends the JWT in the httpOnly `token` cookie using `credentials: 'include'`.
+
+The `admin` module implements title listing and status changes. Separate admin user, role and review-moderation endpoints remain planned (RA); the existing review DELETE endpoint already allows an admin to remove a review. The four SQL views are `title_rating_stats`, `genre_filter_options`, `trending_titles` and `creator_title_stats`; the materialized view `title_rank_in_type` uses `RANK` and `PERCENT_RANK` per media type and is read for title-page ranking. ETL scripts, `cleanupOrphans`, `backfill-undated-dates`, benchmark seed/run/explain scripts and the isolated real-database test suite are tooling outside the runtime tiers.
 
 ## Trending refresh lifecycle
 
+`server.ts` also calls `startTrendingRefresh()` before listening: it runs immediately
+and every minute via `scheduleTrending.ts`, independently of the configurable timer below.
+The two schedulers each guard only their own pending run, so they can overlap.
+
 After the API starts listening, `server.ts` calls `refreshIfEmpty()` to populate an empty
 `TrendingCard` collection and starts `startTrendingTimer(env.TRENDING_REFRESH_MINUTES)`.
-The env value is an integer from 0 to 1440, default 10; 0 disables only the recurring timer.
+The env value is an integer from 0 to 1440, default 10; 0 disables only this configurable timer; the every-minute scheduler still runs.
 The first scheduled refresh runs after the first interval. The interval is unrefed, skips
 pending runs, logs failures and continues; SIGINT/SIGTERM clear it before process exit.
 Startup count/refresh failures are logged without preventing the API from serving.
 
 `refreshTrending()` upserts the top 50 per media type from PostgreSQL's `trending_titles`
 view before deleting stale cards, so the collection is never wiped before rebuilding.
+It then attempts `REFRESH MATERIALIZED VIEW CONCURRENTLY "title_rank_in_type"`;
+rank-refresh failures are logged without failing the card refresh. An empty SQL result
+returns early, keeping existing cards and skipping the rank refresh.
 Before writing, it calls MongoDB's `recentReviewCounts(1460)` once and stores `recentReviews`
 on every card (0 for absent counts). Aggregation failure leaves existing cards untouched.
 `GET /api/trending` sorts by score by default, or by `recentReviews`, score and titleId

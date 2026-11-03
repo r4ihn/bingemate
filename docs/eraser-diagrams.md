@@ -15,4 +15,5 @@ Notes
 - The relational and MongoDB files are "anyone with the link can edit". Treat the links as team-only.
 - Not drawn yet: the four SQL views (`title_rating_stats`, `genre_filter_options`, `trending_titles`, `creator_title_stats`).
 - Review body shape (2026-11-03): text plus a `mediaType` copy, with no imported extras or media-specific form fields. The MongoDB diagram needs to reflect this removal.
+- Not yet drawn in Eraser: the two new Title composite indexes (`mediaType, status, avgRating DESC, reviewCount DESC, id` and `mediaType, status, reviewCount DESC, id`), the materialized view `title_rank_in_type`, and the two new ReviewBody compound indexes (`titleId, userId` and `mediaType, titleId, userId`).
 - Eraser's AI edit ran out of free credits on 2026-10-27; edits were made by writing the DSL directly.
