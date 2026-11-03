@@ -88,6 +88,8 @@ const AUTHORS: Author[] = [
 function seedTitles(): StoredTitle[] {
   const base: StoredTitle[] = mockTitles.map((t) => ({
     ...t,
+    rankInType: null,
+    topPercent: null,
     synopsis: SYNOPSIS,
     countries: ['Usa', 'Canada'],
     studio: 'North Star Pictures',
@@ -104,6 +106,8 @@ function seedTitles(): StoredTitle[] {
       status: TitleStatus.APPROVED,
       avgRating: 3 + ((i * 7) % 35) / 20,
       reviewCount: 10 + i * 13,
+      rankInType: null,
+      topPercent: null,
       synopsis: SYNOPSIS,
       countries: ['Canada'],
       studio: 'Lantern Studio',
@@ -117,7 +121,9 @@ function seedTitles(): StoredTitle[] {
   };
   // The mock creator owns four titles in different states; one more pending title belongs to someone else
   // u-studio wrote the mock reply 'Thank you for watching!', so it gets the Creator badge there
-  patch('mock-1', { createdBy: 'u-studio' });
+  patch('mock-1', { createdBy: 'u-studio', rankInType: 3, topPercent: 1 });
+  patch('mock-2', { rankInType: 1, topPercent: 1 });
+  patch('mock-9', { rankInType: 12, topPercent: 25 });
   patch('mock-24', { createdBy: MOCK_USER });
   patch('mock-25', { createdBy: MOCK_USER, status: TitleStatus.PENDING });
   patch('mock-26', {

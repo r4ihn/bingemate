@@ -15,6 +15,8 @@ const summary: TitleSummary = {
 const detail: TitleDetailDTO = {
   ...summary,
   description: 'Spice.',
+  rankInType: 3,
+  topPercent: 1,
   details: null,
   releaseYear: 2021,
   genres: ['Sci-Fi'],
@@ -24,7 +26,7 @@ const detail: TitleDetailDTO = {
 describe('summaryToTitle', () => {
   it('gives an empty synopsis and no invented fields', () => {
     const t = summaryToTitle(summary);
-    expect(t).toEqual({ ...summary, synopsis: '' });
+    expect(t).toEqual({ ...summary, rankInType: null, topPercent: null, synopsis: '' });
     expect('year' in t).toBe(false);
     expect('hue' in t).toBe(false);
     expect('studio' in t).toBe(false);
@@ -42,6 +44,14 @@ describe('summaryToTitle', () => {
 
 describe('detailToTitle', () => {
   const withDetails = (details: TitleDetailDTO['details']) => detailToTitle({ ...detail, details });
+
+  it('carries rank and percent through the detail mapper', () => {
+    expect(detailToTitle(detail)).toMatchObject({ rankInType: 3, topPercent: 1 });
+    expect(detailToTitle({ ...detail, rankInType: null, topPercent: null })).toMatchObject({
+      rankInType: null,
+      topPercent: null,
+    });
+  });
 
   it('maps movie details to a runtime and rating', () => {
     const t = withDetails({
@@ -184,8 +194,10 @@ describe('mapSubmission', () => {
     });
   });
   it('maps a null description and reason to empty synopsis and undefined', () => {
-    expect(mapSubmission({ ...summary, description: null, rejectionReason: null, updatedAt })).toEqual({
-      title: { ...summary, synopsis: '', version: updatedAt },
+    expect(
+      mapSubmission({ ...summary, description: null, rejectionReason: null, updatedAt }),
+    ).toEqual({
+      title: { ...summary, rankInType: null, topPercent: null, synopsis: '', version: updatedAt },
       rejectionReason: undefined,
     });
   });

@@ -4,6 +4,8 @@ const { prisma, cards } = vi.hoisted(() => ({
   prisma: { $queryRaw: vi.fn(), title: { findMany: vi.fn() } },
   cards: { estimatedDocumentCount: vi.fn(), bulkWrite: vi.fn(), deleteMany: vi.fn() },
 }));
+const refreshTitleRanks = vi.fn();
+vi.mock('../../src/modules/titles/ranking.service.js', () => ({ refreshTitleRanks }));
 const recentReviewCounts = vi.fn();
 vi.mock('../../src/modules/reviewStats/reviewStats.service.js', () => ({ recentReviewCounts }));
 
@@ -15,6 +17,7 @@ const { refreshTrending, refreshIfEmpty, startTrendingTimer, TRENDING_WINDOW_DAY
 
 beforeEach(() => {
   vi.resetAllMocks();
+  refreshTitleRanks.mockResolvedValue(undefined);
   recentReviewCounts.mockResolvedValue(new Map());
   vi.useFakeTimers();
   prisma.$queryRaw.mockResolvedValue([]);
@@ -121,6 +124,7 @@ describe('refreshTrending empty view', () => {
   it('keeps existing cards without writes or deletion and warns', async () => {
     await expect(refreshTrending()).resolves.toEqual({ upserted: 0, removed: 0 });
 
+    expect(refreshTitleRanks).not.toHaveBeenCalled();
     expect(recentReviewCounts).not.toHaveBeenCalled();
     expect(cards.bulkWrite).not.toHaveBeenCalled();
     expect(cards.deleteMany).not.toHaveBeenCalled();
@@ -216,6 +220,21 @@ describe('refreshTrending recent reviews', () => {
     );
   });
 
+  it('refreshes title ranks after successful card writes', async () => {
+    await refreshTrending();
+    expect(refreshTitleRanks).toHaveBeenCalledExactlyOnceWith();
+    expect(cards.bulkWrite.mock.invocationCallOrder[0]).toBeLessThan(
+      refreshTitleRanks.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('logs a failed rank refresh and resolves with the normal card result', async () => {
+    const error = new Error('Rank refresh failed');
+    refreshTitleRanks.mockRejectedValue(error);
+    await expect(refreshTrending()).resolves.toEqual({ upserted: 2, removed: 1 });
+    expect(console.error).toHaveBeenCalledWith('Title rank refresh failed:', error);
+  });
+
   it('writes numeric zero on every card when the window contains no reviews', async () => {
     await refreshTrending();
 
@@ -244,5 +263,6 @@ describe('refreshTrending recent reviews', () => {
     await expect(refreshTrending()).rejects.toBe(error);
 
     expect(cards.deleteMany).not.toHaveBeenCalled();
+    expect(refreshTitleRanks).not.toHaveBeenCalled();
   });
 });

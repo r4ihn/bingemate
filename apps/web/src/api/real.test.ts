@@ -225,7 +225,15 @@ describe('listsApi (real)', () => {
 describe('titlesApi (real)', () => {
   it('get calls GET /titles/:id with cookies and maps the detail', async () => {
     fetchMock.mockReturnValue(
-      json({ ...summary, description: null, releaseYear: 2021, genres: [], people: [] }),
+      json({
+        ...summary,
+        rankInType: null,
+        topPercent: null,
+        description: null,
+        releaseYear: 2021,
+        genres: [],
+        people: [],
+      }),
     );
     const t = await titlesApi.get('t1');
     const { url, init } = lastCall();
@@ -236,7 +244,9 @@ describe('titlesApi (real)', () => {
   });
 
   it('get encodes the id into the path', async () => {
-    fetchMock.mockReturnValue(json({ ...summary, description: 'x', releaseYear: null }));
+    fetchMock.mockReturnValue(
+      json({ ...summary, rankInType: null, topPercent: null, description: 'x', releaseYear: null }),
+    );
     await titlesApi.get('a/b c');
     expect(lastCall().url).toBe('/api/titles/a%2Fb%20c');
   });
@@ -262,7 +272,7 @@ describe('titlesApi (real)', () => {
     expect(url).toBe('/api/titles?q=dune&type=MOVIE&page=2&pageSize=10');
     expect(init.credentials).toBe('include');
     expect(res.total).toBe(31);
-    expect(res.items).toEqual([{ ...summary, synopsis: '' }]);
+    expect(res.items).toEqual([{ ...summary, rankInType: null, topPercent: null, synopsis: '' }]);
   });
 
   it('search skips empty q and missing type, using the defaults for paging', async () => {
@@ -650,11 +660,24 @@ describe('creatorApi submissions (real)', () => {
     );
     expect(await creatorApi.submissions()).toEqual([
       {
-        title: { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.' },
+        title: {
+          ...summary,
+          rankInType: null,
+          topPercent: null,
+          status: TitleStatus.PENDING,
+          synopsis: 'Sand.',
+        },
         rejectionReason: undefined,
       },
       {
-        title: { ...summary, id: 't2', status: TitleStatus.REJECTED, synopsis: '' },
+        title: {
+          ...summary,
+          rankInType: null,
+          topPercent: null,
+          id: 't2',
+          status: TitleStatus.REJECTED,
+          synopsis: '',
+        },
         rejectionReason: 'Fix it',
       },
     ]);
@@ -823,8 +846,23 @@ describe('adminApi title queue (real)', () => {
       }),
     );
     expect(await adminApi.pendingTitles()).toEqual([
-      { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.', version: dto.updatedAt },
-      { ...summary, id: 't2', status: TitleStatus.PENDING, synopsis: '', version: dto.updatedAt },
+      {
+        ...summary,
+        rankInType: null,
+        topPercent: null,
+        status: TitleStatus.PENDING,
+        synopsis: 'Sand.',
+        version: dto.updatedAt,
+      },
+      {
+        ...summary,
+        rankInType: null,
+        topPercent: null,
+        id: 't2',
+        status: TitleStatus.PENDING,
+        synopsis: '',
+        version: dto.updatedAt,
+      },
     ]);
     expect(lastCall().url).toBe('/api/admin/titles?status=PENDING&pageSize=50');
     expect(lastCall().init.method).toBeUndefined();

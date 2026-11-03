@@ -2,6 +2,7 @@ import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { refreshTitleRanks } from '../modules/titles/ranking.service.js';
 import { recentReviewCounts } from '../modules/reviewStats/reviewStats.service.js';
 import { TrendingCard } from '../mongo/models/trendingCard.model.js';
 
@@ -80,6 +81,11 @@ export async function refreshTrending(): Promise<RefreshResult> {
   }
 
   const stale = await TrendingCard.deleteMany({ titleId: { $nin: ids } });
+  try {
+    await refreshTitleRanks();
+  } catch (err) {
+    console.error('Title rank refresh failed:', err);
+  }
   return { upserted: rows.length, removed: stale.deletedCount };
 }
 

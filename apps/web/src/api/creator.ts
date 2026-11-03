@@ -82,6 +82,8 @@ export const creatorApi = {
       status: TitleStatus.PENDING,
       avgRating: 0,
       reviewCount: 0,
+      rankInType: null,
+      topPercent: null,
       synopsis: input.synopsis,
       posterUrl,
       countries: [],

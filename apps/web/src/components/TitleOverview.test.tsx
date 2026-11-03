@@ -12,6 +12,8 @@ const title: TitleDetail = {
   avgRating: 4,
   reviewCount: 2,
   synopsis: 'Spice.',
+  rankInType: null,
+  topPercent: null,
 };
 
 describe('TitleOverview facts', () => {

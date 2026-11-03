@@ -255,3 +255,24 @@ describe('TitleDetail layout', () => {
     );
   });
 });
+
+describe('TitleDetail ranking', () => {
+  it('shows the rank and top percent with a plural media label', async () => {
+    Object.assign(
+      db.titles.find((t) => t.id === 'mock-1')!,
+      { rankInType: 3, topPercent: 1 },
+    );
+    renderTitle('mock-1');
+    expect(await screen.findByText('#3 in Movies · top 1%')).toBeInTheDocument();
+  });
+
+  it('renders no rank line when the title is not ranked', async () => {
+    Object.assign(
+      db.titles.find((t) => t.id === 'mock-1')!,
+      { rankInType: null, topPercent: null },
+    );
+    renderTitle('mock-1');
+    await screen.findByRole('heading', { level: 1, name: 'Last Light' });
+    expect(screen.queryByText(/#\d+ in .* · top/)).not.toBeInTheDocument();
+  });
+});

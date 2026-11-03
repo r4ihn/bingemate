@@ -76,6 +76,8 @@ export type TitleDetailsDTO =
 
 /** One title with the fields only the detail page needs. */
 export interface TitleDetailDTO extends TitleSummary {
+  rankInType: number | null;
+  topPercent: number | null;
   description: string | null;
   releaseYear: number | null;
   genres: string[];

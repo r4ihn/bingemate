@@ -34,6 +34,8 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
     avgRating: s.avgRating,
     reviewCount: s.reviewCount,
     synopsis: '',
+    rankInType: null,
+    topPercent: null,
     ...(s.posterUrl !== undefined && { posterUrl: resolvePosterUrl(s.posterUrl) }),
     ...(s.createdById !== undefined && { createdById: s.createdById }),
   };
@@ -71,6 +73,8 @@ function mapDetails(d: TitleDetailsDTO | null) {
 export function detailToTitle(d: TitleDetailDTO): TitleDetail {
   return {
     ...summaryToTitle(d),
+    rankInType: d.rankInType,
+    topPercent: d.topPercent,
     synopsis: d.description ?? '',
     ...(d.releaseYear != null && { year: d.releaseYear }),
     ...mapDetails(d.details),
