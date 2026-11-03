@@ -229,20 +229,26 @@ describe('POST /api/titles/:titleId/reviews', () => {
     });
   });
 
-  it.each(['MOVIE', 'BOOK', 'TV_SHOW'])('saves the same stars-and-text body for %s', async (type) => {
-    prisma.title.findFirst.mockResolvedValue({ mediaType: type, createdById: null });
-    reReadSucceeds();
+  it.each(['MOVIE', 'BOOK', 'TV_SHOW'])(
+    'saves the same stars-and-text body for %s',
+    async (type) => {
+      prisma.title.findFirst.mockResolvedValue({ mediaType: type, createdById: null });
+      reReadSucceeds();
 
-    await post({ rating: 3, body: 'x' });
+      await post({ rating: 3, body: 'x' });
 
-    expect(mongo.create.mock.calls[0]?.[0]).toEqual({
-      _id: 'r1',
-      titleId: 't1',
-      userId: 'u1',
-      mediaType: type,
-      body: 'x',
-    });
-  });
+      expect(mongo.create).toHaveBeenCalledOnce();
+      const writtenBody = mongo.create.mock.calls[0]?.[0];
+      expect(writtenBody).not.toHaveProperty('details');
+      expect(writtenBody).toEqual({
+        _id: 'r1',
+        titleId: 't1',
+        userId: 'u1',
+        mediaType: type,
+        body: 'x',
+      });
+    },
+  );
 
   it('takes the header row back out when the body cannot be saved', async () => {
     mongo.create.mockRejectedValue(new Error('mongo is down'));
@@ -295,7 +301,7 @@ describe('GET /api/titles/:titleId/reviews', () => {
       // no username yet: a short name from the id, never the email
       author: { name: 'user-u2', role: 'CREATOR' },
     });
-    // the dataset's extras stay in MongoDB, and a review is only stars and text
+    // Legacy stored extras are never exposed; a review is only stars and text.
     expect(res.body.data[0]).not.toHaveProperty('details');
     expect(res.body.data[0]).not.toHaveProperty('fields');
   });
