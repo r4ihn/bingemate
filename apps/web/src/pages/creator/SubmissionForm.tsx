@@ -201,6 +201,9 @@ function Form({
           </Field>
           <p id={helpId} className="text-xs text-muted">
             JPEG, PNG or WebP. It is shrunk to fit before it is uploaded.
+            {editing && (
+              <span className="block">Changing the image sends this title back for approval</span>
+            )}
           </p>
           {preparing && (
             <p role="status" className="text-sm text-muted">

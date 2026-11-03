@@ -115,6 +115,24 @@ describe('SubmissionForm (new)', () => {
 });
 
 describe('SubmissionForm (poster image)', () => {
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'explains image re-approval when editing %s',
+    async (id) => {
+      renderCreator(`/creator/${id}/edit`);
+      const picker = await screen.findByLabelText('Poster image (optional)');
+      expect(picker).toHaveAccessibleDescription(
+        /Changing the image sends this title back for approval/,
+      );
+    },
+  );
+
+  it('does not show the image re-approval hint for a new title', () => {
+    renderCreator('/creator/new');
+    expect(
+      screen.queryByText('Changing the image sends this title back for approval'),
+    ).not.toBeInTheDocument();
+  });
+
   const fillTitle = async (user: ReturnType<typeof userEvent.setup>) =>
     user.type(screen.getByLabelText('Title'), 'Night Train');
 
