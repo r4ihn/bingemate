@@ -3,7 +3,8 @@ import { Role } from '@bingemate/shared';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import { validate } from '../../middleware/validate.js';
-import { route, userOf } from '../../utils/asyncRoute.js';
+import { userOf } from '../../utils/asyncRoute.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import { createSubmissionSchema, updateSubmissionSchema } from './submissions.schema.js';
 import { createSubmission, deleteTitle, updateSubmission } from './submissions.service.js';
 import { idParamSchema } from './titles.schema.js';
@@ -16,7 +17,7 @@ submissionsRouter.post(
   authenticate,
   authorize(Role.CREATOR),
   validate(createSubmissionSchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.status(201).json(await createSubmission(userOf(req), req.body));
   }),
 );
@@ -27,7 +28,7 @@ submissionsRouter.patch(
   authorize(Role.CREATOR),
   validate(idParamSchema, 'params'),
   validate(updateSubmissionSchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await updateSubmission(userOf(req), req.params['id'] as string, req.body));
   }),
 );
@@ -36,7 +37,7 @@ submissionsRouter.delete(
   '/:id',
   authenticate,
   validate(idParamSchema, 'params'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     await deleteTitle(userOf(req), req.params['id'] as string);
     res.status(204).end();
   }),

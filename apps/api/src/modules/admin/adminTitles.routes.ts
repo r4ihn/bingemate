@@ -3,7 +3,7 @@ import { Role } from '@bingemate/shared';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import { validate } from '../../middleware/validate.js';
-import { route } from '../../utils/asyncRoute.js';
+import { asyncHandler } from '../../utils/asyncHandler.js';
 import { idParamSchema } from '../titles/titles.schema.js';
 import { adminTitlesQuerySchema, setTitleStatusSchema } from './adminTitles.schema.js';
 import type { AdminTitlesQuery } from './adminTitles.schema.js';
@@ -16,7 +16,7 @@ adminTitlesRouter.use(authenticate, authorize(Role.ADMIN));
 adminTitlesRouter.get(
   '/',
   validate(adminTitlesQuerySchema, 'query'),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await listTitlesForReview(req.query as unknown as AdminTitlesQuery));
   }),
 );
@@ -25,7 +25,7 @@ adminTitlesRouter.patch(
   '/:id/status',
   validate(idParamSchema, 'params'),
   validate(setTitleStatusSchema),
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(
       await setTitleStatus(
         req.params['id'] as string,

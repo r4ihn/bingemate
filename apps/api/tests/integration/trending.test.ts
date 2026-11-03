@@ -196,7 +196,7 @@ describe('GET /api/trending', () => {
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ data: [] });
     expect(trendingCard.find).toHaveBeenCalledTimes(1);
-    expect(chain.limit).toHaveBeenCalledWith(1);
+    expect(chain.limit).toHaveBeenCalledWith(150);
   });
 
   it('keeps score order after filtering unapproved titles', async () => {

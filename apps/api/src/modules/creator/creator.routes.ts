@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { Role } from '@bingemate/shared';
 import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
-import { route, userOf } from '../../utils/asyncRoute.js';
+import { userOf } from '../../utils/asyncRoute.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
 import { listOwnSubmissions } from '../titles/submissions.service.js';
 import { statsForCreator } from './creator.service.js';
@@ -13,7 +13,7 @@ creatorRouter.use(authenticate, authorize(Role.CREATOR));
 
 creatorRouter.get(
   '/titles',
-  route(async (req, res) => {
+  asyncHandler(async (req, res) => {
     res.json(await listOwnSubmissions(userOf(req)));
   }),
 );
