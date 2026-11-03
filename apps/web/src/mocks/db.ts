@@ -88,6 +88,7 @@ const AUTHORS: Author[] = [
 function seedTitles(): StoredTitle[] {
   const base: StoredTitle[] = mockTitles.map((t) => ({
     ...t,
+    genres: ['Drama', 'Thriller'],
     rankInType: null,
     topPercent: null,
     synopsis: SYNOPSIS,
@@ -100,6 +101,7 @@ function seedTitles(): StoredTitle[] {
     return {
       id: `mock-${i + 8}`,
       name,
+      genres: mediaType === MediaType.BOOK ? ['Fiction'] : ['Drama'],
       year: 2005 + i,
       hue: (i * 47) % 360,
       mediaType,

@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
@@ -45,4 +46,31 @@ describe('every page has exactly one h1', () => {
     );
     await waitFor(() => expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1));
   });
+});
+
+it('Browse discovery selects have visible labels and work from the keyboard', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<Browse />, { route: '/browse?type=MOVIE' });
+  await screen.findByRole('option', { name: 'Drama' });
+  const genre = screen.getByRole('combobox', { name: 'Genre' });
+  const sort = screen.getByRole('combobox', { name: 'Sort' });
+  expect(document.querySelector(`label[for="${genre.id}"]`)).toHaveTextContent('Genre');
+  expect(document.querySelector(`label[for="${sort.id}"]`)).toHaveTextContent('Sort');
+  genre.focus();
+  await user.tab();
+  expect(sort).toHaveFocus();
+  await user.selectOptions(sort, 'rating');
+  expect(sort).toHaveValue('rating');
+});
+
+it('Home trending strip retains named keyboard-focusable title links', async () => {
+  renderWithProviders(<Home />);
+  await screen.findByRole('heading', { level: 1 });
+  const strip = document.getElementById('strip')!;
+  const links = within(strip).getAllByRole('link');
+  expect(links).toHaveLength(7);
+  for (const link of links) {
+    expect(link).toHaveAccessibleName();
+    expect(link.tabIndex).toBe(0);
+  }
 });

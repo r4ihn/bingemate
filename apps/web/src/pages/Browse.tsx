@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MediaType } from '@bingemate/shared';
-import { titlesApi } from '../api/titles.js';
+import { genresApi } from '../api/genres.js';
+import { inputClass } from '../components/ui/inputClass.js';
+import { TITLE_SORTS, type TitleSort, titlesApi } from '../api/titles.js';
 import { FilterPill } from '../components/FilterPill.js';
 import { Pagination } from '../components/Pagination.js';
 import { PosterCard } from '../components/PosterCard.js';
@@ -14,18 +16,27 @@ const PAGE_SIZE = 15;
 const isMediaType = (v: string | null): v is MediaType =>
   v !== null && (Object.values(MediaType) as string[]).includes(v);
 
-/** The URL is the state (?q, ?type, ?page), so back, refresh and shared links all work. */
+/** The URL is the state (?q, ?type, ?genre, ?sort, ?page), so back, refresh and shared links all work. */
 export function Browse() {
   const [params, setParams] = useSearchParams();
   const q = (params.get('q') ?? '').trim();
   const typeParam = params.get('type');
   const type = isMediaType(typeParam) ? typeParam : undefined;
+  const genre = params.get('genre') || undefined;
+  const sortParam = params.get('sort');
+  const sort = TITLE_SORTS.find((value) => value === sortParam);
+  const genres = useAsync(async () => ({ type, options: await genresApi.list(type) }), [type]);
+  const genreOptions =
+    genres.state.status === 'ready' && genres.state.data.type === type
+      ? genres.state.data.options
+      : [];
+  const genresReady = genres.state.status === 'ready' && genres.state.data.type === type;
   const pageParam = Number(params.get('page'));
   const page = Number.isInteger(pageParam) && pageParam >= 1 ? pageParam : 1;
 
   const { state, reload, refreshing } = useAsync(
-    () => titlesApi.search({ q, type, page, pageSize: PAGE_SIZE }),
-    [q, type, page],
+    () => titlesApi.search({ q, type, genre, sort, page, pageSize: PAGE_SIZE }),
+    [q, type, genre, sort, page],
     { keepPrevious: true }, // keeps focus on the Pagination button while the next page loads
   );
 
@@ -38,11 +49,33 @@ export function Browse() {
     }
   }, [outOfRange]);
 
-  function update(next: { type?: MediaType | undefined; page?: number }, replace = false) {
+  useEffect(() => {
+    if (
+      genresReady &&
+      genre &&
+      !genreOptions.some((option) => option.name.toLowerCase() === genre.toLowerCase())
+    ) {
+      update({ genre: undefined }, true);
+    }
+  }, [genresReady, genres.state, genre]);
+
+  function update(
+    next: {
+      type?: MediaType | undefined;
+      genre?: string | undefined;
+      sort?: TitleSort | undefined;
+      page?: number;
+    },
+    replace = false,
+  ) {
     const p = new URLSearchParams();
     if (q) p.set('q', q);
     const t = 'type' in next ? next.type : type;
     if (t) p.set('type', t);
+    const g = 'genre' in next ? next.genre : genre;
+    if (g) p.set('genre', g);
+    const s = 'sort' in next ? next.sort : sort;
+    if (s) p.set('sort', s);
     if (next.page && next.page > 1) p.set('page', String(next.page));
     setParams(p, { replace });
   }
@@ -71,6 +104,53 @@ export function Browse() {
           </FilterPill>
         ))}
       </nav>
+
+      <div className="mt-6 grid min-w-0 gap-4 sm:grid-cols-2 lg:max-w-xl">
+        <div className="grid min-w-0 gap-2">
+          <label htmlFor="browse-genre" className="text-sm text-muted">
+            Genre
+          </label>
+          <select
+            id="browse-genre"
+            className={`${inputClass} min-w-0 w-full`}
+            value={
+              genreOptions.find((option) => option.name.toLowerCase() === genre?.toLowerCase())
+                ?.name ?? ''
+            }
+            disabled={!genresReady}
+            onChange={(event) => update({ genre: event.target.value || undefined })}
+          >
+            <option value="">All genres</option>
+            {genreOptions.map((option) => (
+              <option key={option.id} value={option.name}>
+                {option.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="grid min-w-0 gap-2">
+          <label htmlFor="browse-sort" className="text-sm text-muted">
+            Sort
+          </label>
+          <select
+            id="browse-sort"
+            className={`${inputClass} min-w-0 w-full`}
+            value={sort ?? 'name'}
+            onChange={(event) =>
+              update({ sort: TITLE_SORTS.find((value) => value === event.target.value) })
+            }
+          >
+            <option value="name">Name</option>
+            <option value="rating">Top rated</option>
+            <option value="year">Newest</option>
+            <option value="reviews">Most reviewed</option>
+          </select>
+        </div>
+      </div>
+      {genres.state.status === 'loading' && <StateMessage kind="loading" title="Loading genres…" />}
+      {genres.state.status === 'error' && (
+        <StateMessage kind="error" detail="Genres could not be loaded." onRetry={genres.reload} />
+      )}
 
       <div className="mt-8">
         {state.status === 'loading' && <StateMessage kind="loading" />}

@@ -1,8 +1,11 @@
-import { describe, expect, it } from 'vitest';
-import { screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { renderWithProviders } from '../test/utils.js';
+import { genresApi } from '../api/genres.js';
+import { titlesApi } from '../api/titles.js';
+import { MediaType } from '@bingemate/shared';
 import { Browse } from './Browse.js';
 
 function Where() {
@@ -74,4 +77,119 @@ describe('Browse', () => {
     await u.click(await screen.findByRole('button', { name: 'Next' }));
     expect(screen.getByTestId('where')).toHaveTextContent('page=2');
   });
+});
+
+afterEach(() => vi.restoreAllMocks());
+
+describe('Browse discovery controls', () => {
+  function setup(route: string) {
+    const genres = vi
+      .spyOn(genresApi, 'list')
+      .mockImplementation(async (type) =>
+        type === MediaType.BOOK
+          ? [{ id: 'fantasy', name: 'Fantasy', titleCount: 4 }]
+          : [{ id: 'drama', name: 'Drama', titleCount: 7 }],
+      );
+    const search = vi.spyOn(titlesApi, 'search').mockResolvedValue({ items: [], total: 0 });
+    return { u: renderBrowse(route), genres, search };
+  }
+
+  it('loads genres for the selected type', async () => {
+    const { genres } = setup('/browse?type=BOOK');
+    expect(await screen.findByRole('option', { name: 'Fantasy' })).toBeInTheDocument();
+    expect(genres).toHaveBeenCalledWith(MediaType.BOOK);
+    expect(screen.getByRole('combobox', { name: 'Genre' })).toHaveValue('');
+  });
+
+  it('choosing a genre preserves filters, writes the URL and requests page 1', async () => {
+    const { u, search } = setup('/browse?q=light&type=MOVIE&page=3&sort=rating');
+    await screen.findByRole('option', { name: 'Drama' });
+    await u.selectOptions(screen.getByLabelText('Genre'), 'Drama');
+    await waitFor(() =>
+      expect(search).toHaveBeenLastCalledWith({
+        q: 'light',
+        type: MediaType.MOVIE,
+        genre: 'Drama',
+        sort: 'rating',
+        page: 1,
+        pageSize: 15,
+      }),
+    );
+    const params = new URLSearchParams(screen.getByTestId('where').textContent ?? '');
+    expect(params.get('genre')).toBe('Drama');
+    expect(params.has('page')).toBe(false);
+  });
+
+  it('clears a genre unavailable for the new type', async () => {
+    const { u, search } = setup('/browse?type=MOVIE&genre=Drama&page=3');
+    await screen.findByRole('option', { name: 'Drama' });
+    await u.click(screen.getByRole('button', { name: 'Books' }));
+    await screen.findByRole('option', { name: 'Fantasy' });
+    await waitFor(() => expect(screen.getByTestId('where')).not.toHaveTextContent('genre='));
+    expect(search).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: MediaType.BOOK, genre: undefined, page: 1 }),
+    );
+  });
+
+  it('sort updates the URL and requests page 1', async () => {
+    const { u, search } = setup('/browse?page=2');
+    await u.selectOptions(screen.getByLabelText('Sort'), 'reviews');
+    await waitFor(() =>
+      expect(search).toHaveBeenLastCalledWith(
+        expect.objectContaining({ sort: 'reviews', page: 1 }),
+      ),
+    );
+    expect(screen.getByTestId('where')).toHaveTextContent('sort=reviews');
+    expect(screen.getByTestId('where')).not.toHaveTextContent('page=');
+  });
+
+  it('ignores an unknown URL sort', async () => {
+    const { search } = setup('/browse?sort=bogus');
+    await waitFor(() =>
+      expect(search).toHaveBeenCalledWith(expect.objectContaining({ sort: undefined })),
+    );
+    expect(screen.getByLabelText('Sort')).toHaveValue('name');
+  });
+});
+
+it('keeps genre and sort while paginating', async () => {
+  vi.spyOn(genresApi, 'list').mockResolvedValue([{ id: 'drama', name: 'Drama', titleCount: 30 }]);
+  const original = await titlesApi.search({ pageSize: 15 });
+  const search = vi.spyOn(titlesApi, 'search').mockResolvedValue({ ...original, total: 30 });
+  const user = renderBrowse('/browse?genre=Drama&sort=year');
+  await user.click(await screen.findByRole('button', { name: 'Next' }));
+  await waitFor(() =>
+    expect(search).toHaveBeenLastCalledWith(
+      expect.objectContaining({ genre: 'Drama', sort: 'year', page: 2 }),
+    ),
+  );
+});
+
+it('keeps a genre that is offered for the new media type', async () => {
+  vi.spyOn(genresApi, 'list').mockResolvedValue([{ id: 'drama', name: 'Drama', titleCount: 8 }]);
+  const search = vi.spyOn(titlesApi, 'search').mockResolvedValue({ items: [], total: 0 });
+  const user = renderBrowse('/browse?type=MOVIE&genre=Drama&sort=rating');
+  await screen.findByRole('option', { name: 'Drama' });
+  await user.click(screen.getByRole('button', { name: 'TV' }));
+  await waitFor(() =>
+    expect(search).toHaveBeenLastCalledWith(
+      expect.objectContaining({ type: MediaType.TV_SHOW, genre: 'Drama', sort: 'rating', page: 1 }),
+    ),
+  );
+  expect(await screen.findByRole('combobox', { name: 'Genre' })).toHaveValue('Drama');
+});
+
+it('shows genre loading and retry states without hiding titles', async () => {
+  const list = vi
+    .spyOn(genresApi, 'list')
+    .mockRejectedValueOnce(new Error('offline'))
+    .mockResolvedValue([{ id: 'drama', name: 'Drama', titleCount: 8 }]);
+  const user = renderBrowse('/browse');
+  expect(screen.getByText('Loading genres…')).toBeInTheDocument();
+  expect(screen.getByLabelText('Genre')).toBeDisabled();
+  expect(await screen.findByText('Genres could not be loaded.')).toBeInTheDocument();
+  await user.click(screen.getByRole('button', { name: 'Retry' }));
+  await screen.findByRole('option', { name: 'Drama' });
+  expect(list).toHaveBeenCalledTimes(2);
+  expect(screen.getByLabelText('Genre')).toBeEnabled();
 });

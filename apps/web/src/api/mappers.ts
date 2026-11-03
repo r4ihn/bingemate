@@ -1,3 +1,4 @@
+import { TitleStatus } from '@bingemate/shared';
 import { resolvePosterUrl } from './posterUrl.js';
 import type {
   ReplyDTO,
@@ -6,6 +7,7 @@ import type {
   TitleDetailDTO,
   TitleDetailsDTO,
   TitleSummary,
+  TrendingCardDTO,
 } from '@bingemate/shared';
 import type { Submission } from '../types/creator.js';
 import type { ListItem } from '../types/list.js';
@@ -102,4 +104,17 @@ export function mapReply(r: ReplyDTO): Reply {
     createdAt: r.createdAt,
     ...(r.editedAt ? { editedAt: r.editedAt } : {}),
   };
+}
+
+/** Trending has no description or release year; retain only the card facts it supplies. */
+export function trendingToTitle(card: TrendingCardDTO): TitleDetail {
+  return summaryToTitle({
+    id: card.titleId,
+    name: card.name,
+    mediaType: card.mediaType,
+    status: TitleStatus.APPROVED,
+    avgRating: card.avgRating,
+    reviewCount: card.reviewCount,
+    ...(card.posterUrl !== undefined && { posterUrl: card.posterUrl }),
+  });
 }

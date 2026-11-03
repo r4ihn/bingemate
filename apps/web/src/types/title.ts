@@ -15,6 +15,7 @@ export interface TitleDetail extends TitleSummary {
   rated?: string;
   seasons?: string;
   publisher?: string;
+  genres?: string[];
   year?: number;
   hue?: number;
 }
