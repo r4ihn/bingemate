@@ -202,7 +202,7 @@ The list endpoints were merged in PR #10.
 
 ## 11. Final deliverables (ALL, Week 13)
 
-- [x] Signup username and role merge documentation and browser-script additions: migration `20261103140000_members_and_usernames`; test counts: see the PR. New browser steps await a run.
+- [x] Signup username and role merge documentation and browser-script additions: migration `20261103140000_members_and_usernames`; tests at this point: 690 API (stubbed), 543 web, 18 real-database; browser script 30 of 30 (`docs/manual-test-checklist.md`). New browser steps await a run.
 - [ ] Final report: each member writes up their own component
 - [~] Updated ER diagram + architecture diagram. `docs/architecture.svg` is redrawn from the code (per-route middleware, the cross-store review write, the trending refresh, the rank view, tooling) and `ARCHITECTURE.md` matches. The Eraser ER and MongoDB diagrams are still stale (no `title_rank_in_type`, the two new `Title` indexes, the two new `ReviewBody` indexes, or the new review body shape). `docs/eraser-diagrams.md` holds anyone-can-edit Eraser links, so decide whether to keep it in the repo _(WH)_
 - [~] User manual (the project spec asks for one with the submission): drafted in `docs/user-manual.md`, checked against the source. The creator, admin and reader flows were walked through in a real browser (`docs/manual-test-checklist.md`); the setup commands were not run from a fresh clone. Each member should read their part _(ALL)_
