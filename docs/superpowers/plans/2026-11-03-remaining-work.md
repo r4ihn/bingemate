@@ -175,10 +175,10 @@ Work from here is committed on a new branch `feat/remaining-work`, stacked on `f
 
 **Files:** Create `apps/api/prisma/migrations/<ts>_title_rank_view/migration.sql`; modify `apps/api/src/modules/titles/titles.{schema,routes,service}.ts` or a new `ranking` module; Test `apps/api/tests/integration/titles.test.ts`.
 
-**Interfaces:** view `title_rank_in_type(titleId, mediaType, trending_score, rank_in_type, pct_rank)` using `RANK() OVER (PARTITION BY "mediaType" ORDER BY trending_score DESC, id)` and `PERCENT_RANK() OVER (...)`. `GET /api/titles/:id` adds `rankInType: number | null` and `topPercent: number | null` (null for titles not in the view).
+**Interfaces:** a **materialized view** `title_rank_in_type(title_id, "mediaType", trending_score, rank_in_type, pct_rank)` over `trending_titles`, using `RANK() OVER (PARTITION BY "mediaType" ORDER BY trending_score DESC, id)` and `PERCENT_RANK() OVER (...)`, with a unique index on `title_id`. A plain view would re-aggregate every review and re-rank every title on each title-page request; the materialized view makes the page a single indexed lookup. `refreshTitleRanks()` runs `REFRESH MATERIALIZED VIEW CONCURRENTLY` and is called by the trending job after the cards are written, so ranks are at most one refresh interval (10 min) old. `GET /api/titles/:id` adds `rankInType: number | null` and `topPercent: number | null` (null for titles not in the view, such as titles with no reviews).
 
 - [ ] **Step 1:** Failing tests: detail response carries both fields; a title below the review threshold returns `null`; shared DTO and web `TitleDetail` type updated (web test shows "#3 in Movies" on the detail page).
-- [ ] **Step 2:** Write the migration (do not use `prisma migrate reset`); apply with `prisma migrate deploy` to the local database only. **Step 3:** `EXPLAIN ANALYZE` the lookup; if it re-ranks the whole table per request, read it from the Mongo `TrendingCard` instead or materialise it, and record the choice in the report notes.
+- [ ] **Step 2:** Write the migration (do not use `prisma migrate reset`); apply with `prisma migrate deploy` to the local database only. **Step 3:** `EXPLAIN ANALYZE` the single-title lookup (must be an index scan on `title_id`) and time the refresh on the dev set; record both for the report, with a note that the plain-view alternative was rejected because it re-ranks every title per request.
 - [ ] **Step 4:** Web: show the rank on the title page. **Step 5:** Commit.
 
 ### Task 11: `EXPLAIN ANALYZE` and indexes on every heavy query (SJ)
