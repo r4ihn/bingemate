@@ -6,21 +6,22 @@ const prisma = new PrismaClient();
 async function main() {
   const passwordHash = await bcrypt.hash('Password123!', 12);
 
+  // Demo identities intentionally bypass the signup reserved-name validator.
   const [admin, creator, consumer] = await Promise.all([
     prisma.user.upsert({
       where: { email: 'admin@bingemate.dev' },
-      update: {},
-      create: { email: 'admin@bingemate.dev', passwordHash, role: 'ADMIN' },
+      update: { username: 'BingeMate Admin', role: 'ADMIN' },
+      create: { email: 'admin@bingemate.dev', username: 'BingeMate Admin', passwordHash, role: 'ADMIN' },
     }),
     prisma.user.upsert({
       where: { email: 'creator@bingemate.dev' },
-      update: {},
-      create: { email: 'creator@bingemate.dev', passwordHash, role: 'CREATOR' },
+      update: { username: 'Demo Maker', role: 'MEMBER' },
+      create: { email: 'creator@bingemate.dev', username: 'Demo Maker', passwordHash, role: 'MEMBER' },
     }),
     prisma.user.upsert({
       where: { email: 'consumer@bingemate.dev' },
-      update: {},
-      create: { email: 'consumer@bingemate.dev', passwordHash, role: 'CONSUMER' },
+      update: { username: 'Demo Viewer', role: 'MEMBER' },
+      create: { email: 'consumer@bingemate.dev', username: 'Demo Viewer', passwordHash, role: 'MEMBER' },
     }),
   ]);
 

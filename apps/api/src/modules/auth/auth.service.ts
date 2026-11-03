@@ -3,6 +3,7 @@
 
 // import statements and dependencies
 import { Prisma } from '@prisma/client';
+import { normalizeUsername } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { hashPassword, comparePassword } from '../../utils/password.js';
 import { HttpError } from '../../middleware/errorHandler.js';
@@ -11,6 +12,11 @@ import { HttpError } from '../../middleware/errorHandler.js';
 // and response times don't reveal which emails are registered
 const dummyHash = hashPassword('not-a-real-password-1');
 
+function targetIncludes(target: unknown, field: string): boolean {
+    const targets = Array.isArray(target) ? target : [target];
+    return targets.some(value => typeof value === 'string' && value.toLowerCase().includes(field));
+}
+
 
 // register logic 
 export class authService {
@@ -18,7 +24,7 @@ export class authService {
     // METHODS HEREEEE
 
     // register method
-    static async register(email: string, password: string) {
+    static async register(email: string, password: string, username: string) {
         // Hash password using the function from utils/password.ts
         const hashedPassword = await hashPassword(password);
 
@@ -29,14 +35,24 @@ export class authService {
             const newUser = await prisma.user.create({
                 data: {
                     email: email,
+                    username: normalizeUsername(username),
                     // passwordHash comes from the database schema
                     passwordHash: hashedPassword
                 }
             });
-            return {id: newUser.id, email: newUser.email, role: newUser.role};
+            return {id: newUser.id, email: newUser.email, role: newUser.role, username: newUser.username ?? null};
         } catch (err) {
             if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
-                throw new HttpError(409,'Email already in use');
+                const target = err.meta?.target;
+                const isEmailConstraint = targetIncludes(target, 'email');
+                if (!isEmailConstraint && targetIncludes(target, 'username')) {
+                    throw new HttpError(409, 'Username already taken');
+                }
+                if (isEmailConstraint) {
+                    throw new HttpError(409, 'Email already in use');
+                }
+                // Unknown constraints must not be misreported as an email collision.
+                throw err;
             }
             throw err;
         }
@@ -56,7 +72,7 @@ export class authService {
         if (!user || !passwordMatch) {
             throw new HttpError(401,'Invalid email or password');
         }
-        return {id: user.id, email: user.email, role: user.role};
+        return {id: user.id, email: user.email, role: user.role, username: user.username ?? null};
     }
 
     // getUserById method, this is for making sure user is still logged in and can acces their own data
@@ -71,7 +87,7 @@ export class authService {
             throw new HttpError(401,'User not found');
         }
         // select only the stuff we want to return to client, no password tho!
-        return {id: user.id, email: user.email, role: user.role};
+        return {id: user.id, email: user.email, role: user.role, username: user.username ?? null};
 
     }
 }

@@ -90,7 +90,7 @@ describe('real cross-store reviews', () => {
   });
 
   it('creator self-review is forbidden without writing to either store', async () => {
-    const creator = await createUser('CREATOR');
+    const creator = await createUser('MEMBER');
     const title = await createTitle({ createdById: creator.id });
     const response = await request(app)
       .post(`/api/titles/${title.id}/reviews`)

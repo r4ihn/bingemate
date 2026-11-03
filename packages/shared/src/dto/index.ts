@@ -6,9 +6,11 @@ export interface AuthUser {
   id: string;
   email: string;
   role: Role;
+  username: string | null;
 }
 
 export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
 }

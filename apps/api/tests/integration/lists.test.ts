@@ -29,8 +29,8 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-const as = (id = 'u1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CONSUMER') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'u1', role: 'MEMBER' | 'ADMIN' = 'MEMBER') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const entry = (over: Record<string, unknown> = {}) => ({
@@ -288,7 +288,7 @@ describe('POST /api/me/lists', () => {
 
   it.each([
     ['an admin', as('a1', 'ADMIN')],
-    ['a creator', as('c1', 'CREATOR')],
+    ['a creator', as('c1', 'MEMBER')],
   ])('lets %s keep a list too', async (_who, cookie) => {
     expect((await post({ titleId: 't1', status: 'PLAN_TO' }, cookie)).status).toBe(201);
   });

@@ -87,8 +87,9 @@ loader's job.
 
 **Users**
 
-- `role_id` 1/2/3 -> `CONSUMER`/`CREATOR`/`ADMIN`. Usernames cleaned. Repeated usernames are kept: they
-  are reviewers' display names, not logins (10 repeats).
+- `role_id` 1/2/3 -> `MEMBER`/`MEMBER`/`ADMIN` (5,477 members, 1 admin). Usernames cleaned.
+- Usernames are unique ignoring case: keep the first in input order and append ` (2)`, ` (3)`, ...
+  to later collisions, probing suffixes until each name is unique, including occupied suffixed names.
 
 **Reviews (split across the two stores, TASKS.md section 0 option B)**
 
@@ -127,7 +128,8 @@ loader's job.
 | reviews (Postgres) / review_bodies (Mongo) | 13,490 / 13,490 |
 | user_lists                                 | 13,490          |
 
-`verify.ts`: 27 checks, 0 failed (unique keys, foreign keys, enum values, rating 1 to 5, one review
+`verify.ts` now checks case-insensitive username uniqueness and the two allowed user roles as well.
+Previous run: 27 checks, 0 failed (unique keys, foreign keys, enum values, rating 1 to 5, one review
 per user per title, Postgres and Mongo ids identical, no orphans). The outputs were also compared
 against the raw files with separate code: rating mapping 0 mismatches, no dropped duplicate newer
 than its survivor, title ids identical, no text left untrimmed.

@@ -48,8 +48,8 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-const as = (id = 'u1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CONSUMER') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'u1', role: 'MEMBER' | 'ADMIN' = 'MEMBER') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const reviewRow = (over: Record<string, unknown> = {}) => ({
@@ -58,7 +58,7 @@ const reviewRow = (over: Record<string, unknown> = {}) => ({
   userId: 'u1',
   rating: 4,
   createdAt: new Date('2026-10-01T10:00:00Z'),
-  user: { id: 'u1', username: 'maya_r', role: 'CONSUMER' },
+  user: { id: 'u1', username: 'maya_r', role: 'MEMBER' },
   ...over,
 });
 
@@ -223,7 +223,7 @@ describe('POST /api/titles/:titleId/reviews', () => {
     });
     expect(res.body).toMatchObject({
       id: 'r1',
-      author: { id: 'u1', name: 'maya_r', role: 'CONSUMER' },
+      author: { id: 'u1', name: 'maya_r', role: 'MEMBER' },
       rating: 4,
       body: 'Great.',
     });
@@ -276,7 +276,7 @@ describe('GET /api/titles/:titleId/reviews', () => {
   it('lists newest first with the id as tie-break, joined with the bodies', async () => {
     prisma.title.findFirst.mockResolvedValue({ id: 't1' });
     prisma.review.findMany.mockResolvedValue([
-      reviewRow({ id: 'r2', user: { id: 'u2', username: null, role: 'CREATOR' } }),
+      reviewRow({ id: 'r2', user: { id: 'u2', username: null, role: 'MEMBER' } }),
       reviewRow({ id: 'r1' }),
     ]);
     prisma.review.count.mockResolvedValue(12);
@@ -299,7 +299,7 @@ describe('GET /api/titles/:titleId/reviews', () => {
       id: 'r2',
       body: 'Second.',
       // no username yet: a short name from the id, never the email
-      author: { name: 'user-u2', role: 'CREATOR' },
+      author: { name: 'user-u2', role: 'MEMBER' },
     });
     // Legacy stored extras are never exposed; a review is only stars and text.
     expect(res.body.data[0]).not.toHaveProperty('details');

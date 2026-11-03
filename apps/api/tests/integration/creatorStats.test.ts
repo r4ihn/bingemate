@@ -14,8 +14,8 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'c1', role: 'MEMBER' | 'ADMIN' = 'MEMBER') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const row = (over: Record<string, unknown> = {}) => ({
@@ -49,7 +49,7 @@ describe('GET /api/creator/stats access', () => {
     expect(prisma.$queryRaw).not.toHaveBeenCalled();
   });
 
-  it.each(['CONSUMER', 'ADMIN'] as const)('refuses a %s with 403', async (role) => {
+  it.each(['ADMIN'] as const)('refuses a %s with 403', async (role) => {
     const res = await request(app).get('/api/creator/stats').set(as('u1', role));
 
     expect(res.status).toBe(403);
@@ -80,7 +80,7 @@ describe('GET /api/creator/stats', () => {
     expect(sentSql().text).toContain('ORDER BY "name" ASC, "title_id" ASC');
   });
 
-  it('answers an empty list for a creator with no titles', async () => {
+  it('allows a member with no titles to read creator stats', async () => {
     const res = await request(app).get('/api/creator/stats').set(as());
 
     expect(res.status).toBe(200);

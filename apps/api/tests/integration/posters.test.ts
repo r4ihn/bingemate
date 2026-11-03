@@ -18,8 +18,8 @@ const { signToken } = await import('../../src/utils/jwt.js');
 const { sniffImage } = await import('../../src/modules/posters/image.js');
 const app = createApp();
 
-const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'c1', role: 'MEMBER' | 'ADMIN' = 'MEMBER') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const STORED_VERSION = 1700000000001;
@@ -91,7 +91,7 @@ describe('PUT /api/titles/:titleId/poster', () => {
   });
 
   it.each([
-    ['a reader', as('c1', 'CONSUMER')],
+    ['a member who did not make the title', as('u1', 'MEMBER')],
     ['a creator who did not make the title', as('c2')],
   ])('refuses %s', async (_who, cookie) => {
     const res = await put(PNG, cookie);
@@ -107,10 +107,10 @@ describe('PUT /api/titles/:titleId/poster', () => {
     expect((await put(PNG, as('a1', 'ADMIN'))).status).toBe(200);
   });
 
-  it('does not let a user with someone else’s id in the title pass as its owner', async () => {
+  it('allows a member to change the image of their own title', async () => {
     prisma.title.findUnique.mockResolvedValue({ createdById: 'c1' });
 
-    expect((await put(PNG, as('c1', 'CONSUMER'))).status).toBe(403);
+    expect((await put(PNG, as('c1', 'MEMBER'))).status).toBe(200);
   });
 
   it('saves the image first, then points the title at it', async () => {
@@ -225,14 +225,14 @@ describe('GET /api/titles/:titleId/poster', () => {
     expect(poster.findById).not.toHaveBeenCalled();
   });
 
-  it.each([['c1', 'CREATOR'], ['a1', 'ADMIN']] as const)('allows a private preview for %s', async (id, role) => {
+  it.each([['c1', 'MEMBER'], ['a1', 'ADMIN']] as const)('allows a private preview for %s', async (id, role) => {
     prisma.title.findFirst.mockResolvedValue({ id: 't1', status: 'PENDING' });
     poster.findById.mockReturnValue({ lean: async () => ({ contentType: 'image/png', data: PNG, version: STORED_VERSION }) });
     const res = await request(app).get(`/api/titles/t1/poster?v=${STORED_VERSION}`).set(as(id, role));
     expect(res.status).toBe(200);
     expect(res.headers['cache-control']).toBe('private, no-store');
     const where = prisma.title.findFirst.mock.calls[0]?.[0].where;
-    if (role === 'CREATOR') expect(where.OR).toContainEqual({ createdById: id });
+    if (role === 'MEMBER') expect(where.OR).toContainEqual({ createdById: id });
     else expect(where).toEqual({ id: 't1' });
   });
 

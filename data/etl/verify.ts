@@ -124,10 +124,12 @@ export function main(): void {
     unique(users, (u) => u['user_id'] ?? '') && unique(users, (u) => u['email'] ?? ''),
   );
   check(
-    'exactly one ADMIN and one CREATOR in the dataset',
-    users.filter((u) => u['role'] === 'ADMIN').length === 1 &&
-      users.filter((u) => u['role'] === 'CREATOR').length === 1,
+    'exactly one ADMIN in the dataset',
+    users.filter((u) => u['role'] === 'ADMIN').length === 1,
   );
+
+  check('usernames unique ignoring case', unique(users, u => (u['username'] ?? '').toLowerCase()));
+  check('user roles are ADMIN or MEMBER', users.every(u => u['role'] === 'ADMIN' || u['role'] === 'MEMBER'));
 
   // Reviews: Postgres headers vs Mongo bodies
   check(

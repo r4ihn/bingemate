@@ -23,7 +23,7 @@ authRouter.get('/me', authenticate, asyncHandler(async (req, res) => {
 }));
 
 authRouter.post('/register', authLimiter, validate(registerSchema), asyncHandler(async (req, res) => {
-    const user = await authService.register(req.body.email, req.body.password);
+    const user = await authService.register(req.body.email, req.body.password, req.body.username);
     setAuthCookie(res, signToken(user));
     res.status(201).json(user);
 }));
