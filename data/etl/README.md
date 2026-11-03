@@ -134,6 +134,8 @@ than its survivor, title ids identical, no text left untrimmed.
 
 ## Loading
 
+Remove orphan Mongo review bodies and replies whose PostgreSQL review is gone (from the repo root): `npx tsx --env-file=apps/api/.env apps/api/src/jobs/cleanupOrphans.ts`.
+
 - Ids: the loaders generate UUIDs (`crypto.randomUUID`, no dependency) and keep the dataset-id map in
   `id-map.json`, which the Mongo loader needs.
 - Everyone gets the dev password `Password123!` (one bcrypt hash, cost 12). Dataset users have placeholder emails.
