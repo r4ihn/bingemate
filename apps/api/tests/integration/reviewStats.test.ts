@@ -93,7 +93,7 @@ describe('GET /api/reviews/top-reviewers', () => {
       { userId: 'u1', reviews: 8, replies: 2 },
       { userId: 'u2', reviews: 7, replies: 0 },
     ]);
-    prisma.user.findMany.mockResolvedValue([
+    prisma.user.findMany.mockResolvedValueOnce([{ id: 'admin' }]).mockResolvedValueOnce([
       { id: 'admin', username: 'Admin', role: 'ADMIN' },
       { id: 'u1', username: 'Maya', role: 'CONSUMER' },
       { id: 'u2', username: 'Lee', role: 'CREATOR' },
@@ -106,7 +106,7 @@ describe('GET /api/reviews/top-reviewers', () => {
       select: { id: true },
     });
     expect(aggregate).toHaveBeenCalledWith(
-      stats.topReviewersPipeline(['hidden'], { type: 'TV_SHOW', limit: 1 }),
+      stats.topReviewersPipeline(['hidden'], { type: 'TV_SHOW', limit: 1 }, { adminIds: ['admin'] }),
     );
     expect(aggregate.mock.calls[0]![0][4]).toEqual({
       $lookup: {
@@ -134,7 +134,7 @@ describe('GET /api/reviews/top-reviewers', () => {
     const res = await request(app).get('/api/reviews/top-reviewers');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ data: [] });
-    expect(aggregate).toHaveBeenCalledWith(stats.topReviewersPipeline(['hidden'], { limit: 10 }));
+    expect(aggregate).toHaveBeenCalledWith(stats.topReviewersPipeline(['hidden'], { limit: 10 }, { adminIds: [] }));
   });
 
   it.each(['limit=0', 'limit=51', 'limit=abc', 'limit=1.5', 'type=PODCAST'])(
@@ -151,6 +151,6 @@ describe('GET /api/reviews/top-reviewers', () => {
   it.each([1, 50])('accepts limit=%i', async (limit) => {
     const res = await request(app).get(`/api/reviews/top-reviewers?limit=${limit}`);
     expect(res.status).toBe(200);
-    expect(aggregate).toHaveBeenCalledWith(stats.topReviewersPipeline(['hidden'], { limit }));
+    expect(aggregate).toHaveBeenCalledWith(stats.topReviewersPipeline(['hidden'], { limit }, { adminIds: [] }));
   });
 });

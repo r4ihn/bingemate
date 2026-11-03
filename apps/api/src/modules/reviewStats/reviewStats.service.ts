@@ -35,9 +35,16 @@ export function reviewActivityPipeline(titleId: string, months: number): Pipelin
 export function topReviewersPipeline(
   hiddenTitleIds: string[],
   { type, limit }: TopReviewersQuery,
+  { adminIds }: { adminIds?: string[] } = {},
 ): PipelineStage[] {
   return [
-    { $match: { ...(type ? { mediaType: type } : {}), titleId: { $nin: hiddenTitleIds } } },
+    {
+      $match: {
+        ...(type ? { mediaType: type } : {}),
+        titleId: { $nin: hiddenTitleIds },
+        ...(adminIds ? { userId: { $nin: adminIds } } : {}),
+      },
+    },
     { $group: { _id: '$userId', reviews: { $sum: 1 } } },
     { $sort: { reviews: -1, _id: 1 } },
     { $limit: limit * 2 },
@@ -73,9 +80,9 @@ export function topReviewersPipeline(
   ];
 }
 
-export function recentReviewCountsPipeline(since: Date): PipelineStage[] {
+export function recentReviewCountsPipeline(since: Date, titleIds?: string[]): PipelineStage[] {
   return [
-    { $match: { createdAt: { $gte: since } } },
+    { $match: { createdAt: { $gte: since }, ...(titleIds ? { titleId: { $in: titleIds } } : {}) } },
     { $group: { _id: '$titleId', reviews: { $sum: 1 } } },
   ];
 }
@@ -100,10 +107,15 @@ export async function topReviewers(query: TopReviewersQuery) {
     where: { status: { not: 'APPROVED' } },
     select: { id: true },
   });
+  const admins = await prisma.user.findMany({
+    where: { role: 'ADMIN' },
+    select: { id: true },
+  });
   const rows = await ReviewBody.aggregate<Reviewer>(
     topReviewersPipeline(
       hiddenTitles.map((title) => title.id),
       query,
+      { adminIds: admins.map((admin) => admin.id) },
     ),
   );
   if (rows.length === 0) return { data: [] };
@@ -115,11 +127,15 @@ export async function topReviewers(query: TopReviewersQuery) {
   return { data: data.slice(0, query.limit) };
 }
 
-/** Shared with the upcoming trending job; this helper does not schedule or write anything. */
-export async function recentReviewCounts(days: number): Promise<Map<string, number>> {
+/** Count recent reviews, optionally restricted to the titles being refreshed. */
+export async function recentReviewCounts(
+  days: number,
+  titleIds?: string[],
+): Promise<Map<string, number>> {
+  if (titleIds?.length === 0) return new Map();
   const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
   const rows = await ReviewBody.aggregate<{ _id: string; reviews: number }>(
-    recentReviewCountsPipeline(since),
+    recentReviewCountsPipeline(since, titleIds),
   );
   return new Map(rows.map((row) => [row._id, row.reviews]));
 }

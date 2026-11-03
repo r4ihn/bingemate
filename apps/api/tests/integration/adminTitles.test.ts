@@ -214,6 +214,21 @@ describe('PATCH /api/admin/titles/:id/status', () => {
     );
   });
 
+  it.each([
+    ['REJECTED', '   ', null],
+    ['REJECTED', '', null],
+    ['REJECTED', '  Needs detail.  ', 'Needs detail.'],
+    ['APPROVED', 'Ignore this.', null],
+  ] as const)('normalizes status %s reason %j without sockets', async (status, reason, expected) => {
+    const { setTitleStatus } = await import('../../src/modules/admin/adminTitles.service.js');
+    await setTitleStatus('t1', status, new Date(updatedAt), reason);
+
+    expect(prisma.title.updateMany).toHaveBeenCalledWith({
+      where: { id: 't1', updatedAt: new Date(updatedAt) },
+      data: { status, rejectionReason: expected },
+    });
+  });
+
   it('allows rejection without a reason', async () => {
     const res = await patch({ updatedAt, status: 'REJECTED' });
 

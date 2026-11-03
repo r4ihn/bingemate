@@ -194,7 +194,7 @@ describe('refreshTrending recent reviews', () => {
     await expect(refreshTrending()).resolves.toEqual({ upserted: 2, removed: 1 });
 
     expect(TRENDING_WINDOW_DAYS).toBe(1460);
-    expect(recentReviewCounts).toHaveBeenCalledExactlyOnceWith(TRENDING_WINDOW_DAYS);
+    expect(recentReviewCounts).toHaveBeenCalledExactlyOnceWith(TRENDING_WINDOW_DAYS, ['t1', 't2']);
     expect(cards.bulkWrite).toHaveBeenCalledExactlyOnceWith([
       ...['t1', 't2'].map((titleId) => ({
         updateOne: {

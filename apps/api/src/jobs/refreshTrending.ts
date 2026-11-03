@@ -51,8 +51,8 @@ export async function refreshTrending(): Promise<RefreshResult> {
     console.warn('Trending view returned no rows; keeping existing cards');
     return { upserted: 0, removed: 0 };
   }
-  const recentCounts = await recentReviewCounts(TRENDING_WINDOW_DAYS);
   const ids = rows.map((r) => r.id);
+  const recentCounts = await recentReviewCounts(TRENDING_WINDOW_DAYS, ids);
 
   if (rows.length > 0) {
     await TrendingCard.bulkWrite(

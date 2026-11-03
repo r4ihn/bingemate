@@ -92,6 +92,34 @@ describe('quoted aggregation pipelines', () => {
     },
   );
 
+  it('excludes admins in the first reviewer match before grouping and limiting', () => {
+    const original = stats.topReviewersPipeline(['hidden'], { type: 'BOOK', limit: 3 });
+    expect(
+      stats.topReviewersPipeline(
+        ['hidden'],
+        { type: 'BOOK', limit: 3 },
+        { adminIds: ['a1', 'a2'] },
+      ),
+    ).toEqual([
+      {
+        $match: {
+          mediaType: 'BOOK',
+          titleId: { $nin: ['hidden'] },
+          userId: { $nin: ['a1', 'a2'] },
+        },
+      },
+      ...original.slice(1),
+    ]);
+  });
+
+  it('matches the exact recent-count stages for selected titles', () => {
+    const since = new Date('2025-01-02T03:04:05Z');
+    expect(stats.recentReviewCountsPipeline(since, ['t1', 't2'])).toEqual([
+      { $match: { createdAt: { $gte: since }, titleId: { $in: ['t1', 't2'] } } },
+      { $group: { _id: '$titleId', reviews: { $sum: 1 } } },
+    ]);
+  });
+
   it('matches the exact recent-count stages', () => {
     const since = new Date('2025-01-02T03:04:05Z');
     expect(stats.recentReviewCountsPipeline(since)).toEqual([
@@ -139,7 +167,7 @@ describe('socket-free service checks', () => {
       { userId: 'u2', reviews: 7, replies: 3 },
       { userId: 'u3', reviews: 6, replies: 0 },
     ]);
-    prisma.user.findMany.mockResolvedValue([
+    prisma.user.findMany.mockResolvedValueOnce([{ id: 'admin' }]).mockResolvedValueOnce([
       { id: 'admin', username: 'Admin', role: 'ADMIN' },
       { id: 'u1', username: 'Maya', role: 'CONSUMER' },
       { id: 'u2', username: null, role: 'CREATOR' },
@@ -156,9 +184,14 @@ describe('socket-free service checks', () => {
       select: { id: true },
     });
     expect(aggregate).toHaveBeenCalledWith(
-      stats.topReviewersPipeline(['hidden'], { type: 'BOOK', limit: 2 }),
+      stats.topReviewersPipeline(['hidden'], { type: 'BOOK', limit: 2 }, { adminIds: ['admin'] }),
     );
-    expect(prisma.user.findMany).toHaveBeenCalledExactlyOnceWith({
+    expect(prisma.user.findMany).toHaveBeenCalledTimes(2);
+    expect(prisma.user.findMany).toHaveBeenNthCalledWith(1, {
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+    expect(prisma.user.findMany).toHaveBeenNthCalledWith(2, {
       where: { id: { in: ['gone', 'admin', 'u1', 'u2', 'u3'] } },
       select: { id: true, username: true, role: true },
     });
@@ -166,7 +199,47 @@ describe('socket-free service checks', () => {
 
   it('returns no reviewers without loading authors', async () => {
     expect(await stats.topReviewers({ limit: 10 })).toEqual({ data: [] });
-    expect(prisma.user.findMany).not.toHaveBeenCalled();
+    expect(prisma.user.findMany).toHaveBeenCalledExactlyOnceWith({
+      where: { role: 'ADMIN' },
+      select: { id: true },
+    });
+  });
+
+  it('returns non-admin reviewers when imported admins would fill the top rows', async () => {
+    const rows = [
+      { userId: 'a1', reviews: 100, replies: 0 },
+      { userId: 'a2', reviews: 90, replies: 0 },
+      { userId: 'u1', reviews: 2, replies: 0 },
+    ];
+    prisma.user.findMany
+      .mockResolvedValueOnce([{ id: 'a1' }, { id: 'a2' }])
+      .mockResolvedValueOnce([{ id: 'u1', username: 'Maya', role: 'CONSUMER' }]);
+    aggregate.mockImplementation(async (pipeline) => {
+      const excluded = pipeline[0].$match.userId?.$nin ?? [];
+      const cap = pipeline.find((stage: Record<string, unknown>) => '$limit' in stage).$limit;
+      return rows.filter((row) => !excluded.includes(row.userId)).slice(0, cap);
+    });
+
+    expect(await stats.topReviewers({ limit: 1 })).toEqual({
+      data: [{ userId: 'u1', name: 'Maya', reviews: 2, replies: 0 }],
+    });
+    expect(aggregate.mock.calls[0]![0][0].$match.userId).toEqual({ $nin: ['a1', 'a2'] });
+  });
+
+  it('restricts recent counts to the selected ids', async () => {
+    aggregate.mockResolvedValue([{ _id: 't1', reviews: 3 }]);
+    expect(await stats.recentReviewCounts(2, ['t1'])).toEqual(new Map([['t1', 3]]));
+    expect(aggregate).toHaveBeenCalledExactlyOnceWith([
+      {
+        $match: { createdAt: { $gte: new Date('2026-11-01T14:23:45Z') }, titleId: { $in: ['t1'] } },
+      },
+      { $group: { _id: '$titleId', reviews: { $sum: 1 } } },
+    ]);
+  });
+
+  it('returns an empty Map without aggregating for an empty id list', async () => {
+    expect(await stats.recentReviewCounts(2, [])).toEqual(new Map());
+    expect(aggregate).not.toHaveBeenCalled();
   });
 
   it('returns recent review counts as a Map with a rolling day cutoff', async () => {
