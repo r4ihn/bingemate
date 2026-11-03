@@ -11,7 +11,9 @@ const prisma = {
 };
 const aggregate = vi.fn();
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
-vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({ ReviewBody: { aggregate } }));
+vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({
+  ReviewBody: { aggregate, collection: { name: 'reviewbodies' } },
+}));
 vi.mock('../../src/mongo/models/reply.model.js', () => ({
   Reply: { collection: { name: 'replies' } },
 }));
@@ -106,6 +108,26 @@ describe('GET /api/reviews/top-reviewers', () => {
     expect(aggregate).toHaveBeenCalledWith(
       stats.topReviewersPipeline(['hidden'], { type: 'TV_SHOW', limit: 1 }),
     );
+    expect(aggregate.mock.calls[0]![0][4]).toEqual({
+      $lookup: {
+        from: 'replies',
+        let: { userId: '$_id' },
+        pipeline: [
+          { $match: { $expr: { $eq: ['$userId', '$$userId'] } } },
+          {
+            $lookup: {
+              from: 'reviewbodies',
+              localField: 'reviewId',
+              foreignField: '_id',
+              as: 'review',
+            },
+          },
+          { $match: { review: { $ne: [] }, 'review.titleId': { $nin: ['hidden'] } } },
+          { $count: 'count' },
+        ],
+        as: 'replyCounts',
+      },
+    });
   });
 
   it('defaults to limit 10 and returns an empty array', async () => {

@@ -31,7 +31,7 @@ export function reviewActivityPipeline(titleId: string, months: number): Pipelin
   ];
 }
 
-/** Count reviews of visible titles; count each candidate's replies with a bounded lookup result. */
+/** Count reviews and replies on visible titles, with a bounded reply lookup result. */
 export function topReviewersPipeline(
   hiddenTitleIds: string[],
   { type, limit }: TopReviewersQuery,
@@ -45,7 +45,20 @@ export function topReviewersPipeline(
       $lookup: {
         from: Reply.collection.name,
         let: { userId: '$_id' },
-        pipeline: [{ $match: { $expr: { $eq: ['$userId', '$$userId'] } } }, { $count: 'count' }],
+        pipeline: [
+          { $match: { $expr: { $eq: ['$userId', '$$userId'] } } },
+          {
+            $lookup: {
+              from: ReviewBody.collection.name,
+              localField: 'reviewId',
+              foreignField: '_id',
+              as: 'review',
+            },
+          },
+          // $nin excludes any hidden title in the joined array; $ne also rejects orphan replies.
+          { $match: { review: { $ne: [] }, 'review.titleId': { $nin: hiddenTitleIds } } },
+          { $count: 'count' },
+        ],
         as: 'replyCounts',
       },
     },

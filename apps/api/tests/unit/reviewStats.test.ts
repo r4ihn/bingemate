@@ -10,7 +10,9 @@ const prisma = {
 };
 const aggregate = vi.fn();
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
-vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({ ReviewBody: { aggregate } }));
+vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({
+  ReviewBody: { aggregate, collection: { name: 'reviewbodies' } },
+}));
 vi.mock('../../src/mongo/models/reply.model.js', () => ({
   Reply: { collection: { name: 'replies' } },
 }));
@@ -64,6 +66,15 @@ describe('quoted aggregation pipelines', () => {
             let: { userId: '$_id' },
             pipeline: [
               { $match: { $expr: { $eq: ['$userId', '$$userId'] } } },
+              {
+                $lookup: {
+                  from: 'reviewbodies',
+                  localField: 'reviewId',
+                  foreignField: '_id',
+                  as: 'review',
+                },
+              },
+              { $match: { review: { $ne: [] }, 'review.titleId': { $nin: ['hidden'] } } },
               { $count: 'count' },
             ],
             as: 'replyCounts',
