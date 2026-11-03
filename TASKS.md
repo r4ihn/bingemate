@@ -15,7 +15,7 @@ Last checked on 3 Nov 2026 (evening). `main` ends at PR #16. Four stacked pull r
 
 ## Where the work is (3 Nov 2026, evening)
 
-Four stacked pull requests are open. Merge them in order; after each merge GitHub retargets the next one to `main`.
+Five stacked pull requests are open. Merge them in order; after each merge GitHub retargets the next one to `main`.
 
 | PR  | Branch                         | Based on                       | Contents                                                                                                                                                                   |
 | --- | ------------------------------ | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -23,8 +23,9 @@ Four stacked pull requests are open. Merge them in order; after each merge GitHu
 | #18 | `refactor/review-body-details` | `feat/title-details`           | A review is a star rating and text for every media type. **Needs HS and JW to sign off on the data-model change**                                                          |
 | #19 | `feat/web-wire-writes`         | `refactor/review-body-details` | Website writes on the real API, creator upload and admin approval, and the code-review fixes                                                                               |
 | #20 | `feat/remaining-work`          | `feat/web-wire-writes`         | Rank view, aggregation pipelines, indexes, benchmarks, real-database tests and CI job, single trending scheduler, Browse and Home wiring, manual, demo script and diagrams |
+| #23 | `feat/members-and-usernames`   | `feat/remaining-work`          | Members replace consumers and creators (migration `members_and_usernames`), and signup collects a unique username. Security notes and limits are in the PR description     |
 
-CI on 3 Nov: `verify` passed on #17, and both `verify` and the new `verify-real-db` passed on the whole stack (draft PR #21, closed afterwards; Actions only runs for PRs into `main`).
+CI on 3 Nov: `verify` passed on #17, and both `verify` and the new `verify-real-db` passed on the whole stack (draft PR #21, closed afterwards; Actions only runs for PRs into `main`). Later the same day, both jobs also passed on the stack including #23 (draft PR #24, closed): the real-database job applied all seven migrations and 4 test files passed.
 
 | Other branch                                                              | State                                                                                                                    |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
