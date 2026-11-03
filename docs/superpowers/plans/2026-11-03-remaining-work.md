@@ -2,6 +2,8 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Status (3 Nov 2026):** Tasks 2–9 are done. Tasks 1 and 10–16 continue in `2026-11-03-database-showpieces-and-delivery.md`, which supersedes them: it fixes the benchmark data source (there is no 950k set) and adds a bench-database task.
+
 **Goal:** Close every open item in `TASKS.md` that is not RA's, in time for the 29 Nov 2026, 11:30 PM submission.
 
 **Architecture:** Small, independent tasks on top of the existing stack. The three unpushed branches become PRs first. The MongoDB aggregation work, the SQL window-function query and the benchmarks come next, because they carry the grade (25% relational, 25% NoSQL). Report, slides, video and manual drafting run alongside.
