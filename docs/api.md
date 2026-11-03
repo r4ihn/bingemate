@@ -16,15 +16,45 @@ Validation errors return 400 with `error: "ValidationError"` and field `details`
 
 ## Routes
 
-| Method | Path | Role | Notes |
-|---|---|---|---|
-| POST | /api/auth/register | public | default role CONSUMER |
-| POST | /api/auth/login | public | sets httpOnly cookie |
-| GET | /api/auth/me | authenticated | restore session |
-| POST | /api/auth/logout | public | clears cookie, even an expired one; 204 |
-| POST | /api/titles | CREATOR | submit a title: `{ name, mediaType, description? }`; saved `PENDING`; 201 |
-| PATCH | /api/titles/:id | CREATOR (owner) | `{ name?, description? }`; an approved or rejected title goes back to `PENDING`; `mediaType` is refused |
-| DELETE | /api/titles/:id | CREATOR (owner) or ADMIN | a creator only while no other user has reviewed or listed it (else 409); also removes review bodies, replies and the image from MongoDB; 204 |
-| GET | /api/creator/titles | CREATOR | the creator's own titles, every status, with `rejectionReason` |
-| GET | /api/admin/titles | ADMIN | `?status=PENDING` (default), paginated, oldest first |
-| PATCH | /api/admin/titles/:id/status | ADMIN | `{ status: APPROVED \| REJECTED, rejectionReason?, updatedAt }`; `updatedAt` is the title's version (ISO datetime) taken from the list response; the optional reason is trimmed, at most 500 characters, and kept only for `REJECTED`; a stale `updatedAt` returns 409: "This title changed after you opened it. Reload the queue and review it again." |
+| Method | Path                         | Role                                                     | Notes                                                                                                                                                                                                                                                                                                                                       |
+| ------ | ---------------------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| POST   | /api/auth/register           | public                                                   | default role CONSUMER                                                                                                                                                                                                                                                                                                                       |
+| POST   | /api/auth/login              | public                                                   | sets httpOnly cookie                                                                                                                                                                                                                                                                                                                        |
+| GET    | /api/auth/me                 | authenticated                                            | restore session                                                                                                                                                                                                                                                                                                                             |
+| POST   | /api/auth/logout             | public                                                   | clears cookie, even an expired one; 204                                                                                                                                                                                                                                                                                                     |
+| POST   | /api/titles                  | CREATOR                                                  | submit a title: `{ name, mediaType, description? }`; saved `PENDING`; 201                                                                                                                                                                                                                                                                   |
+| PATCH  | /api/titles/:id              | CREATOR (owner)                                          | `{ name?, description? }`; an approved or rejected title goes back to `PENDING`; `mediaType` is refused                                                                                                                                                                                                                                     |
+| DELETE | /api/titles/:id              | CREATOR (owner) or ADMIN                                 | a creator only while no other user has reviewed or listed it (else 409); also removes review bodies, replies and the image from MongoDB; 204                                                                                                                                                                                                |
+| GET    | /api/creator/titles          | CREATOR                                                  | the creator's own titles, every status, with `rejectionReason`                                                                                                                                                                                                                                                                              |
+| GET    | /api/admin/titles            | ADMIN                                                    | `?status=PENDING` (default), paginated, oldest first                                                                                                                                                                                                                                                                                        |
+| PATCH  | /api/admin/titles/:id/status | ADMIN                                                    | `{ status: APPROVED \| REJECTED, rejectionReason?, updatedAt }`; `updatedAt` is the title's version (ISO datetime) from the list response; the optional reason is trimmed, at most 500 characters, and kept only for `REJECTED`; a stale `updatedAt` returns 409: "This title changed after you opened it. Reload the queue and review it again."                                                                                                                                                                                                                                                |
+| GET    | /api/titles/:titleId/poster  | public for APPROVED; owner or ADMIN for PENDING/REJECTED | Image bytes. Anyone else, and missing titles or images, get the same 404. A bad or expired cookie is ignored. Non-approved images use `Cache-Control: private, no-store`; approved images use `public, max-age=31536000, immutable` only for the current `?v=` (otherwise `no-cache`). Sent with `X-Content-Type-Options: nosniff`. |
+| PUT    | /api/titles/:titleId/poster  | CREATOR (owner) or ADMIN | Raw JPEG, PNG or WebP, max 1 MB; returns `{ posterUrl }` using the version Mongo kept. When a creator uploads, an APPROVED title is set back to `PENDING` **before** the stored bytes are overwritten, so the old public URL never serves an unreviewed image; an admin upload leaves the status alone. |
+| DELETE | /api/titles/:titleId/poster  | CREATOR (owner) or ADMIN | 204. Clears the link first, then removes the bytes; a failure removing the bytes is logged and still answers 204. Removing an image does not change the status. |
+
+## Review statistics (public)
+
+`GET /api/titles/:titleId/review-activity?months=120` returns review counts and average text length (Unicode code points, rounded to one decimal) per populated UTC month, ascending. `months` is an integer from 1 to 240, default 120. The cutoff is the first day of the UTC month `months` ago. Gaps are omitted. PostgreSQL must first confirm the title is APPROVED; missing or unapproved titles return 404 `{ "error": "Title not found" }`. An approved title without reviews returns 200 `{ "data": [] }`.
+
+```json
+{
+  "data": [
+    { "month": "2022-01", "reviews": 12, "avgBodyLength": 154.3 },
+    { "month": "2022-03", "reviews": 4, "avgBodyLength": 82.5 }
+  ]
+}
+```
+
+`GET /api/reviews/top-reviewers?type=BOOK&limit=10` ranks writers by review count descending, breaking ties by userId ascending. Optional `type` accepts MOVIE, BOOK or TV_SHOW; `limit` is an integer from 1 to 50, default 10. Reviews of non-APPROVED titles are excluded. Reply totals count replies written by each candidate (`Reply.userId`) only when the joined `ReviewBody` exists and its title is not hidden, regardless of the review type filter. Replies under non-APPROVED titles or with missing review bodies are excluded. Names come from PostgreSQL via `loadAuthors`; missing users and ADMIN users are dropped. The pipeline fetches up to `limit * 2` candidates before filtering, so the response may contain fewer than `limit` writers.
+
+```json
+{
+  "data": [
+    { "userId": "u1", "name": "maya_r", "reviews": 23, "replies": 7 },
+    { "userId": "u2", "name": "user-u2", "reviews": 18, "replies": 0 }
+  ]
+}
+```
+
+Empty query strings use defaults. Invalid months, limit, type or titleId return 400 `{ "error": "ValidationError", "details": { ... } }` through the shared validation middleware. Named exported pipeline builders (`reviewActivityPipeline`, `topReviewersPipeline`, `recentReviewCountsPipeline`) live in `apps/api/src/modules/reviewStats/reviewStats.service.ts`. `recentReviewCounts(days)` returns a Map of title IDs to counts over a rolling day window; the trending refresh calls it once per non-empty run with 1460 days.
+

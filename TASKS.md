@@ -101,7 +101,7 @@ The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm
 
 ## 5. MongoDB: reviews, replies, trending (HS lead; SJ co-owns trending)
 
-The review, reply and trending items in this section were merged in PRs #10 to #12, tested with mocked stores in CI and run against the real local databases.
+The review, reply and trending items in this section were merged in PRs #10 to #12, tested with mocked stores in CI and run against the real local databases. The aggregation pipelines (Task 8) are new on the work branch.
 
 - [x] Mongoose connection module (`db/mongo.ts`)
 - [x] `ReviewBody` model, `_id` = the PostgreSQL `reviews.id`, with one shape for all media types: a plain `mediaType` copy (so a Mongo pipeline can group by type without a cross-store join), and `body` text. No rating here; the rating lives in PostgreSQL
@@ -111,6 +111,7 @@ The review, reply and trending items in this section were merged in PRs #10 to #
 - [x] Reply storage: a separate collection with `reviewId` (no 16 MB document limit). Renamed from `comment.model.ts` to `reply.model.ts` (collection `replies`); `parentId` and `isOfficial` dropped, `editedAt` added
 - [x] `TrendingCard` collection (denormalised title + rating + review count + poster) and a refresh job _(HS, SJ)_ (PR #12). `jobs/refreshTrending.ts` copies the top 50 per media type from the `trending_titles` view, upserts by title, removes cards that dropped out, and is safe to run twice. Run it with `npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`
   - [x] D2: `server.ts` starts a timer controlled by `TRENDING_REFRESH_MINUTES` (integer 0–1440, default 10; 0 disables it). First tick is after one interval; pending runs are skipped, failures logged, and SIGINT/SIGTERM stop the timer. A separate startup check refreshes only an empty collection. The CLI above remains available. Socket-free timer/startup unit tests pass; live-database verification remains pending _(SJ, HS)_
+- [~] Aggregation pipelines (Task 8): public review activity (populated UTC months, default 120, max 240), top reviewers (hidden titles excluded, author roles checked, max 50), and exported `recentReviewCounts(days)` for Task 9. Named builders and exact-stage unit tests added; socket-free checks pass. Supertest, real-database execution and explain output remain pending. See `docs/api.md` _(HS, SJ)_
 - [ ] Indexes: `{titleId, createdAt}`, `{userId}`, `{rating}`. The first two are done. `{rating}` doesn't apply any more since ratings live in PostgreSQL (option B); confirm with the team and drop it
 - [x] Map review-dataset titles to PostgreSQL `title.id` and load the review datasets (`load-postgres.ts` + `load-mongo-reviews.ts`; the 0 to 10 scores are converted to 1 to 5 stars in `clean-reviews.ts`)
 - [x] Review endpoints: `GET /titles/:titleId/reviews` (newest first, tie-break on id, 10 per page, max 50), `POST /titles/:titleId/reviews`, `PATCH /reviews/:id` (owner only), `DELETE /reviews/:id` (owner or admin). Editing a review whose MongoDB body is missing answers 502 and changes nothing, instead of a silent 200
@@ -125,6 +126,7 @@ The review, reply and trending items in this section were merged in PRs #10 to #
 ## 6. Search, filtering, trending queries (SJ, Week 9–10)
 
 - [x] `GET /titles?q=&type=&genre=&minRating=&year=&sort=&page=&pageSize=` (PR #7; returns `APPROVED` titles only). `sort` is `name` (default), `rating`, `year` or `reviews`, every order ends on `id` so pages are stable; `genre` is a name (case-insensitive) and `year` an exact match. Bad values answer 400
+- [~] Review statistics queries: `GET /api/titles/:titleId/review-activity?months=120` and `GET /api/reviews/top-reviewers?type=&limit=10`; Zod-bounded public reads with APPROVED-title filtering. Recent counts helper is ready for Task 9; trending integration remains pending. Socket-free checks pass; Supertest and live database verification pending.
 - [ ] Text search: `ILIKE` is in (`q` matches the title name, ~5 ms on the 1,500-title dev set); move to `pg_trgm` or full-text search only if it is too slow on 950k rows
 - [x] Trending/popular aggregate queries. The `trending_titles` view (rating weighted by review count) is on `main`; `GET /api/trending?type=&limit=` reads the cards the job builds (PR #12). A recent time window is not in the view yet
 - [x] Genre filter options: `GET /api/genres?type=` from the `genre_filter_options` view, most titles first; without a type, the same genre is summed across media types (PR #12)
