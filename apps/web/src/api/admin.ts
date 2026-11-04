@@ -33,10 +33,16 @@ export const adminApi = {
 
   async pendingTitles(): Promise<TitleDetail[]> {
     if (!useMock) {
-      const res = await apiFetch<Paginated<SubmissionDTO>>(
-        '/admin/titles?status=PENDING&pageSize=50',
-      );
-      return res.data.map((dto) => mapSubmission(dto).title);
+      // The API caps a page at 50; read every page so no pending title is left out of the queue.
+      const rows: SubmissionDTO[] = [];
+      for (let page = 1; ; page++) {
+        const res = await apiFetch<Paginated<SubmissionDTO>>(
+          `/admin/titles?status=PENDING&pageSize=50&page=${page}`,
+        );
+        rows.push(...res.data);
+        if (res.data.length === 0 || rows.length >= res.total) break;
+      }
+      return rows.map((dto) => mapSubmission(dto).title);
     }
     await delay();
     return clone(db.titles.filter((t) => t.status === TitleStatus.PENDING));

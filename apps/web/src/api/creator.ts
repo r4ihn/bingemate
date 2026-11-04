@@ -107,23 +107,38 @@ export const creatorApi = {
             ...(input.synopsis !== undefined && { description: input.synopsis }),
           }),
         });
-      } else {
+      }
+      let posterUrl: string | undefined | null = null; // null: the image was not touched
+      try {
+        if (input.poster) {
+          const res = await apiFetch<{ posterUrl: string }>(`${path}/poster`, {
+            method: 'PUT',
+            body: input.poster,
+            headers: { 'Content-Type': input.poster.type },
+          });
+          posterUrl = resolvePosterUrl(res.posterUrl);
+        } else if (input.removePoster) {
+          await apiFetch<void>(`${path}/poster`, { method: 'DELETE' });
+          posterUrl = undefined;
+        }
+      } catch (error) {
+        // The PATCH already saved and re-submitted the title; say so, as submit() does.
+        if (dto && error instanceof ApiError) {
+          throw new ApiError(
+            error.status,
+            `Your changes were saved, but the image could not be updated: ${error.message}. Edit the title to try the image again.`,
+          );
+        }
+        throw error;
+      }
+      // An image change can send an approved title back to PENDING, so read the row after it.
+      if (!dto) {
         const rows = await apiFetch<SubmissionDTO[]>('/creator/titles');
         dto = rows.find((row) => row.id === id);
       }
       if (!dto) throw new ApiError(404, 'Title not found');
       const submission = mapSubmission(dto);
-      if (input.poster) {
-        const { posterUrl } = await apiFetch<{ posterUrl: string }>(`${path}/poster`, {
-          method: 'PUT',
-          body: input.poster,
-          headers: { 'Content-Type': input.poster.type },
-        });
-        submission.title.posterUrl = resolvePosterUrl(posterUrl);
-      } else if (input.removePoster) {
-        await apiFetch<void>(`${path}/poster`, { method: 'DELETE' });
-        submission.title.posterUrl = undefined;
-      }
+      if (posterUrl !== null) submission.title.posterUrl = posterUrl;
       return submission;
     }
     await delay();
