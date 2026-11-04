@@ -35,7 +35,7 @@ export function reviewActivityPipeline(titleId: string, months: number): Pipelin
 export function topReviewersPipeline(
   hiddenTitleIds: string[],
   { type, limit }: TopReviewersQuery,
-  { adminIds }: { adminIds?: string[] } = {},
+  { adminIds, skip = 0 }: { adminIds?: string[]; skip?: number } = {},
 ): PipelineStage[] {
   return [
     {
@@ -47,6 +47,7 @@ export function topReviewersPipeline(
     },
     { $group: { _id: '$userId', reviews: { $sum: 1 } } },
     { $sort: { reviews: -1, _id: 1 } },
+    ...(skip > 0 ? [{ $skip: skip }] : []),
     { $limit: limit * 2 },
     {
       $lookup: {
@@ -102,28 +103,31 @@ export async function reviewActivity(
   return { data: await ReviewBody.aggregate<Activity>(reviewActivityPipeline(titleId, months)) };
 }
 
+/** Candidate pages read at most, so a run of deleted accounts cannot make one request scan forever. */
+const TOP_REVIEWER_ROUNDS = 10;
+
 export async function topReviewers(query: TopReviewersQuery) {
-  const hiddenTitles = await prisma.title.findMany({
-    where: { status: { not: 'APPROVED' } },
-    select: { id: true },
-  });
-  const admins = await prisma.user.findMany({
-    where: { role: 'ADMIN' },
-    select: { id: true },
-  });
-  const rows = await ReviewBody.aggregate<Reviewer>(
-    topReviewersPipeline(
-      hiddenTitles.map((title) => title.id),
-      query,
-      { adminIds: admins.map((admin) => admin.id) },
-    ),
-  );
-  if (rows.length === 0) return { data: [] };
-  const authors = await loadAuthors(rows.map((row) => row.userId));
-  const data = rows.flatMap((row) => {
-    const author = authors.get(row.userId);
-    return !author || author.role === 'ADMIN' ? [] : [{ ...row, name: author.name }];
-  });
+  const [hiddenTitles, admins] = await Promise.all([
+    prisma.title.findMany({ where: { status: { not: 'APPROVED' } }, select: { id: true } }),
+    prisma.user.findMany({ where: { role: 'ADMIN' }, select: { id: true } }),
+  ]);
+  const hiddenTitleIds = hiddenTitles.map((title) => title.id);
+  const adminIds = admins.map((admin) => admin.id);
+  const batch = query.limit * 2;
+  const data: (Reviewer & { name: string })[] = [];
+  // Review bodies outlive deleted accounts, so keep reading candidates until `limit` are real users.
+  for (let round = 0; round < TOP_REVIEWER_ROUNDS && data.length < query.limit; round++) {
+    const rows = await ReviewBody.aggregate<Reviewer>(
+      topReviewersPipeline(hiddenTitleIds, query, { adminIds, skip: round * batch }),
+    );
+    if (rows.length === 0) break;
+    const authors = await loadAuthors(rows.map((row) => row.userId));
+    for (const row of rows) {
+      const author = authors.get(row.userId);
+      if (author && author.role !== 'ADMIN') data.push({ ...row, name: author.name });
+    }
+    if (rows.length < batch) break;
+  }
   return { data: data.slice(0, query.limit) };
 }
 

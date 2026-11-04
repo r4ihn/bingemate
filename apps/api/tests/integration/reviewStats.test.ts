@@ -153,4 +153,25 @@ describe('GET /api/reviews/top-reviewers', () => {
     expect(res.status).toBe(200);
     expect(aggregate).toHaveBeenCalledWith(stats.topReviewersPipeline(['hidden'], { limit }, { adminIds: [] }));
   });
+
+  it('reads further candidates when deleted accounts fill the first page', async () => {
+    aggregate
+      .mockResolvedValueOnce([
+        { userId: 'gone1', reviews: 9, replies: 0 },
+        { userId: 'gone2', reviews: 8, replies: 0 },
+      ])
+      .mockResolvedValueOnce([{ userId: 'u1', reviews: 3, replies: 1 }]);
+    prisma.user.findMany
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([])
+      .mockResolvedValueOnce([{ id: 'u1', username: 'Maya', role: 'CONSUMER' }]);
+    const res = await request(app).get('/api/reviews/top-reviewers?limit=1');
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ data: [{ userId: 'u1', name: 'Maya', reviews: 3, replies: 1 }] });
+    expect(aggregate).toHaveBeenCalledTimes(2);
+    expect(aggregate.mock.calls[1]![0]).toEqual(
+      stats.topReviewersPipeline(['hidden'], { limit: 1 }, { adminIds: [], skip: 2 }),
+    );
+    expect(aggregate.mock.calls[1]![0]).toContainEqual({ $skip: 2 });
+  });
 });

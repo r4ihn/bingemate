@@ -128,7 +128,7 @@ async function loadPostgres(pg: PrismaClient, o: Options): Promise<void> {
     () => pg.$executeRaw`
     INSERT INTO "User" (id, email, username, "passwordHash", role, "createdAt", "updatedAt")
     SELECT 'bench-user-' || n, 'bench-' || n || '@example.test', 'Bench User ' || n,
-           'synthetic-dummy-hash-not-for-login', 'CONSUMER'::"Role", now(), now()
+           'synthetic-dummy-hash-not-for-login', 'MEMBER'::"Role", now(), now()
     FROM generate_series(1, ${o.users}::int) AS n`,
   );
   await phase(
