@@ -8,7 +8,7 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { adminApi } from './admin.js';
 import { ApiError, setUnauthorizedHandler } from './client.js';
-import { creatorApi } from './creator.js';
+import { creatorApi, PosterUploadError } from './creator.js';
 import { listsApi } from './lists.js';
 import { repliesApi, reviewsApi } from './reviews.js';
 import { titlesApi } from './titles.js';
@@ -225,7 +225,15 @@ describe('listsApi (real)', () => {
 describe('titlesApi (real)', () => {
   it('get calls GET /titles/:id with cookies and maps the detail', async () => {
     fetchMock.mockReturnValue(
-      json({ ...summary, description: null, releaseYear: 2021, genres: [], people: [] }),
+      json({
+        ...summary,
+        rankInType: null,
+        topPercent: null,
+        description: null,
+        releaseYear: 2021,
+        genres: [],
+        people: [],
+      }),
     );
     const t = await titlesApi.get('t1');
     const { url, init } = lastCall();
@@ -236,7 +244,9 @@ describe('titlesApi (real)', () => {
   });
 
   it('get encodes the id into the path', async () => {
-    fetchMock.mockReturnValue(json({ ...summary, description: 'x', releaseYear: null }));
+    fetchMock.mockReturnValue(
+      json({ ...summary, rankInType: null, topPercent: null, description: 'x', releaseYear: null }),
+    );
     await titlesApi.get('a/b c');
     expect(lastCall().url).toBe('/api/titles/a%2Fb%20c');
   });
@@ -262,7 +272,7 @@ describe('titlesApi (real)', () => {
     expect(url).toBe('/api/titles?q=dune&type=MOVIE&page=2&pageSize=10');
     expect(init.credentials).toBe('include');
     expect(res.total).toBe(31);
-    expect(res.items).toEqual([{ ...summary, synopsis: '' }]);
+    expect(res.items).toEqual([{ ...summary, rankInType: null, topPercent: null, synopsis: '' }]);
   });
 
   it('search skips empty q and missing type, using the defaults for paging', async () => {
@@ -593,6 +603,25 @@ describe('repliesApi writes (real)', () => {
 });
 
 describe('creatorApi submissions (real)', () => {
+  it('remove sends DELETE with credentials and resolves undefined on 204', async () => {
+    fetchMock.mockResolvedValue(new Response(null, { status: 204 }));
+
+    await expect(creatorApi.remove('a/b c')).resolves.toBeUndefined();
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const { url, init } = lastCall();
+    expect(url).toBe('/api/titles/a%2Fb%20c');
+    expect(init.method).toBe('DELETE');
+    expect(init.credentials).toBe('include');
+    expect(init.body).toBeUndefined();
+  });
+
+  it('remove preserves the server conflict message', async () => {
+    const message = 'Other users have reviewed or listed this title. Ask an admin to delete it.';
+    fetchMock.mockReturnValueOnce(json({ error: message }, 409));
+    await expect(creatorApi.remove('t1')).rejects.toMatchObject({ status: 409, message });
+  });
+
   const dto = {
     ...summary,
     status: TitleStatus.PENDING,
@@ -631,11 +660,24 @@ describe('creatorApi submissions (real)', () => {
     );
     expect(await creatorApi.submissions()).toEqual([
       {
-        title: { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.' },
+        title: {
+          ...summary,
+          rankInType: null,
+          topPercent: null,
+          status: TitleStatus.PENDING,
+          synopsis: 'Sand.',
+        },
         rejectionReason: undefined,
       },
       {
-        title: { ...summary, id: 't2', status: TitleStatus.REJECTED, synopsis: '' },
+        title: {
+          ...summary,
+          rankInType: null,
+          topPercent: null,
+          id: 't2',
+          status: TitleStatus.REJECTED,
+          synopsis: '',
+        },
         rejectionReason: 'Fix it',
       },
     ]);
@@ -675,6 +717,25 @@ describe('creatorApi submissions (real)', () => {
       rejectionReason: undefined,
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('throws PosterUploadError carrying the created submission when the poster returns 413', async () => {
+    fetchMock
+      .mockReturnValueOnce(json(dto, 201))
+      .mockReturnValueOnce(json({ error: 'Image too large' }, 413));
+    const error: unknown = await creatorApi
+      .submit({ ...input, poster: new Blob(['image'], { type: 'image/png' }) })
+      .catch((error: unknown) => error);
+    expect(error).toBeInstanceOf(PosterUploadError);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({
+      status: 413,
+      submission: {
+        title: { id: dto.id, name: dto.name, synopsis: 'Sand.', status: TitleStatus.PENDING },
+      },
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(lastCall().init.method).toBe('PUT');
   });
 
   it('submit tells the user the title exists when only the image fails', async () => {
@@ -810,7 +871,6 @@ describe('creatorApi submissions (real)', () => {
   );
 });
 
-
 describe('adminApi title queue (real)', () => {
   const dto = {
     ...summary,
@@ -835,11 +895,31 @@ describe('adminApi title queue (real)', () => {
 
   it('pendingTitles asks for PENDING with pageSize 50 and maps rows', async () => {
     fetchMock.mockReturnValueOnce(
-      json({ data: [dto, { ...dto, id: 't2', description: null }], page: 1, pageSize: 50, total: 2 }),
+      json({
+        data: [dto, { ...dto, id: 't2', description: null }],
+        page: 1,
+        pageSize: 50,
+        total: 2,
+      }),
     );
     expect(await adminApi.pendingTitles()).toEqual([
-      { ...summary, status: TitleStatus.PENDING, synopsis: 'Sand.', version: dto.updatedAt },
-      { ...summary, id: 't2', status: TitleStatus.PENDING, synopsis: '', version: dto.updatedAt },
+      {
+        ...summary,
+        rankInType: null,
+        topPercent: null,
+        status: TitleStatus.PENDING,
+        synopsis: 'Sand.',
+        version: dto.updatedAt,
+      },
+      {
+        ...summary,
+        rankInType: null,
+        topPercent: null,
+        id: 't2',
+        status: TitleStatus.PENDING,
+        synopsis: '',
+        version: dto.updatedAt,
+      },
     ]);
     expect(lastCall().url).toBe('/api/admin/titles?status=PENDING&pageSize=50&page=1');
     expect(lastCall().init.method).toBeUndefined();
@@ -865,7 +945,9 @@ describe('adminApi title queue (real)', () => {
 
   it('setTitleStatus omits the rejectionReason key when no reason is given', async () => {
     fetchMock.mockReturnValueOnce(json({ ...dto, status: TitleStatus.APPROVED }));
-    await expect(adminApi.setTitleStatus('t1', TitleStatus.APPROVED, undefined, dto.updatedAt)).resolves.toBeUndefined();
+    await expect(
+      adminApi.setTitleStatus('t1', TitleStatus.APPROVED, undefined, dto.updatedAt),
+    ).resolves.toBeUndefined();
     expect(lastCall().url).toBe('/api/admin/titles/t1/status');
     expect(lastCall().init.method).toBe('PATCH');
     const body = JSON.parse(lastCall().init.body as string);
@@ -892,4 +974,3 @@ describe('adminApi title queue (real)', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });
-

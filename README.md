@@ -56,15 +56,38 @@ With mocks off, browsing, search, reviews, replies, My Lists and creator stats u
 forms (create, edit, delete, image upload) and the admin pages still need their API endpoints and show
 "Real API not wired yet".
 
+### Trending refresh
+
+The API checks the `TrendingCard` collection after it starts listening and refreshes it once if it is empty.
+`TRENDING_REFRESH_MINUTES` in `apps/api/.env` controls the recurring timer: an integer from 0 to 1440,
+default 10 minutes; `0` disables the timer (the empty-collection startup check still runs).
+The timer first runs after one full interval, skips ticks while its previous run is pending, logs failures,
+and stops on SIGINT/SIGTERM. A refresh upserts cards before deleting stale cards; an empty SQL view
+keeps existing cards and logs a warning.
+
+To fill an empty collection manually, or refresh before a demo, run the CLI from the repo root:
+
+```bash
+npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
+```
+
 ## Scripts
 
-| Command | What |
-|---|---|
-| `npm run lint` | ESLint across the monorepo |
-| `npm run typecheck` | `tsc --noEmit` in every workspace |
-| `npm test` | run all workspace tests |
-| `npm run format` | Prettier write |
-| `npm run db:up` / `db:down` | start / stop local databases |
+| Command                     | What                              |
+| --------------------------- | --------------------------------- |
+| `npm run lint`              | ESLint across the monorepo        |
+| `npm run typecheck`         | `tsc --noEmit` in every workspace |
+| `npm test`                  | run all workspace tests           |
+| `npm run format`            | Prettier write                    |
+| `npm run db:up` / `db:down` | start / stop local databases      |
+
+## Real-database tests
+
+Create the isolated PostgreSQL database: `docker exec bingemate-postgres createdb -U bingemate bingemate_test`.
+Export `export TEST_DATABASE_URL=postgresql://bingemate:bingemate@localhost:5432/bingemate_test?schema=public` (adjust credentials).
+Export `export TEST_MONGO_URI=mongodb://localhost:27017/bingemate_test` with MongoDB running locally.
+Run `npm run test:real --workspace apps/api`; global setup deploys migrations automatically.
+This suite truncates every app table and drops every Mongo collection in that `_test` database; `npm test` stays stubbed.
 
 ## Git workflow
 

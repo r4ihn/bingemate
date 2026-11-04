@@ -11,6 +11,21 @@ import { mapSubmission } from './mappers.js';
 import { clone, delay, useMock } from './mockMode.js';
 import { resolvePosterUrl } from './posterUrl.js';
 
+/** The title exists even though its poster upload failed; creation must not be retried. */
+export class PosterUploadError extends ApiError {
+  constructor(
+    status: number,
+    message: string,
+    public readonly submission: Submission,
+  ) {
+    super(
+      status,
+      `Your title was saved, but its image could not be uploaded: ${message}. Edit the title to try the image again.`,
+    );
+    this.name = 'PosterUploadError';
+  }
+}
+
 // The seeded demo titles belong to MOCK_USER; every creator sees them alongside their own submissions
 const own = () =>
   db.titles.filter((t) => t.createdBy === getMockActor().id || t.createdBy === MOCK_USER);
@@ -62,13 +77,11 @@ export const creatorApi = {
           );
           submission.title.posterUrl = resolvePosterUrl(posterUrl);
         } catch (error) {
-          if (error instanceof ApiError) {
-            throw new ApiError(
-              error.status,
-              `Your title was saved, but its image could not be uploaded: ${error.message}. Edit the title to try the image again.`,
-            );
-          }
-          throw error;
+          throw new PosterUploadError(
+            error instanceof ApiError ? error.status : 0,
+            error instanceof Error ? error.message : 'Upload failed',
+            submission,
+          );
         }
       }
       return submission;
@@ -82,6 +95,8 @@ export const creatorApi = {
       status: TitleStatus.PENDING,
       avgRating: 0,
       reviewCount: 0,
+      rankInType: null,
+      topPercent: null,
       synopsis: input.synopsis,
       posterUrl,
       countries: [],
@@ -155,6 +170,15 @@ export const creatorApi = {
     if (title.status !== TitleStatus.PENDING) title.status = TitleStatus.PENDING;
     title.rejectionReason = undefined;
     return clone(toSubmission(title));
+  },
+
+  async remove(id: string): Promise<void> {
+    if (!useMock) {
+      return apiFetch<void>(`/titles/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
+    await delay();
+    if (!own().some((title) => title.id === id)) throw new ApiError(404, 'Title not found');
+    db.titles = db.titles.filter((title) => title.id !== id);
   },
 
   async stats(): Promise<CreatorStat[]> {

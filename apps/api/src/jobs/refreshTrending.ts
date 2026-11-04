@@ -2,10 +2,15 @@ import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
 import { Prisma } from '@prisma/client';
 import { prisma } from '../db/prisma.js';
+import { refreshTitleRanks } from '../modules/titles/ranking.service.js';
+import { recentReviewCounts } from '../modules/reviewStats/reviewStats.service.js';
 import { TrendingCard } from '../mongo/models/trendingCard.model.js';
 
 /** How many cards are kept per media type. */
 export const TRENDING_PER_TYPE = 50;
+
+/** Rolling review window stored on every card at refresh time. */
+export const TRENDING_WINDOW_DAYS = 1460;
 
 interface TrendingRow {
   id: string;
@@ -42,7 +47,12 @@ export async function refreshTrending(): Promise<RefreshResult> {
       ) ranked
       WHERE "rank" <= ${TRENDING_PER_TYPE}`,
   );
+  if (rows.length === 0) {
+    console.warn('Trending view returned no rows; keeping existing cards');
+    return { upserted: 0, removed: 0 };
+  }
   const ids = rows.map((r) => r.id);
+  const recentCounts = await recentReviewCounts(TRENDING_WINDOW_DAYS, ids);
 
   if (rows.length > 0) {
     await TrendingCard.bulkWrite(
@@ -57,6 +67,7 @@ export async function refreshTrending(): Promise<RefreshResult> {
                 mediaType: r.mediaType,
                 avgRating: Number(r.avg_rating),
                 reviewCount: Number(r.review_count),
+                recentReviews: recentCounts.get(r.id) ?? 0,
                 score: Number(r.trending_score),
                 ...(posterUrl ? { posterUrl } : {}),
               },
@@ -70,7 +81,49 @@ export async function refreshTrending(): Promise<RefreshResult> {
   }
 
   const stale = await TrendingCard.deleteMany({ titleId: { $nin: ids } });
+  try {
+    await refreshTitleRanks();
+  } catch (err) {
+    console.error('Title rank refresh failed:', err);
+  }
   return { upserted: rows.length, removed: stale.deletedCount };
+}
+
+/** Populate a fresh collection at startup; failures must not prevent the API from serving. */
+export async function refreshIfEmpty(): Promise<void> {
+  try {
+    if ((await TrendingCard.estimatedDocumentCount()) === 0) {
+      await refreshTrending();
+    }
+  } catch (err) {
+    console.error('Initial trending refresh failed:', err);
+  }
+}
+
+/**
+ * First run is after the first interval; use the CLI to fill an empty collection manually.
+ * Skips ticks while a run is pending, and never keeps the process alive.
+ */
+export function startTrendingTimer(
+  minutes: number,
+  run: () => Promise<unknown> = refreshTrending,
+): () => void {
+  if (minutes <= 0) return () => {};
+
+  let running = false;
+  const timer = setInterval(async () => {
+    if (running) return;
+    running = true;
+    try {
+      await run();
+    } catch (err) {
+      console.error('Scheduled trending refresh failed:', err);
+    } finally {
+      running = false;
+    }
+  }, minutes * 60_000);
+  timer.unref();
+  return () => clearInterval(timer);
 }
 
 /** `tsx src/jobs/refreshTrending.ts` runs the job once; importing this file does not. */

@@ -109,8 +109,7 @@ loader's job.
   3+ blank lines capped at one, NEL/line-separator characters turned into spaces. Line breaks are kept,
   so render with `white-space: pre-line`. 3,845 texts changed.
 - Body drops `score`, `username`, `title_name` (rating lives in Postgres; the others are joins). Kept:
-  `media_type`, `text`, `details` (movie `review_year`; TV `review_type`, `publication_name`; book
-  `summary`, `amazon_id`, `helpfulness`) and an empty `comments` array.
+  `media_type`, `text` and an empty `comments` array. Imported review extras are discarded (2026-11-03).
 
 **User lists**
 
@@ -135,13 +134,17 @@ than its survivor, title ids identical, no text left untrimmed.
 
 ## Loading
 
+For the 947 undated reviews already loaded locally with the old `1900-01-01` placeholder, use `backfill-undated-dates.ts` to give them the same deterministic made-up 2022–2025 dates as a fresh load, without reloading either store. From the repo root, preview with `npx tsx --env-file=apps/api/.env data/etl/backfill-undated-dates.ts`, then write with `npx tsx --env-file=apps/api/.env data/etl/backfill-undated-dates.ts --apply`. It requires the existing `data/processed/reviews.csv` and `id-map.json`, refuses remote databases, and only updates matching placeholder dates, so reruns are safe; apply verifies that no targeted placeholders remain and both stores agree.
+
+Remove orphan Mongo review bodies and replies whose PostgreSQL review is gone (from the repo root): `npx tsx --env-file=apps/api/.env apps/api/src/jobs/cleanupOrphans.ts`.
+
 - Ids: the loaders generate UUIDs (`crypto.randomUUID`, no dependency) and keep the dataset-id map in
   `id-map.json`, which the Mongo loader needs.
 - Everyone gets the dev password `Password123!` (one bcrypt hash, cost 12). Dataset users have placeholder emails.
 - Imported titles are `APPROVED` with `createdById` NULL. Undated reviews get a made-up `createdAt` between 2022 and 2025.
 - `Title.avgRating` / `reviewCount` are filled from the `title_rating_stats` view at the end of the load.
-- Mongo body: `body` = cleaned text, `mediaType` = a copy of the title's type, `details` = the media-specific extras (the site writes nothing to it)
-  (a new `Mixed` field on `ReviewBody`), `createdAt` = the Postgres review date. Comments stay in their own collection.
+- Mongo body: `body` = cleaned text, `mediaType` = a copy of the title's type,
+  `createdAt` = the Postgres review date. Imported review extras are not written. Comments stay in their own collection.
 - Last load (3 seconds for Postgres): 5,478 users, 1,500 titles, 178 genres, 3,060 title_genres, 12,758 people,
   15,798 title_people, 13,490 reviews, 13,490 list entries, 13,490 Mongo bodies. `verify-load.ts`: 17 checks, 0 failed.
 
@@ -166,7 +169,7 @@ Every run writes to `../processed/logs/`:
 1. ~~`WRITER` role~~ added to the schema. ~~`Title.description`~~, ~~`User.username`~~ added.
 2. **Emails and passwords**: dataset users have placeholder emails and share the dev password. (RA)
 3. **Detail columns** (runtime, tagline, ratings, publisher, price, ...) are not stored. Put them in Mongo or drop them. (JW, HS)
-4. **Review form fields**: dropped (WH, 2026-11-02). A review is only a star rating and text, so the old `runtimeMinutes`, `chaptersRead`, `season`, `episodes` fields and the per-type discriminators are gone; `details` keeps only the imported extras. (HS)
+4. **Review form fields**: dropped (WH, 2026-11-02). A review is only a star rating and text, so the old `runtimeMinutes`, `chaptersRead`, `season`, `episodes` fields and the per-type discriminators are gone; imported review extras were also removed from the ETL and model on 2026-11-03. (HS)
 5. **Genre filter**: all genres are in the data; decide the view/query that limits the browse filter to common ones. (SJ)
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star
    were my calls; confirm with the team.

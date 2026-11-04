@@ -8,7 +8,7 @@ import { TitleOverview } from '../components/TitleOverview.js';
 import { ReviewForm } from '../components/review/ReviewForm.js';
 import { ReviewList } from '../components/review/ReviewList.js';
 import { useAsync } from '../hooks/useAsync.js';
-import { MEDIA_SECTION } from '../labels.js';
+import { MEDIA_LABEL_PLURAL, MEDIA_SECTION } from '../labels.js';
 import { NotFound } from './NotFound.js';
 
 // The layout lets this page run full-bleed, so non-hero states need their own padding
@@ -54,6 +54,11 @@ export function TitleDetail() {
         title={title}
         breadcrumb={['Main', MEDIA_SECTION[title.mediaType], title.name]}
       />
+      {title.rankInType !== null && (
+        <p className="mx-auto max-w-[1100px] px-8 pb-6 text-sm text-muted">
+          #{title.rankInType} in {MEDIA_LABEL_PLURAL[title.mediaType]} · top {title.topPercent}%
+        </p>
+      )}
       <section
         id="reviews"
         className="mx-auto max-w-[1100px] border-t border-line px-6 py-8 sm:px-8 sm:py-12"

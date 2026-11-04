@@ -129,9 +129,11 @@ Same tokens, same pill and dock language. Proposed:
 | Login / Register | Centred panel on `--bg`, pill-radius inputs and a yellow primary button |
 | My Lists | Pill tabs (Completed, In progress, Plan to) with a poster grid |
 | Review form | Panel with a star rating control and a text box, the same for every media type |
-| Creator | Table of submissions with status badges (Pending, Approved, Rejected) |
+| Creator | Table of submissions with status badges (Pending, Approved, Rejected). The edit form shows “Changing the image sends this title back for approval” beside the image field. |
 | Admin | Tables for users and the approval queue, using the same badge styles |
 | Forbidden / 404 | Giant ghost text (`403`, `404`) in the style of the surname word |
+
+Submissions (all statuses) and approved-title stats have a Delete button with inline “Delete this title? This cannot be undone.” and Confirm / Cancel. Controls are disabled during deletion; success refreshes the table, while a server error appears inline and keeps the row.
 
 ## B5. Components (our spec)
 - **Primary button:** `--accent` fill, `--accent-ink` text, pill.

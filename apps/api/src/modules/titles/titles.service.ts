@@ -2,6 +2,7 @@ import type { Prisma } from '@prisma/client';
 import type { Paginated, TitleDetailDTO, TitleDetailsDTO, TitleSummary } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
+import { getTitleRank } from './ranking.service.js';
 import type { ListQuery, TitleSort } from './titles.schema.js';
 
 export const summarySelect = {
@@ -108,6 +109,12 @@ export async function getTitle(id: string): Promise<TitleDetailDTO> {
     },
   });
   if (!t) throw new HttpError(404, 'Title not found');
+  let rank = null;
+  try {
+    rank = await getTitleRank(id);
+  } catch (err) {
+    console.error('Title rank lookup failed:', err);
+  }
   return {
     ...toSummary(t),
     description: t.description,
@@ -115,5 +122,7 @@ export async function getTitle(id: string): Promise<TitleDetailDTO> {
     genres: t.genres.map((g) => g.genre.name).sort(),
     people: t.people.map((p) => ({ id: p.person.id, name: p.person.name, role: p.role })),
     details: toDetails(t),
+    rankInType: rank?.rankInType ?? null,
+    topPercent: rank?.topPercent ?? null,
   };
 }

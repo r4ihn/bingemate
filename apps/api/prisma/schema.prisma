@@ -89,6 +89,9 @@ model Title {
   @@index([status])
   @@index([avgRating])
   @@index([createdById])
+  // Omit the measured releaseYear DESC NULLS LAST index: Prisma 5.20 cannot declare NULLS LAST.
+  @@index([mediaType, status, avgRating(sort: Desc), reviewCount(sort: Desc), id])
+  @@index([mediaType, status, reviewCount(sort: Desc), id])
 }
 
 model Genre {

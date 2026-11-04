@@ -1,3 +1,4 @@
+import { TitleStatus } from '@bingemate/shared';
 import { resolvePosterUrl } from './posterUrl.js';
 import type {
   ReplyDTO,
@@ -6,6 +7,7 @@ import type {
   TitleDetailDTO,
   TitleDetailsDTO,
   TitleSummary,
+  TrendingCardDTO,
 } from '@bingemate/shared';
 import type { Submission } from '../types/creator.js';
 import type { ListItem } from '../types/list.js';
@@ -34,6 +36,8 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
     avgRating: s.avgRating,
     reviewCount: s.reviewCount,
     synopsis: '',
+    rankInType: null,
+    topPercent: null,
     ...(s.posterUrl !== undefined && { posterUrl: resolvePosterUrl(s.posterUrl) }),
     ...(s.createdById !== undefined && { createdById: s.createdById }),
   };
@@ -71,6 +75,8 @@ function mapDetails(d: TitleDetailsDTO | null) {
 export function detailToTitle(d: TitleDetailDTO): TitleDetail {
   return {
     ...summaryToTitle(d),
+    rankInType: d.rankInType,
+    topPercent: d.topPercent,
     synopsis: d.description ?? '',
     ...(d.releaseYear != null && { year: d.releaseYear }),
     ...mapDetails(d.details),
@@ -98,4 +104,17 @@ export function mapReply(r: ReplyDTO): Reply {
     createdAt: r.createdAt,
     ...(r.editedAt ? { editedAt: r.editedAt } : {}),
   };
+}
+
+/** Trending has no description or release year; retain only the card facts it supplies. */
+export function trendingToTitle(card: TrendingCardDTO): TitleDetail {
+  return summaryToTitle({
+    id: card.titleId,
+    name: card.name,
+    mediaType: card.mediaType,
+    status: TitleStatus.APPROVED,
+    avgRating: card.avgRating,
+    reviewCount: card.reviewCount,
+    ...(card.posterUrl !== undefined && { posterUrl: card.posterUrl }),
+  });
 }
