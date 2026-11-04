@@ -3,7 +3,6 @@
 
 // import statements and dependencies
 import { Prisma } from '@prisma/client';
-import { normalizeUsername } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { hashPassword, comparePassword } from '../../utils/password.js';
 import { HttpError } from '../../middleware/errorHandler.js';
@@ -35,7 +34,8 @@ export class authService {
             const newUser = await prisma.user.create({
                 data: {
                     email: email,
-                    username: normalizeUsername(username),
+                    // registerSchema has already normalised it
+                    username,
                     // passwordHash comes from the database schema
                     passwordHash: hashedPassword
                 }
