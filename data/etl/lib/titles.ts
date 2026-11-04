@@ -37,8 +37,8 @@ export const TITLE_COLUMNS = [
 
 /**
  * Cleans one media type: the core `titles.csv` rows plus that type's `*_details.csv`,
- * joined on title_id. Core columns map onto `Title`; detail columns have no Postgres home
- * yet and are kept for the loader to put in MongoDB or drop.
+ * joined on title_id. Core columns map onto `Title`; the loader puts the detail columns in the
+ * `MovieDetails`, `TvDetails` and `BookDetails` tables (book `price` is kept here but not loaded).
  */
 export function cleanMediaTitles(spec: MediaSpec): void {
   const log = new StepLog(spec.step);

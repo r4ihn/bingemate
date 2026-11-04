@@ -18,6 +18,9 @@ npx tsx data/etl/load-all.ts                     # both stores in order; add --r
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
 
+Ids change on every load, so rebuild the trending cards afterwards, from `apps/api`:
+`npx tsx src/jobs/refreshTrending.ts`.
+
 Ids are random per run and the Mongo bodies are keyed by the PostgreSQL review ids, so always load (and
 `--reset`) both stores together with `load-all.ts`. Running `load-postgres.ts --reset` alone orphans the Mongo bodies until
 `load-mongo-reviews.ts --reset` is run too. `load-postgres` runs in one transaction: a failed load leaves the database as it was and writes no
@@ -34,17 +37,18 @@ idempotent and reads only `../raw/` (except `clean-lists`, which reads the revie
 
 ## What each script does
 
-| Script             | Reads                               | Writes (`../processed/`)                                            |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------- |
-| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`   | `movies.csv`                                                        |
-| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`      | `tv_shows.csv`                                                      |
-| `clean-books.ts`   | `titles.csv`, `book_details.csv`    | `books.csv`                                                         |
-| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`    | `genres.csv`, `title_genres.csv`                                    |
-| `clean-people.ts`  | `people.csv`, `title_people.csv`    | `people.csv`, `title_people.csv`                                    |
-| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only) | `users.csv`                                                         |
-| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json` | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
-| `clean-lists.ts`   | `user_lists.csv`                    | `user_lists.csv`                                                    |
-| `verify.ts`        | everything in `../processed/`       | nothing; exits non-zero on a failed check                           |
+| Script             | Reads                                                                | Writes (`../processed/`)                                            |
+| ------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`                                    | `movies.csv`                                                        |
+| `clean-posters.ts` | poster sources (optional), `movies.csv`, `tv_shows.csv`, `books.csv` | `title_posters.csv` (`title_id`, `poster_url`)                      |
+| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`                                       | `tv_shows.csv`                                                      |
+| `clean-books.ts`   | `titles.csv`, `book_details.csv`                                     | `books.csv`                                                         |
+| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`                                     | `genres.csv`, `title_genres.csv`                                    |
+| `clean-people.ts`  | `people.csv`, `title_people.csv`                                     | `people.csv`, `title_people.csv`                                    |
+| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only)                                  | `users.csv`                                                         |
+| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json`                                  | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
+| `clean-lists.ts`   | `user_lists.csv`                                                     | `user_lists.csv`                                                    |
+| `verify.ts`        | everything in `../processed/`                                        | nothing; exits non-zero on a failed check                           |
 
 Dataset ids (`title_id`, `person_id`, ...) are kept as they are. Mapping them to database ids is the
 loader's job.
@@ -167,3 +171,29 @@ Every run writes to `../processed/logs/`:
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star
    were my calls; confirm with the team.
 7. Aggregates are computed by the loader through the view; keep that in sync when reviews are written through the API. (HS)
+
+## Posters
+
+`clean-posters.ts` writes `title_posters.csv` (`title_id`, `poster_url`), and `load-postgres.ts` puts
+it in `Title.posterUrl`. The links are hotlinked, and only https is kept.
+
+- Movies: `MovieGenre_cleaned.csv` and `movielens_movies.csv`, matched on normalised name + release year.
+- TV shows: `tv_series_data_cleaned.csv` (name + start year), then the saved lookups.
+- Books: `books_data_cleaned.csv` (name + publication year), then the saved lookups.
+
+`fetch-posters.ts` asks TVmaze and Open Library about the TV shows and books the files miss, and
+saves the answers to `data/raw/lookup_posters.csv`. It needs the network, so it is not part of
+`clean-all`. Run `clean-all`, then `fetch-posters`, then `clean-all` again. It can be stopped and
+resumed. TVmaze matches need the same year; Open Library matches are on title only, so some covers
+can be another edition.
+
+A movie with no poster loads as `REJECTED`, which hides it, and is listed in
+`processed/logs/clean-posters.rejects.csv`. TV shows and books are never hidden. Every source is
+optional: with none in `data/raw/`, the step warns, writes an empty `title_posters.csv`, nothing is
+hidden, and every title keeps the gradient.
+
+## Media details
+
+`load-postgres.ts` fills `MovieDetails`, `TvDetails` and `BookDetails` from the detail columns in
+`movies.csv`, `tv_shows.csv` and `books.csv` (mapping in `lib/details.ts`). A title with no detail
+values gets no row. Book `price` is cleaned but not loaded: only 23% of books have one.

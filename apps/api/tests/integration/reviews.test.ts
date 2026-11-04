@@ -301,6 +301,7 @@ describe('GET /api/titles/:titleId/reviews/mine', () => {
     expect(prisma.review.findFirst.mock.calls[0]?.[0].where).toEqual({
       titleId: 't1',
       userId: 'u1',
+      title: { status: 'APPROVED' },
     });
   });
 
@@ -318,7 +319,7 @@ describe('PATCH /api/reviews/:id', () => {
     userId: 'u1',
     titleId: 't1',
     rating: 4,
-    title: { mediaType: 'MOVIE', createdById: null },
+    title: { mediaType: 'MOVIE', createdById: null, status: 'APPROVED' },
     ...over,
   });
   const patch = (body: unknown, cookie = as()) =>
@@ -396,7 +397,7 @@ describe('PATCH /api/reviews/:id', () => {
     await patch({ fields: { runtimeMinutes: 95 } });
     mongo.movieUpdate.mockClear();
     prisma.review.findUnique.mockResolvedValueOnce(
-      stored({ title: { mediaType: 'BOOK', createdById: null } }),
+      stored({ title: { mediaType: 'BOOK', createdById: null, status: 'APPROVED' } }),
     );
     await patch({ fields: {} });
 
@@ -460,9 +461,24 @@ describe('PATCH /api/reviews/:id', () => {
   it('still refuses the creator of the title', async () => {
     prisma.review.findUnique
       .mockReset()
-      .mockResolvedValue(stored({ title: { mediaType: 'MOVIE', createdById: 'u1' } }));
+      .mockResolvedValue(
+        stored({ title: { mediaType: 'MOVIE', createdById: 'u1', status: 'APPROVED' } }),
+      );
 
     expect((await patch({ rating: 2 })).status).toBe(403);
+  });
+
+  it('answers 404 for a review of a hidden title and changes nothing', async () => {
+    prisma.review.findUnique
+      .mockReset()
+      .mockResolvedValue(
+        stored({ title: { mediaType: 'MOVIE', createdById: null, status: 'REJECTED' } }),
+      );
+
+    const res = await patch({ rating: 1 });
+
+    expect(res.status).toBe(404);
+    expect(prisma.review.update).not.toHaveBeenCalled();
   });
 });
 

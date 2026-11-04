@@ -123,9 +123,12 @@ export async function listReviews(
   return { data: await withBodies(rows), page, pageSize, total };
 }
 
-/** The signed-in user's review of the title, or null. */
+/** The signed-in user's review of the title, or null. A hidden title counts as not reviewed. */
 export async function myReview(user: AuthUser, titleId: string): Promise<ReviewDTO | null> {
-  const row = await prisma.review.findFirst({ where: { titleId, userId: user.id }, include });
+  const row = await prisma.review.findFirst({
+    where: { titleId, userId: user.id, title: { status: 'APPROVED' } },
+    include,
+  });
   if (!row) return null;
   const [dto] = await withBodies([row]);
   return dto ?? null;
@@ -198,10 +201,11 @@ export async function updateReview(
       userId: true,
       titleId: true,
       rating: true,
-      title: { select: { mediaType: true, createdById: true } },
+      title: { select: { mediaType: true, createdById: true, status: true } },
     },
   });
-  if (!review) throw new HttpError(404, 'Review not found');
+  // A hidden title's reviews look absent, the same as everywhere else.
+  if (!review || review.title.status !== 'APPROVED') throw new HttpError(404, 'Review not found');
   if (review.userId !== user.id) throw new HttpError(403, 'You can only edit your own review');
   if (review.title.createdById === user.id) {
     throw new HttpError(403, 'You cannot review a title you created');

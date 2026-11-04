@@ -83,7 +83,7 @@ export async function setEntryStatus(
 ): Promise<ListItemDTO> {
   return prisma.$transaction(async (tx) => {
     const entry = await tx.listEntry.findFirst({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, title: { status: 'APPROVED' } },
       select: { id: true },
     });
     if (!entry) throw new HttpError(404, 'List entry not found');

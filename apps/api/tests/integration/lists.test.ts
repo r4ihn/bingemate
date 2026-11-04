@@ -284,7 +284,11 @@ describe('PATCH /api/me/lists/:id', () => {
     const res = await patch({ status: 'COMPLETED' }, as('u2'));
 
     expect(res.status).toBe(404);
-    expect(firstArgs(prisma.listEntry.findFirst).where).toEqual({ id: 'e1', userId: 'u2' });
+    expect(firstArgs(prisma.listEntry.findFirst).where).toEqual({
+      id: 'e1',
+      userId: 'u2',
+      title: { status: 'APPROVED' },
+    });
     expect(prisma.listEntry.update).not.toHaveBeenCalled();
   });
 

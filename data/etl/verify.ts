@@ -26,6 +26,7 @@ export function main(): void {
   const books = readProcessed('books.csv');
   const titles = [...movies, ...tv, ...books];
   const titleIds = new Set(titles.map((t) => t['title_id']));
+  const posters = readProcessed('title_posters.csv');
   const genres = readProcessed('genres.csv');
   const titleGenres = readProcessed('title_genres.csv');
   const people = readProcessed('people.csv');
@@ -63,6 +64,15 @@ export function main(): void {
       const y = Number(t['release_year']);
       return t['release_year'] === '' || (y >= 1000 && y <= new Date().getFullYear() + 1);
     }),
+  );
+
+  // Posters (hotlinked, so they must be https URLs on titles that exist)
+  check(
+    'every poster belongs to a title, once, with an https URL',
+    unique(posters, (p) => p['title_id'] ?? '') &&
+      posters.every(
+        (p) => titleIds.has(p['title_id']) && /^https:\/\/[^\s"]+$/.test(p['poster_url'] ?? ''),
+      ),
   );
 
   // Genres

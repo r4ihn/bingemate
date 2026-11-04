@@ -72,7 +72,7 @@ The website reads real data on `main` with `VITE_USE_MOCKS=false` (web) and `npm
   - [ ] The `users` module: every route needs a signed-in user. Auth is merged (PR #8), so this can start
 - [ ] Creator title endpoints: create (→ `PENDING`), edit/delete own; editing an `APPROVED` title resets it to `PENDING`; store `rejection_reason` on `titles`. The `rejectionReason` column exists; endpoints not started. **Hold until the Part A decision (§0)**, since the rules differ with and without approval. Deleting a title must also remove its MongoDB review bodies, replies and image (see §12)
 - [x] Title image endpoints (PR #11): `PUT`, `GET` and `DELETE /api/titles/:id/poster`. Only the creator who made the title or an admin can change it; 30 uploads per 15 minutes. The image URL carries `?v=<version>` taken from the stored document, so two uploads at once cannot leave the wrong version behind, and only a request for the current version is cached for a year
-- [ ] Where do runtime and publisher live? The cleaned data has `runtime_min` (movies), `duration` (TV), `publisher` and `price` (books), but no loader stores them, so the title page shows no runtime. Studio and country are not in the dataset at all, and the UI hides them when empty. Store them in MongoDB or drop them _(JW, HS)_
+- [~] Where do runtime and publisher live? In `MovieDetails`, `TvDetails` and `BookDetails` (PostgreSQL), one optional row per title, type enforced by a composite foreign key (`feat/title-details`, needs team sign-off). The title page shows runtime, seasons, rating and publisher. Book `price` is not stored (23% filled). Studio and country are not in the dataset, and the UI hides them when empty
 
 ## 3. Authentication & RBAC (RA, Week 7–8)
 

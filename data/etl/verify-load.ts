@@ -1,12 +1,14 @@
 import { RATING_MAX } from '@bingemate/shared/rating';
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, type Prisma } from '@prisma/client';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
 import { loadIdMap, lookup } from './id-mapping.js';
+import type { Row } from './lib/csv.js';
 import { undatedReviewDate } from './lib/dates.js';
 import { loadApiEnv } from './lib/env.js';
 import { readProcessed, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
+import { hasMoviePoster } from './lib/posters.js';
 
 /** Thrown inside the probe transaction to force a rollback when the UPDATE was (wrongly) accepted. */
 class RollbackProbe extends Error {}
@@ -70,6 +72,89 @@ export async function main(): Promise<void> {
         rejected = !(err instanceof RollbackProbe);
       }
       check(`CHECK constraint rejects rating ${RATING_MAX + 1}`, rejected);
+    }
+
+    // Details: one row for each title with any detail value, of the title's own type only.
+    const filled = (rows: Row[], columns: string[]): number =>
+      rows.filter((r) => columns.some((c) => (r[c] ?? '') !== '')).length;
+    const books = readProcessed('books.csv');
+    check(
+      'movie_details count matches',
+      (await prisma.movieDetails.count()) ===
+        filled(readProcessed('movies.csv'), [
+          'runtime_min',
+          'tagline',
+          'letterboxd_rating',
+          'rated',
+        ]),
+    );
+    check(
+      'tv_details count matches',
+      (await prisma.tvDetails.count()) ===
+        filled(readProcessed('tv_shows.csv'), [
+          'num_seasons',
+          'duration',
+          'metascore',
+          'userscore',
+          'content_rating',
+        ]),
+    );
+    check(
+      'book_details count matches',
+      (await prisma.bookDetails.count()) === filled(books, ['publisher', 'ratings_count']),
+    );
+    check(
+      'a ratings count of 0 is kept, not blanked',
+      (await prisma.bookDetails.count({ where: { ratingsCount: 0 } })) ===
+        books.filter((b) => b['ratings_count'] === '0').length,
+    );
+    const hiddenMovies = await prisma.title.count({
+      where: { mediaType: 'MOVIE', status: 'REJECTED' },
+    });
+    check(
+      'hidden movies keep their details',
+      hiddenMovies === 0 ||
+        (await prisma.movieDetails.count({ where: { title: { status: 'REJECTED' } } })) > 0,
+    );
+    check(
+      'no movie is hidden when there are no movie posters',
+      hiddenMovies === 0 ||
+        hasMoviePoster(
+          readProcessed('movies.csv'),
+          new Map(readProcessed('title_posters.csv').map((p) => [p['title_id'] ?? '', ''])),
+        ),
+    );
+    const aBook = await prisma.title.findFirst({
+      where: { mediaType: 'BOOK' },
+      select: { id: true },
+    });
+    const refused = async (run: (tx: Prisma.TransactionClient) => Promise<unknown>) => {
+      try {
+        await prisma.$transaction(async (tx) => {
+          await run(tx);
+          throw new RollbackProbe();
+        });
+        return false;
+      } catch (err) {
+        return !(err instanceof RollbackProbe);
+      }
+    };
+    if (aBook === null) {
+      check('there is a book to probe the details type with', false);
+    } else {
+      check(
+        "a book's id is refused in MovieDetails",
+        await refused(
+          (tx) => tx.$executeRaw`INSERT INTO "MovieDetails" ("titleId") VALUES (${aBook.id})`,
+        ),
+      );
+      check(
+        'MovieDetails refuses mediaType BOOK',
+        await refused(
+          (tx) =>
+            tx.$executeRaw`INSERT INTO "MovieDetails" ("titleId", "mediaType") VALUES (${aBook.id}, 'BOOK')`,
+        ),
+      );
     }
 
     // Same review ids in both stores.
