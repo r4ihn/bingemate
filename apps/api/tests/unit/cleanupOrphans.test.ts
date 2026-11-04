@@ -1,20 +1,24 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { prisma, bodies, replies } = vi.hoisted(() => ({
-  prisma: { review: { findMany: vi.fn() } },
+const { prisma, bodies, replies, posters } = vi.hoisted(() => ({
+  prisma: { review: { findMany: vi.fn() }, title: { findMany: vi.fn() } },
   bodies: { find: vi.fn(), deleteMany: vi.fn() },
   replies: { find: vi.fn(), deleteMany: vi.fn() },
+  posters: { find: vi.fn(), deleteMany: vi.fn() },
 }));
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
 vi.mock('../../src/mongo/models/reviewBody.model.js', () => ({ ReviewBody: bodies }));
 vi.mock('../../src/mongo/models/reply.model.js', () => ({ Reply: replies }));
+vi.mock('../../src/mongo/models/titlePoster.model.js', () => ({ TitlePoster: posters }));
 
 const { cleanupOrphans } = await import('../../src/jobs/cleanupOrphans.js');
 
 type Doc = { _id: string; reviewId?: string };
 let bodyDocs: Doc[];
 let replyDocs: Doc[];
+let posterDocs: Doc[];
 let liveIds: Set<string>;
+let liveTitleIds: Set<string>;
 
 /** Stateful stores: enforce bounded, projected, ordered reads and really remove deleted rows. */
 function stubStore(model: typeof bodies, docs: () => Doc[], field: '_id' | 'reviewId') {
@@ -62,9 +66,16 @@ beforeEach(() => {
   vi.resetAllMocks();
   bodyDocs = [];
   replyDocs = [];
+  posterDocs = [];
   liveIds = new Set();
+  liveTitleIds = new Set();
   stubStore(bodies, () => bodyDocs, '_id');
   stubStore(replies, () => replyDocs, 'reviewId');
+  stubStore(posters, () => posterDocs, '_id');
+  prisma.title.findMany.mockImplementation(
+    async ({ where }: { where: { id: { in: string[] } } }) =>
+      where.id.in.filter((id) => liveTitleIds.has(id)).map((id) => ({ id })),
+  );
   prisma.review.findMany.mockImplementation(
     async ({ where, select }: { where: { id: { in: string[] } }; select: unknown }) => {
       expect(select).toEqual({ id: true });
@@ -82,10 +93,10 @@ describe('cleanupOrphans', () => {
     bodyDocs = [{ _id: 'gone' }, { _id: 'live' }];
     liveIds.add('live');
 
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 1, replies: 0 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 1, replies: 0, posters: 0 });
     expect(bodyDocs).toEqual([{ _id: 'live' }]);
     expect(bodies.deleteMany).toHaveBeenCalledWith({ _id: { $in: ['gone'] } });
-    expect(console.info).toHaveBeenCalledWith('Orphans cleaned: 1 review bodies, 0 replies');
+    expect(console.info).toHaveBeenCalledWith('Orphans cleaned: 1 review bodies, 0 replies, 0 posters');
   });
 
   it('removes all replies for a missing review and keeps replies for live reviews', async () => {
@@ -96,7 +107,7 @@ describe('cleanupOrphans', () => {
     ];
     liveIds.add('live');
 
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 2 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 2, posters: 0 });
     expect(replyDocs).toEqual([{ _id: 'c', reviewId: 'live' }]);
     expect(prisma.review.findMany).toHaveBeenCalledWith({
       where: { id: { in: ['gone', 'live'] } },
@@ -110,7 +121,7 @@ describe('cleanupOrphans', () => {
     bodyDocs = ids.map((_id) => ({ _id })).reverse();
     replyDocs = ids.map((_id) => ({ _id, reviewId: _id })).reverse();
 
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 2500, replies: 2500 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 2500, replies: 2500, posters: 0 });
     expect(prisma.review.findMany.mock.calls.map(([query]) => query.where.id.in)).toEqual([
       ids.slice(0, 1000),
       ids.slice(1000, 2000),
@@ -137,8 +148,8 @@ describe('cleanupOrphans', () => {
     ];
     liveIds.add('live');
 
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 1, replies: 1 });
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 1, replies: 1, posters: 0 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0, posters: 0 });
     expect(bodies.deleteMany).toHaveBeenCalledTimes(1);
     expect(replies.deleteMany).toHaveBeenCalledTimes(1);
   });
@@ -178,15 +189,22 @@ describe('cleanupOrphans', () => {
     replyDocs = [{ _id: 'a', reviewId: 'live' }];
     liveIds.add('live');
 
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0, posters: 0 });
     expect(bodies.deleteMany).not.toHaveBeenCalled();
     expect(replies.deleteMany).not.toHaveBeenCalled();
   });
 
   it('does not query Prisma or delete anything for empty collections', async () => {
-    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0 });
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0, posters: 0 });
     expect(prisma.review.findMany).not.toHaveBeenCalled();
     expect(bodies.deleteMany).not.toHaveBeenCalled();
     expect(replies.deleteMany).not.toHaveBeenCalled();
+  });
+
+  it('removes images whose title is gone and keeps the rest', async () => {
+    liveTitleIds = new Set(['t-live']);
+    posterDocs = [{ _id: 't-gone' }, { _id: 't-live' }];
+    await expect(cleanupOrphans()).resolves.toEqual({ reviewBodies: 0, replies: 0, posters: 1 });
+    expect(posterDocs).toEqual([{ _id: 't-live' }]);
   });
 });
