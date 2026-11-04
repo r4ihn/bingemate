@@ -6,15 +6,27 @@ interface JwtPayload {
   sub: string;
   email: string;
   role: Role;
+  username?: string | null;
 }
 
 export function signToken(user: AuthUser): string {
   const payload: JwtPayload = { sub: user.id, email: user.email, role: user.role };
+  if (user.username !== undefined) {
+    payload.username = user.username;
+  }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return jwt.sign(payload, env.JWT_SECRET, { expiresIn: env.JWT_EXPIRES_IN as any });
 }
 
 export function verifyToken(token: string): AuthUser {
   const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
-  return { id: decoded.sub, email: decoded.email, role: decoded.role };
+
+  return {
+    id: decoded.sub,
+    email: decoded.email,
+    role: decoded.role,
+    ...(decoded.username !== undefined
+      ? { username: decoded.username }
+      : {}),
+  };
 }

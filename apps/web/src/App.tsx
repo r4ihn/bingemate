@@ -9,6 +9,7 @@ import { TitleDetail } from './pages/TitleDetail.js';
 import { Login } from './pages/Login.js';
 import { Register } from './pages/Register.js';
 import { MyLists } from './pages/MyLists.js';
+import { Profile } from './pages/Profile.js';
 import { Forbidden } from './pages/Forbidden.js';
 import { NotFound } from './pages/NotFound.js';
 import { CreatorDashboard } from './pages/creator/CreatorDashboard.js';
@@ -34,6 +35,7 @@ export function App() {
 
             <Route element={<ProtectedRoute />}>
               <Route path="me/lists" element={<MyLists />} />
+              <Route path="me/profile" element={<Profile />} />
             </Route>
             <Route element={<ProtectedRoute roles={[Role.CREATOR, Role.ADMIN]} />}>
               <Route path="creator">

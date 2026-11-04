@@ -20,7 +20,10 @@ const PERSON = 'M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3
 /** Links shown for this user. Hiding is UX only; the API enforces roles. */
 function navLinks(user: AuthUser | null) {
   const links = [{ to: '/browse', label: 'Browse' }];
-  if (user) links.push({ to: '/me/lists', label: 'My Lists' });
+  if (user) {
+    links.push({ to: '/me/lists', label: 'My Lists' });
+    links.push({ to: '/me/profile', label: 'Profile' });
+  }
   if (user && (user.role === Role.CREATOR || user.role === Role.ADMIN)) {
     links.push({ to: '/creator', label: 'Creator' });
   }

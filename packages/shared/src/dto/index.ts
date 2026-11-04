@@ -6,6 +6,7 @@ export interface AuthUser {
   id: string;
   email: string;
   role: Role;
+  username?: string | null;
 }
 
 export interface RegisterRequest {
@@ -61,6 +62,7 @@ export interface AuthorDTO {
   id: string;
   name: string;
   role: Role;
+  username?: string | null;
 }
 
 /** Media-specific extras on a review; a title's media type decides which ones apply. */
@@ -123,4 +125,19 @@ export interface TrendingCardDTO {
   avgRating: number;
   reviewCount: number;
   score: number;
+}
+
+/** The signed-in user's own account page. The email is private to its owner, so only this DTO adds it to a sign-in. */
+export interface ProfileDTO extends AuthUser {
+  username: string | null;
+  createdAt: string;
+}
+
+export interface UpdateUsernameRequest {
+  username: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
 }

@@ -9,10 +9,12 @@ import type { ReactNode } from 'react';
 export function Field({
   label,
   error,
+  hint,
   children,
 }: {
   label: string;
   error?: string;
+  hint?: string;
   children: ReactNode;
 }) {
   const errorId = useId();
@@ -27,6 +29,7 @@ export function Field({
         <span>{label}</span>
         {control}
       </label>
+      {hint && <p className="text-xs text-muted">{hint}</p>}
       {error && (
         <p id={errorId} role="alert" className="text-sm text-danger">
           {error}
