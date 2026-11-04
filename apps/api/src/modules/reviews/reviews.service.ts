@@ -27,7 +27,7 @@ type ReviewRow = Prisma.ReviewGetPayload<{
 }>;
 
 /** Joins the PostgreSQL rows with their MongoDB bodies. A body that is missing reads as empty text. */
-async function withBodies(rows: ReviewRow[]): Promise<ReviewDTO[]> {
+export async function withBodies(rows: ReviewRow[]): Promise<ReviewDTO[]> {
   if (rows.length === 0) return [];
   const docs = (await ReviewBody.find({
     _id: { $in: rows.map((r) => r.id) },
