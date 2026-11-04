@@ -42,7 +42,7 @@ npm run dev:web      # http://localhost:5173
 Demo accounts (password `Password123!`): `admin@bingemate.dev`, `creator@bingemate.dev`, `consumer@bingemate.dev`.
 The seed usernames are **BingeMate Admin** (admin), **Demo Maker** and **Demo Viewer**. `creator@bingemate.dev` and `consumer@bingemate.dev` are ordinary members; their email names are historical. Loaded dataset accounts keep their usernames: `admin` and `demo_creator`, respectively for `admin@bingemate.dev` and `creator@bingemate.dev`.
 
-To use the full dataset instead of the demo seed, run `npx tsx data/etl/clean-all.ts` and then `npx tsx data/etl/load-all.ts --reset` (see `data/etl/README.md`). The `--reset` is needed the first time because step 4 already seeded the demo data, and the load replaces it.
+The cleaned full dataset is included in `data/processed/`. To use it instead of the demo seed, run `npx tsx data/etl/load-all.ts --reset`, then `npx tsx data/etl/verify-load.ts` (see `data/etl/README.md`). No cleaning step is required. The `--reset` replaces existing database data, including the demo data seeded by step 4.
 
 After the dataset load (`data/etl/load-all.ts`) there is no `consumer@bingemate.dev`; any imported user works instead, for example `user4@seed.bingemate.local`.
 

@@ -1,7 +1,9 @@
 # ETL (TASKS.md section 2, JW + HS)
 
-Cleaning scripts for the dev dataset. Raw inputs go in `../raw/`, cleaned outputs and logs in
-`../processed/` (both gitignored).
+Cleaning scripts for the dev dataset. Raw inputs in `../raw/` and cleaned CSV/JSONL datasets in
+`../processed/` are committed to Git. Logs and the load-specific `id-map.json` stay gitignored.
+Group members can load the committed cleaned dataset directly; cleaning is only needed when
+updating the inputs or cleaning rules.
 
 ```
 npx tsx data/etl/clean-all.ts      # run every step in order, then verify.ts
@@ -13,13 +15,12 @@ To load the cleaned data (Docker running, `apps/api/.env` copied from `.env.exam
 ```
 docker compose up -d
 npm run prisma:migrate                           # tables, CHECK constraint, views
-npx tsx data/etl/clean-all.ts                    # data/raw -> data/processed
 npx tsx data/etl/load-all.ts --reset             # both stores in order; --reset is needed on a new database (see below)
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
 
-Ids change on every load, so rebuild the trending cards afterwards, from `apps/api`:
-`npx tsx src/jobs/refreshTrending.ts`.
+Ids change on every load, so rebuild the trending cards afterwards, from the repo root:
+`npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`.
 
 Ids are random per run and the Mongo bodies are keyed by the PostgreSQL review ids, so always load (and
 `--reset`) both stores together with `load-all.ts`. Running `load-postgres.ts --reset` alone orphans the Mongo bodies until
