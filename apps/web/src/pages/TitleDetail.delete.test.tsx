@@ -48,7 +48,6 @@ describe('delete controls', () => {
       author: me,
       rating: 4,
       body: 'My own take',
-      fields: { runtimeMinutes: 100 },
       createdAt: new Date().toISOString(),
     });
     renderTitle('mock-20', Role.CONSUMER);

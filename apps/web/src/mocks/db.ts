@@ -1,7 +1,7 @@
 import { ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { AdminUser } from '../types/admin.js';
 import type { ListItem } from '../types/list.js';
-import type { Author, Reply, Review, ReviewFields } from '../types/review.js';
+import type { Author, Reply, Review } from '../types/review.js';
 import type { TitleDetail } from '../types/title.js';
 import { mockTitles } from './titles.js';
 
@@ -85,12 +85,6 @@ const AUTHORS: Author[] = [
   { id: 'u-dev', name: 'dev_k', role: Role.CONSUMER },
 ];
 
-function fieldsFor(mediaType: MediaType, n: number): ReviewFields {
-  if (mediaType === MediaType.BOOK) return { chapters: 10 + n };
-  if (mediaType === MediaType.TV_SHOW) return { season: 1 + (n % 3), episodes: 6 + n };
-  return { runtimeMinutes: 90 + n * 5 };
-}
-
 function seedTitles(): StoredTitle[] {
   const base: StoredTitle[] = mockTitles.map((t) => ({
     ...t,
@@ -136,17 +130,15 @@ function seedTitles(): StoredTitle[] {
   return all;
 }
 
-function seedReviews(titles: StoredTitle[]): Review[] {
+function seedReviews(): Review[] {
   const counts: Record<string, number> = { 'mock-1': 7, 'mock-2': 3, 'mock-3': 1, 'mock-24': 2 };
   return Object.entries(counts).flatMap(([titleId, n]) => {
-    const mediaType = titles.find((t) => t.id === titleId)?.mediaType ?? MediaType.MOVIE;
     return Array.from({ length: n }, (_, i): Review => ({
       id: `r-${titleId}-${i}`,
       titleId,
       author: AUTHORS[i % AUTHORS.length] as Author,
       rating: 3 + (i % 3),
       body: `Placeholder review ${i + 1}. Pacing, performances and ending all get a mention here.`,
-      fields: fieldsFor(mediaType, i),
       createdAt: new Date(Date.UTC(2026, 9, 17 - i)).toISOString(),
     }));
   });
@@ -190,7 +182,7 @@ function seed(): Db {
   const titles = seedTitles();
   return {
     titles,
-    reviews: seedReviews(titles),
+    reviews: seedReviews(),
     replies: seedReplies(),
     lists: seedLists(titles),
     users: seedUsers(),

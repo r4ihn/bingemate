@@ -8,17 +8,13 @@ import { reviewsApi } from '../../api/reviews.js';
 import { useAuth } from '../../auth/AuthContext.js';
 import { useCanWrite } from '../../auth/useCanWrite.js';
 import { useAsync } from '../../hooks/useAsync.js';
-import type { Review, ReviewFields } from '../../types/review.js';
+import type { Review } from '../../types/review.js';
 import { Button } from '../ui/Button.js';
 import { Field } from '../ui/Field.js';
 import { Panel } from '../ui/Panel.js';
 import { inputClass } from '../ui/inputClass.js';
 import { RATING_MAX, RATING_MIN } from '../../rating.js';
-import { fieldConfig } from './fieldConfig.js';
 import { StarRating, StarsDisplay } from './StarRating.js';
-
-const WHOLE = /^\d+$/;
-const whole = (v: string): number | null => (WHOLE.test(v.trim()) ? Number(v.trim()) : null);
 
 function LoginPrompt() {
   const location = useLocation();
@@ -55,12 +51,8 @@ function Form({
   onCancel?: () => void;
 }) {
   const location = useLocation();
-  const config = fieldConfig[title.mediaType];
   const [rating, setRating] = useState(existing?.rating ?? 0);
   const [body, setBody] = useState(existing?.body ?? '');
-  const [media, setMedia] = useState<Record<string, string>>(() =>
-    Object.fromEntries(Object.entries(existing?.fields ?? {}).map(([k, v]) => [k, String(v)])),
-  );
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitError, setSubmitError] = useState<'session' | string | null>(null);
   const [pending, setPending] = useState(false);
@@ -81,12 +73,6 @@ function Form({
       found.rating = `Choose a rating from ${RATING_MIN} to ${RATING_MAX} stars`;
     }
     if (!body.trim()) found.body = 'Write something about this title before posting';
-    for (const f of config) {
-      if (f.optional && !(media[f.name] ?? '').trim()) continue;
-      const n = whole(media[f.name] ?? '');
-      if (n === null || n < (f.min ?? 0))
-        found[f.name] = `${f.label}: enter a whole number, ${f.min ?? 0} or more`;
-    }
     setErrors(found);
     setSubmitError(null);
     if (Object.keys(found).length > 0) return;
@@ -94,17 +80,13 @@ function Form({
     inFlight.current = true;
     setPending(true);
     try {
-      const fields = Object.fromEntries(
-        config.filter((f) => !f.optional || (media[f.name] ?? '').trim()).map((f) => [f.name, Number(media[f.name])]),
-      ) as unknown as ReviewFields;
-      const input = { rating, body: body.trim(), fields };
+      const input = { rating, body: body.trim() };
       const review = existing
         ? await reviewsApi.update(existing.id, input)
         : await reviewsApi.create(title.id, input);
       if (!existing) {
         setRating(0);
         setBody('');
-        setMedia({});
       }
       onSubmitted(review);
     } catch (err) {
@@ -128,18 +110,6 @@ function Form({
       </h3>
       <form onSubmit={(e) => void onSubmit(e)} noValidate className="mt-4 grid gap-4">
         <StarRating value={rating} onChange={setRating} error={errors.rating} />
-        {config.map((f) => (
-          <Field key={f.name} label={f.label} error={errors[f.name]}>
-            <input
-              inputMode="numeric"
-              value={media[f.name] ?? ''}
-              onChange={(e) =>
-                setMedia((m) => ({ ...m, [f.name]: e.target.value.replace(/\D/g, '') }))
-              }
-              className={inputClass}
-            />
-          </Field>
-        ))}
         <Field label="Your review" error={errors.body}>
           <textarea
             rows={4}

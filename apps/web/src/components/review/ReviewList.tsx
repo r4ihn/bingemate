@@ -4,7 +4,7 @@ import { useAuth } from '../../auth/AuthContext.js';
 import { canDelete } from '../../auth/permissions.js';
 import { reviewsApi } from '../../api/reviews.js';
 import { useAsync } from '../../hooks/useAsync.js';
-import type { NoFields, Review, ReviewFields } from '../../types/review.js';
+import type { Review } from '../../types/review.js';
 import { ConfirmDialog } from '../ConfirmDialog.js';
 import { Pagination } from '../Pagination.js';
 import { StateMessage } from '../StateMessage.js';
@@ -15,19 +15,6 @@ import { ReplyThread } from './ReplyThread.js';
 import { ReviewText } from './ReviewText.js';
 import { StarsDisplay } from './StarRating.js';
 
-function describeFields(fields: ReviewFields | NoFields | undefined): string {
-  if (!fields) return '';
-  if ('runtimeMinutes' in fields) return `Watched ${fields.runtimeMinutes} min`;
-  if ('chapters' in fields) return `Read ${fields.chapters} chapters`;
-  if ('season' in fields || 'episodes' in fields) {
-    return [
-      fields.season !== undefined ? `Season ${fields.season}` : '',
-      fields.episodes !== undefined ? `${fields.episodes} episodes` : '',
-    ].filter(Boolean).join(', ');
-  }
-  return '';
-}
-
 function ReviewCard({
   review,
   title,
@@ -36,7 +23,7 @@ function ReviewCard({
   onEdited,
 }: {
   review: Review;
-  /** Needed to edit in place (its media type picks the fields); without it there is no Edit button. */
+  /** Needed to edit in place; without it there is no Edit button. */
   title?: TitleSummary;
   titleOwnerId: string | null;
   onDeleted: () => void;
@@ -48,7 +35,6 @@ function ReviewCard({
   const [editing, setEditing] = useState(false);
   const editButton = useRef<HTMLButtonElement>(null);
   const wasEditing = useRef(false);
-  const detail = describeFields(review.fields);
   const mine = user?.id === review.author.id;
   const canEdit = mine && title !== undefined;
   const canRemove = canDelete(user, review.author.id);
@@ -127,7 +113,6 @@ function ReviewCard({
       ) : (
         <>
           <ReviewText text={review.body} className="mt-3" />
-          {detail && <p className="mt-2 text-sm text-muted">{detail}</p>}
           {deleteError && (
             <p role="alert" className="mt-2 text-sm text-danger">
               {deleteError}

@@ -2,12 +2,11 @@ import { resolvePosterUrl } from './posterUrl.js';
 import type {
   ReplyDTO,
   ReviewDTO,
-  ReviewFieldsDTO,
   TitleDetailDTO,
   TitleDetailsDTO,
   TitleSummary,
 } from '@bingemate/shared';
-import type { NoFields, Reply, Review, ReviewFields } from '../types/review.js';
+import type { Reply, Review } from '../types/review.js';
 import type { TitleDetail } from '../types/title.js';
 
 /** The list endpoint returns summaries only: no description or year, so synopsis stays empty. */
@@ -56,19 +55,6 @@ export function detailToTitle(d: TitleDetailDTO): TitleDetail {
   };
 }
 
-/** Preserve whichever optional media fields the API returned. */
-export function mapReviewFields(f: ReviewFieldsDTO): ReviewFields | NoFields {
-  if (f.runtimeMinutes !== undefined) return { runtimeMinutes: f.runtimeMinutes };
-  if (f.chapters !== undefined) return { chapters: f.chapters };
-  if (f.season !== undefined || f.episodes !== undefined) {
-    return {
-      ...(f.season !== undefined && { season: f.season }),
-      ...(f.episodes !== undefined && { episodes: f.episodes }),
-    };
-  }
-  return {};
-}
-
 export function mapReview(r: ReviewDTO): Review {
   return {
     id: r.id,
@@ -76,7 +62,6 @@ export function mapReview(r: ReviewDTO): Review {
     author: { id: r.author.id, name: r.author.name, role: r.author.role },
     rating: r.rating,
     body: r.body,
-    fields: mapReviewFields(r.fields ?? {}),
     createdAt: r.createdAt,
   };
 }

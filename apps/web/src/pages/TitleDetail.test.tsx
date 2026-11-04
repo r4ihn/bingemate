@@ -101,7 +101,6 @@ describe('TitleDetail', () => {
     const u = userEvent.setup();
     await rate(u, 5);
     await u.type(screen.getByLabelText('Your review'), 'A fresh take');
-    await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
     await u.click(screen.getByRole('button', { name: 'Post review' }));
     expect(await screen.findByText('A fresh take')).toBeInTheDocument();
     expect(screen.queryByText('No reviews yet')).not.toBeInTheDocument();
@@ -123,7 +122,6 @@ describe('TitleDetail when the reviews change', () => {
     author: { id: 'test-user', name: 'You', role: Role.CONSUMER },
     rating: 4,
     body: 'My own take',
-    fields: { runtimeMinutes: 100 },
     createdAt: new Date().toISOString(),
   });
 
@@ -136,7 +134,6 @@ describe('TitleDetail when the reviews change', () => {
     const u = userEvent.setup();
     await rate(u, 5);
     await u.type(screen.getByLabelText('Your review'), 'A fresh take');
-    await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
     await u.click(screen.getByRole('button', { name: 'Post review' }));
     await screen.findByText('A fresh take');
     await waitFor(() => expect(countText()).toBe('5 reviews'));
@@ -149,7 +146,6 @@ describe('TitleDetail when the reviews change', () => {
     const u = userEvent.setup();
     await rate(u, 5);
     await u.type(screen.getByLabelText('Your review'), 'A fresh take');
-    await u.type(screen.getByLabelText(/^(Runtime|Chapters|Season)/), '3');
     await u.click(screen.getByRole('button', { name: 'Post review' }));
     expect(await screen.findByText(/You have already reviewed this title/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();

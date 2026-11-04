@@ -14,5 +14,5 @@ Notes
 
 - The relational and MongoDB files are "anyone with the link can edit". Treat the links as team-only.
 - Not drawn yet: the four SQL views (`title_rating_stats`, `genre_filter_options`, `trending_titles`, `creator_title_stats`).
-- The MongoDB diagram still lists `runtimeMinutes`, `chaptersRead`, `season`, `episodes`; they exist in the model but the dataset fills `details` instead.
+- The MongoDB diagram was updated on 2026-11-02: a review body is text plus the dataset's extras in `details`, with no media-specific form fields.
 - Eraser's AI edit ran out of free credits on 2026-10-27; edits were made by writing the DSL directly.

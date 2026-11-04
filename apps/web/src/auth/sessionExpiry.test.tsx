@@ -59,7 +59,6 @@ describe('a 401 while posting (real session-clearing path)', () => {
     const u = userEvent.setup();
     await screen.findByRole('radio', { name: '4 stars' });
     await rate(u, 4);
-    await u.type(screen.getByLabelText('Runtime watched (minutes)'), '100');
     await u.type(screen.getByLabelText('Your review'), 'Worth the wait');
     await u.click(screen.getByRole('button', { name: 'Post review' }));
 
@@ -94,7 +93,6 @@ describe('after the session has expired', () => {
     const u = userEvent.setup();
     await screen.findByRole('radio', { name: '4 stars' });
     await rate(u, 4);
-    await u.type(screen.getByLabelText('Runtime watched (minutes)'), '100');
     await u.type(screen.getByLabelText('Your review'), 'Worth the wait');
     await u.click(screen.getByRole('button', { name: 'Post review' }));
     await screen.findByRole('alert');

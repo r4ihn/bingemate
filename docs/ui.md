@@ -128,7 +128,7 @@ Same tokens, same pill and dock language. Proposed:
 | Title detail | The reference hero, then reviews and comments in `--surface` panels below |
 | Login / Register | Centred panel on `--bg`, pill-radius inputs and a yellow primary button |
 | My Lists | Pill tabs (Completed, In progress, Plan to) with a poster grid |
-| Review form | Panel with a rating control and media-specific fields (movie, book, TV) |
+| Review form | Panel with a star rating control and a text box, the same for every media type |
 | Creator | Table of submissions with status badges (Pending, Approved, Rejected) |
 | Admin | Tables for users and the approval queue, using the same badge styles |
 | Forbidden / 404 | Giant ghost text (`403`, `404`) in the style of the surname word |

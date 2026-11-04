@@ -2,15 +2,10 @@ import { assertCanWrite } from '../../utils/assertCanWrite.js';
 import { toSkipTake } from '../../utils/pagination.js';
 import type { Prisma } from '@prisma/client';
 import { Role } from '@bingemate/shared';
-import type { AuthUser, MediaType, Paginated, ReviewDTO, ReviewFieldsDTO } from '@bingemate/shared';
+import type { AuthUser, Paginated, ReviewDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
-import {
-  BookReviewBody,
-  MovieReviewBody,
-  ReviewBody,
-  TvShowReviewBody,
-} from '../../mongo/models/reviewBody.model.js';
+import { ReviewBody } from '../../mongo/models/reviewBody.model.js';
 import { Reply } from '../../mongo/models/reply.model.js';
 import { authorSelect, toAuthor } from '../../utils/author.js';
 import { lockTitle, recomputeTitleRating } from './rating.js';
@@ -22,47 +17,10 @@ import type { CreateReviewInput, UpdateReviewInput } from './reviews.schema.js';
  * does PostgreSQL first, then MongoDB, and undoes the PostgreSQL part if MongoDB fails.
  */
 
-type BodyModel = typeof ReviewBody;
-const BODY_MODEL: Record<MediaType, BodyModel> = {
-  MOVIE: MovieReviewBody as unknown as BodyModel,
-  BOOK: BookReviewBody as unknown as BodyModel,
-  TV_SHOW: TvShowReviewBody as unknown as BodyModel,
-};
-
-/** API field name -> the name in MongoDB, for the fields each media type takes. */
-const FIELD_KEYS: Record<MediaType, [keyof ReviewFieldsDTO, string][]> = {
-  MOVIE: [['runtimeMinutes', 'runtimeMinutes']],
-  BOOK: [['chapters', 'chaptersRead']],
-  TV_SHOW: [
-    ['season', 'season'],
-    ['episodes', 'episodes'],
-  ],
-};
-
 const failed = (what: string) =>
   new HttpError(502, `Could not ${what} the review. Nothing was changed, please try again.`);
 
 
-
-/** Keeps only the fields this media type takes, under their MongoDB names. */
-function mongoFields(type: MediaType, fields: ReviewFieldsDTO = {}): Record<string, number> {
-  const out: Record<string, number> = {};
-  for (const [apiKey, mongoKey] of FIELD_KEYS[type]) {
-    const value = fields[apiKey];
-    if (value !== undefined) out[mongoKey] = value;
-  }
-  return out;
-}
-
-function apiFields(doc: Record<string, unknown> | undefined): ReviewFieldsDTO {
-  const out: ReviewFieldsDTO = {};
-  if (!doc) return out;
-  if (typeof doc['runtimeMinutes'] === 'number') out.runtimeMinutes = doc['runtimeMinutes'];
-  if (typeof doc['chaptersRead'] === 'number') out.chapters = doc['chaptersRead'];
-  if (typeof doc['season'] === 'number') out.season = doc['season'];
-  if (typeof doc['episodes'] === 'number') out.episodes = doc['episodes'];
-  return out;
-}
 
 type ReviewRow = Prisma.ReviewGetPayload<{
   include: { user: { select: typeof authorSelect } };
@@ -83,7 +41,6 @@ async function withBodies(rows: ReviewRow[]): Promise<ReviewDTO[]> {
       author: toAuthor(r.user),
       rating: r.rating,
       body: doc?.body ?? '',
-      fields: apiFields(doc),
       createdAt: r.createdAt.toISOString(),
     };
   });
@@ -167,12 +124,12 @@ export async function createReview(
 
   // 2. MongoDB: the body. If it fails, take the header row back out.
   try {
-    await BODY_MODEL[title.mediaType].create({
+    await ReviewBody.create({
       _id: review.id,
       titleId,
       userId: user.id,
+      mediaType: title.mediaType,
       body: input.body,
-      ...mongoFields(title.mediaType, input.fields),
     });
   } catch (err) {
     console.error('Review body write failed, removing the header row:', err);
@@ -233,27 +190,9 @@ export async function updateReview(
       if (count > 0) await recomputeTitleRating(tx, review.titleId);
     });
 
-  if (input.body !== undefined || input.fields !== undefined) {
-    const type = review.title.mediaType;
-    const $set: Record<string, unknown> = {};
-    const $unset: Record<string, ''> = {};
-    if (input.body !== undefined) $set['body'] = input.body;
-    if (input.fields !== undefined) {
-      // The form sends the whole set, so a field left out is cleared.
-      const given = mongoFields(type, input.fields);
-      for (const [, mongoKey] of FIELD_KEYS[type]) {
-        if (mongoKey in given) $set[mongoKey] = given[mongoKey];
-        else $unset[mongoKey] = '';
-      }
-    }
+  if (input.body !== undefined) {
     try {
-      const result = await BODY_MODEL[type].updateOne(
-        { _id: id },
-        {
-          ...(Object.keys($set).length ? { $set } : {}),
-          ...(Object.keys($unset).length ? { $unset } : {}),
-        },
-      );
+      const result = await ReviewBody.updateOne({ _id: id }, { $set: { body: input.body } });
       // A review whose body is missing would otherwise answer 200 and lose the edit without a trace.
       if (result.matchedCount === 0) throw new Error(`review ${id} has no body in MongoDB`);
     } catch (err) {

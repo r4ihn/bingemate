@@ -83,21 +83,12 @@ export interface AuthorDTO {
   role: Role;
 }
 
-/** Media-specific extras on a review; a title's media type decides which ones apply. */
-export interface ReviewFieldsDTO {
-  runtimeMinutes?: number;
-  chapters?: number;
-  season?: number;
-  episodes?: number;
-}
-
 export interface ReviewDTO {
   id: string;
   titleId: string;
   author: AuthorDTO;
   rating: number;
   body: string;
-  fields: ReviewFieldsDTO;
   createdAt: string;
 }
 

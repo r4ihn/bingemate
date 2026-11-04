@@ -1,7 +1,7 @@
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { ReplyDTO, ReviewDTO, TitleDetailDTO, TitleSummary } from '@bingemate/shared';
 import { describe, expect, it } from 'vitest';
-import { detailToTitle, mapReply, mapReview, mapReviewFields, summaryToTitle } from './mappers.js';
+import { detailToTitle, mapReply, mapReview, summaryToTitle } from './mappers.js';
 
 const summary: TitleSummary = {
   id: 't1',
@@ -117,28 +117,6 @@ describe('detailToTitle', () => {
   });
 });
 
-describe('mapReviewFields', () => {
-  it('maps movie fields', () => {
-    expect(mapReviewFields({ runtimeMinutes: 120 })).toEqual({ runtimeMinutes: 120 });
-  });
-  it('maps book fields', () => {
-    expect(mapReviewFields({ chapters: 12 })).toEqual({ chapters: 12 });
-  });
-  it('maps TV fields', () => {
-    expect(mapReviewFields({ season: 2, episodes: 8 })).toEqual({ season: 2, episodes: 8 });
-  });
-  it('maps an empty object to an empty object', () => {
-    expect(mapReviewFields({})).toEqual({});
-  });
-  it('preserves partial TV fields', () => {
-    expect(mapReviewFields({ season: 2 })).toEqual({ season: 2 });
-    expect(mapReviewFields({ episodes: 8 })).toEqual({ episodes: 8 });
-  });
-  it('keeps a zero value', () => {
-    expect(mapReviewFields({ runtimeMinutes: 0 })).toEqual({ runtimeMinutes: 0 });
-  });
-});
-
 const author = { id: 'u1', name: 'Ann', role: Role.CREATOR };
 
 describe('mapReview', () => {
@@ -148,7 +126,6 @@ describe('mapReview', () => {
     author,
     rating: 4,
     body: 'Good',
-    fields: { runtimeMinutes: 90 },
     createdAt: '2026-01-01T00:00:00.000Z',
   };
   it('maps every field', () => {
@@ -156,9 +133,6 @@ describe('mapReview', () => {
   });
   it('copies the author rather than sharing it', () => {
     expect(mapReview(dto).author).not.toBe(dto.author);
-  });
-  it('handles empty fields', () => {
-    expect(mapReview({ ...dto, fields: {} }).fields).toEqual({});
   });
 });
 
