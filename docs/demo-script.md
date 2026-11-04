@@ -1,13 +1,13 @@
 # Demo script (10 minutes, all five members speak)
 
-Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member has a timed segment. Rehearse it at least twice with a stopwatch: the creator, admin and reader click paths were run in a real browser on 3 Nov (`docs/manual-test-checklist.md`, 23 of 23 steps), but a scripted run is not a rehearsal: practise the timing and the handovers by hand.
+Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member has a timed segment. Rehearse it at least twice with a stopwatch: the member submission, admin and member reading click paths were run in a real browser on 3 Nov (`docs/manual-test-checklist.md`, 23 of 23 steps), but a scripted run is not a rehearsal: practise the timing and the handovers by hand.
 
 ## Before you record
 
 1. Reset the demo data so nothing from earlier testing shows up: `docker compose up -d`, then `npx tsx data/etl/load-all.ts --reset` (loads 1,500 titles, 13,490 reviews; asks no questions, so make sure `apps/api/.env` points at the dev database, not a `_bench` or `_test` one).
 2. Start the API (`npm run dev` in `apps/api`) and the web app with `VITE_USE_MOCKS=false`. Confirm `http://localhost:5173` loads real titles. Run the trending job once so trending is not empty: `npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`.
 3. Open these windows before you start and put them side by side: the browser; a terminal in `psql` (`docker exec -it bingemate-postgres psql -U bingemate -d bingemate`); a terminal in `mongosh` (`docker exec -it bingemate-mongo mongosh bingemate`); a page with `docs/benchmarks/results.md` open.
-4. Log in once as each of `admin@bingemate.dev`, `creator@bingemate.dev` and `user4@seed.bingemate.local` (password `Password123!`) in three browser profiles or private windows, so switching accounts costs no time. The loaded data has no `consumer@bingemate.dev`.
+4. Log in once as each of `admin@bingemate.dev`, `creator@bingemate.dev` and `user4@seed.bingemate.local` (password `Password123!`) in three browser profiles or private windows, so switching accounts costs no time. The first account is an admin; the other two are ordinary members. Dataset usernames are `admin` and `demo_creator` for the first two accounts. The loaded data has no `consumer@bingemate.dev`. In the small seed, `creator@bingemate.dev` (Demo Maker) and `consumer@bingemate.dev` (Demo Viewer) are members; their email names are historical, and the admin is BingeMate Admin.
 5. Zoom the terminals to a readable size. Close notifications.
 
 ## Segments
@@ -19,12 +19,12 @@ Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member ha
 | 2:00-3:30 | RA  | Accounts, roles and the approval workflow                                                                               |
 | 3:30-5:30 | HS  | MongoDB: one review across both stores, replies, aggregation pipelines                                                  |
 | 5:30-7:30 | SJ  | Search, window function, query plans and the benchmark conclusions                                                      |
-| 7:30-9:00 | WH  | The creator flow end to end on the website, then testing and CI                                                         |
+| 7:30-9:00 | WH  | The member submission flow end to end on the website, then testing and CI                                               |
 | 9:00-9:30 | ALL | One sentence each: what we learned. Last speaker names what is not finished (admin user management, review moderation). |
 
 ### WH, 0:00-0:30: introduction
 
-Show `docs/architecture.svg`. Say: React single-page app, Express API, PostgreSQL for the structured data, MongoDB for review text, replies, trending cards and images. One sentence on why two stores: ratings and titles need integrity and joins; text and precomputed cards suit documents. Hand over to JW.
+Show `docs/architecture.svg`. Say: React single-page app, Express API, PostgreSQL for the structured data, MongoDB for review text, replies, trending cards and images. Say: visitors browse; members review, list and submit through Creator; admins approve and moderate. One sentence on why two stores: ratings and titles need integrity and joins; text and precomputed cards suit documents. Hand over to JW.
 
 ### JW, 0:30-2:00: the relational model and the data
 
@@ -35,10 +35,11 @@ Show `docs/architecture.svg`. Say: React single-page app, Express API, PostgreSQ
 
 ### RA, 2:00-3:30: roles and approval
 
-- **Show:** log in as `creator@bingemate.dev`; the Creator link exists. Log in as `admin@bingemate.dev`; there is no Creator link. Open the approval queue.
+- **Show signup:** in a separate private window open `/register`, enter **Email**, **Username** (for example `Demo Member <short stamp>`) and **Password**, then **Create account**. The new member is signed in and sees **Creator**. In a fresh window try another email and that username in another case: **Username already taken** appears under **Username** (409); no account is created. Keep the new account email for cleanup after recording.
+- **Show:** log in as the member `creator@bingemate.dev`; the Creator link exists. Log in as `admin@bingemate.dev`; there is no Creator link. Open the approval queue.
 - **Do:** approve one pending title and reject another with a reason. If you can, open the queue in two tabs and decide the same title twice to show the "This title changed after you opened it" message (the version check on `updatedAt`).
 - **Database:** `select status, "rejectionReason" from "Title" order by "updatedAt" desc limit 3;`
-- **Say:** JWT in an httpOnly cookie, role checks per route, admins never write reviews, the creator of a title cannot review it.
+- **Say:** JWT in an httpOnly cookie, role checks per route, admins never submit titles or write reviews or replies; members cannot review their own titles but can reply under them. A member can have at most 10 PENDING submissions; edits do not count against the creation cap.
 - **Do not show:** admin user and role management, review moderation. They are not built. If asked, say so.
 - **Backup:** if the two-tab step is fiddly, skip it and mention the 409 in one sentence.
 
@@ -60,10 +61,10 @@ Show `docs/architecture.svg`. Say: React single-page app, Express API, PostgreSQ
 - **Say:** the data is synthetic (no 950k-title source exists), and the repeatability target was missed on sub-millisecond rows.
 - **Backup:** if live `EXPLAIN` is slow, show the tables only.
 
-### WH, 7:30-9:00: the creator flow, tests and CI
+### WH, 7:30-9:00: the member submission flow, tests and CI
 
-- **Do:** as the creator, submit a title with an image. It appears as PENDING with its image. As the admin, approve it. As a visitor, find it in Browse. Optionally edit it as the creator to show it returns to PENDING.
-- **Show:** `npm test` summary (540 API tests, 492 web tests, no databases needed) and `npm run test:real --workspace apps/api` (14 tests against real PostgreSQL and MongoDB, including a concurrent delete-versus-add-to-list race). Say each rule was checked by breaking the code on purpose and watching a test fail.
+- **Do:** as an ordinary member, submit a title with an image. It appears as PENDING with its image. As the admin, approve it. As a visitor, find it in Browse. Optionally edit it as its owning member to show it returns to PENDING.
+- **Show:** `npm test` summary (test counts: see the PR; no databases needed) and `npm run test:real --workspace apps/api` (test counts: see the PR; real PostgreSQL and MongoDB, including username uniqueness and pending-cap concurrency). Say each rule was checked by breaking the code on purpose and watching a test fail.
 - **Show:** the CI file: the second job starts both databases.
 
 ### ALL, 9:00-9:30: close

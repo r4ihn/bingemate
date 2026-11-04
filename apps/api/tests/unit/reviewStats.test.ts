@@ -169,9 +169,9 @@ describe('socket-free service checks', () => {
     ]);
     prisma.user.findMany.mockResolvedValueOnce([{ id: 'admin' }]).mockResolvedValueOnce([
       { id: 'admin', username: 'Admin', role: 'ADMIN' },
-      { id: 'u1', username: 'Maya', role: 'CONSUMER' },
-      { id: 'u2', username: null, role: 'CREATOR' },
-      { id: 'u3', username: 'Third', role: 'CONSUMER' },
+      { id: 'u1', username: 'Maya', role: 'MEMBER' },
+      { id: 'u2', username: null, role: 'MEMBER' },
+      { id: 'u3', username: 'Third', role: 'MEMBER' },
     ]);
     expect(await stats.topReviewers({ type: 'BOOK', limit: 2 })).toEqual({
       data: [
@@ -213,7 +213,7 @@ describe('socket-free service checks', () => {
     ];
     prisma.user.findMany
       .mockResolvedValueOnce([{ id: 'a1' }, { id: 'a2' }])
-      .mockResolvedValueOnce([{ id: 'u1', username: 'Maya', role: 'CONSUMER' }]);
+      .mockResolvedValueOnce([{ id: 'u1', username: 'Maya', role: 'MEMBER' }]);
     aggregate.mockImplementation(async (pipeline) => {
       const excluded = pipeline[0].$match.userId?.$nin ?? [];
       const cap = pipeline.find((stage: Record<string, unknown>) => '$limit' in stage).$limit;

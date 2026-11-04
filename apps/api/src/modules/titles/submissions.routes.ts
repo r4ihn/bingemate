@@ -9,13 +9,13 @@ import { createSubmissionSchema, updateSubmissionSchema } from './submissions.sc
 import { createSubmission, deleteTitle, updateSubmission } from './submissions.service.js';
 import { idParamSchema } from './titles.schema.js';
 
-/** Mounted at /titles. Only creators can submit a title for approval. */
+/** Mounted at /titles. Only members can submit a title for approval. */
 export const submissionsRouter: Router = Router();
 
 submissionsRouter.post(
   '/',
   authenticate,
-  authorize(Role.CREATOR),
+  authorize(Role.MEMBER),
   validate(createSubmissionSchema),
   asyncHandler(async (req, res) => {
     res.status(201).json(await createSubmission(userOf(req), req.body));
@@ -25,7 +25,7 @@ submissionsRouter.post(
 submissionsRouter.patch(
   '/:id',
   authenticate,
-  authorize(Role.CREATOR),
+  authorize(Role.MEMBER),
   validate(idParamSchema, 'params'),
   validate(updateSubmissionSchema),
   asyncHandler(async (req, res) => {

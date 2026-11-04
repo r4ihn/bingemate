@@ -17,8 +17,8 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-const as = (id = 'a1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'ADMIN') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'a1', role: 'MEMBER' | 'ADMIN' = 'ADMIN') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const updatedAt = '2026-11-02T01:02:03.456Z';
@@ -88,7 +88,7 @@ describe('admin title route authorization', () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 
-  it.each(['CONSUMER', 'CREATOR'] as const)('refuses a %s on both routes', async (role) => {
+  it.each(['MEMBER'] as const)('refuses a %s on both routes', async (role) => {
     const list = await request(app).get('/api/admin/titles').set(as('u1', role));
     const patch = await request(app)
       .patch('/api/admin/titles/t1/status')

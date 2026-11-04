@@ -16,7 +16,7 @@ describe('ReviewList with unexpected data', () => {
     const odd = {
       id: 'r-odd',
       titleId: 't1',
-      author: { id: 'a', name: 'someone', role: Role.CONSUMER },
+      author: { id: 'a', name: 'someone', role: Role.MEMBER },
       rating: 4,
       body: 'Odd one',
       createdAt: new Date().toISOString(),
@@ -36,7 +36,7 @@ describe('ReviewList with unexpected data', () => {
     const review = {
       id: 'r-stars',
       titleId: 't1',
-      author: { id: 'a', name: 'someone', role: Role.CONSUMER },
+      author: { id: 'a', name: 'someone', role: Role.MEMBER },
       rating: 4,
       body: 'Four stars',
       createdAt: new Date().toISOString(),
@@ -56,7 +56,7 @@ describe('ReviewList with unexpected data', () => {
     const review = (id: string, authorId: string, name: string): Review => ({
       id,
       titleId: 't1',
-      author: { id: authorId, name, role: Role.CREATOR },
+      author: { id: authorId, name, role: Role.MEMBER },
       rating: 4,
       body: `Review by ${name}`,
       createdAt: new Date().toISOString(),
@@ -87,7 +87,7 @@ describe('review card actions', () => {
   const review = (id: string, authorId: string, name: string): Review => ({
     id,
     titleId: 'mock-20',
-    author: { id: authorId, name, role: Role.CONSUMER },
+    author: { id: authorId, name, role: Role.MEMBER },
     rating: 4,
     body: `Words by ${name}`,
     createdAt: new Date().toISOString(),
@@ -95,12 +95,12 @@ describe('review card actions', () => {
 
   beforeEach(() => {
     resetDb();
-    setMockActor({ id: 'test-user', email: 'sam@test.dev', role: Role.CONSUMER });
+    setMockActor({ id: 'test-user', email: 'sam@test.dev', role: Role.MEMBER });
     db.reviews.push(review('r-mine', 'test-user', 'sam_k'), review('r-other', 'other', 'maya_r'));
   });
 
   const mount = () =>
-    renderWithProviders(<ReviewList titleId="mock-20" title={movie} />, { role: Role.CONSUMER });
+    renderWithProviders(<ReviewList titleId="mock-20" title={movie} />, { role: Role.MEMBER });
   const card = (text: string) => screen.getByText(text).closest('article') as HTMLElement;
 
   it('puts Reply, Edit and Delete in one row on your own review, and marks it You', async () => {
@@ -159,7 +159,7 @@ describe('review card actions', () => {
   });
 
   it('has no Edit button when the list is not given the title to edit against', async () => {
-    renderWithProviders(<ReviewList titleId="mock-20" />, { role: Role.CONSUMER });
+    renderWithProviders(<ReviewList titleId="mock-20" />, { role: Role.MEMBER });
     await screen.findByText('Words by sam_k');
     expect(screen.queryByRole('button', { name: /^Edit review/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete review by sam_k' })).toBeInTheDocument();

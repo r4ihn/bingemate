@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { Role } from '@bingemate/shared';
+import { MAX_PENDING_SUBMISSIONS, Role } from '@bingemate/shared';
 import type { AuthUser, SubmissionDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
@@ -41,15 +41,22 @@ export async function createSubmission(
   user: AuthUser,
   input: CreateSubmissionInput,
 ): Promise<SubmissionDTO> {
-  const row = await prisma.title.create({
-    data: {
-      name: input.name,
-      mediaType: input.mediaType,
-      description: input.description || null,
-      createdById: user.id,
-      status: 'PENDING',
-    },
-    select: submissionSelect,
+  const row = await prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${user.id}))`;
+    const pending = await tx.title.count({ where: { createdById: user.id, status: 'PENDING' } });
+    if (pending >= MAX_PENDING_SUBMISSIONS) {
+      throw new HttpError(409, `You already have ${MAX_PENDING_SUBMISSIONS} titles waiting for approval. Wait for an admin to decide on some of them.`);
+    }
+    return tx.title.create({
+      data: {
+        name: input.name,
+        mediaType: input.mediaType,
+        description: input.description || null,
+        createdById: user.id,
+        status: 'PENDING',
+      },
+      select: submissionSelect,
+    });
   });
   return toSubmission(row);
 }
@@ -64,7 +71,7 @@ export async function updateSubmission(
     select: { createdById: true, status: true },
   });
   if (!title) throw new HttpError(404, 'Title not found');
-  if (user.role !== Role.CREATOR || title.createdById !== user.id) {
+  if (user.role !== Role.MEMBER || title.createdById !== user.id) {
     throw new HttpError(403, 'You can only edit your own submission');
   }
 
@@ -96,7 +103,7 @@ export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
   if (!title) throw new HttpError(404, 'Title not found');
   if (
     user.role !== Role.ADMIN &&
-    (user.role !== Role.CREATOR || title.createdById !== user.id)
+    (user.role !== Role.MEMBER || title.createdById !== user.id)
   ) {
     throw new HttpError(403, 'You can only delete your own submission');
   }

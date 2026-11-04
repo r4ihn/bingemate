@@ -23,7 +23,12 @@ const movie = {
 
 // Exercise the REAL chain: apiFetch sees a 401 -> clears the session in AuthProvider -> UI re-renders
 function renderWithRealAuth(ui: React.ReactElement) {
-  vi.spyOn(authApi, 'me').mockResolvedValue({ id: 'u1', email: 'a@b.co', role: Role.CONSUMER });
+  vi.spyOn(authApi, 'me').mockResolvedValue({
+    username: null,
+    id: 'u1',
+    email: 'a@b.co',
+    role: Role.MEMBER,
+  });
   vi.stubGlobal(
     'fetch',
     vi.fn(() =>

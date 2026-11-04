@@ -1,7 +1,9 @@
 # ETL (TASKS.md section 2, JW + HS)
 
-Cleaning scripts for the dev dataset. Raw inputs go in `../raw/`, cleaned outputs and logs in
-`../processed/` (both gitignored).
+Cleaning scripts for the dev dataset. Raw inputs in `../raw/` and cleaned CSV/JSONL datasets in
+`../processed/` are committed to Git. Logs and the load-specific `id-map.json` stay gitignored.
+Group members can load the committed cleaned dataset directly; cleaning is only needed when
+updating the inputs or cleaning rules.
 
 ```
 npx tsx data/etl/clean-all.ts      # run every step in order, then verify.ts
@@ -13,13 +15,12 @@ To load the cleaned data (Docker running, `apps/api/.env` copied from `.env.exam
 ```
 docker compose up -d
 npm run prisma:migrate                           # tables, CHECK constraint, views
-npx tsx data/etl/clean-all.ts                    # data/raw -> data/processed
-npx tsx data/etl/load-all.ts                     # both stores in order; add --reset to wipe and reload
+npx tsx data/etl/load-all.ts --reset             # both stores in order; --reset is needed on a new database (see below)
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
 
-Ids change on every load, so rebuild the trending cards afterwards, from `apps/api`:
-`npx tsx src/jobs/refreshTrending.ts`.
+Ids change on every load, so rebuild the trending cards afterwards, from the repo root:
+`npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`.
 
 Ids are random per run and the Mongo bodies are keyed by the PostgreSQL review ids, so always load (and
 `--reset`) both stores together with `load-all.ts`. Running `load-postgres.ts --reset` alone orphans the Mongo bodies until
@@ -30,7 +31,9 @@ Both loaders refuse a database that is not on this machine (`DATABASE_URL`/`MONG
 localhost) unless you pass `--allow-remote`.
 
 Skip `npm run seed`: the dataset already contains `admin@bingemate.dev` and `creator@bingemate.dev`
-(password `Password123!`, same as the seed), and the loaders refuse a non-empty database without `--reset`.
+(password `Password123!`, same as the seed). **Use `--reset` the first time.** On a newly created database,
+`npm run prisma:migrate` (`prisma migrate dev`) runs the demo seed by itself, so the database is not empty and
+the loaders refuse it without `--reset`; the reset replaces the seeded demo accounts and sample titles with the dataset.
 
 No dependencies were added: a small CSV reader/writer lives in `lib/csv.ts`. Each step is
 idempotent and reads only `../raw/` (except `clean-lists`, which reads the reviews that survived).
@@ -87,8 +90,9 @@ loader's job.
 
 **Users**
 
-- `role_id` 1/2/3 -> `CONSUMER`/`CREATOR`/`ADMIN`. Usernames cleaned. Repeated usernames are kept: they
-  are reviewers' display names, not logins (10 repeats).
+- `role_id` 1/2/3 -> `MEMBER`/`MEMBER`/`ADMIN` (5,477 members, 1 admin). Usernames cleaned.
+- Usernames are unique ignoring case: keep the first in input order and append ` (2)`, ` (3)`, ...
+  to later collisions, probing suffixes until each name is unique, including occupied suffixed names.
 
 **Reviews (split across the two stores, TASKS.md section 0 option B)**
 
@@ -127,7 +131,8 @@ loader's job.
 | reviews (Postgres) / review_bodies (Mongo) | 13,490 / 13,490 |
 | user_lists                                 | 13,490          |
 
-`verify.ts`: 27 checks, 0 failed (unique keys, foreign keys, enum values, rating 1 to 5, one review
+`verify.ts` now checks case-insensitive username uniqueness and the two allowed user roles as well.
+Previous run: 27 checks, 0 failed (unique keys, foreign keys, enum values, rating 1 to 5, one review
 per user per title, Postgres and Mongo ids identical, no orphans). The outputs were also compared
 against the raw files with separate code: rating mapping 0 mismatches, no dropped duplicate newer
 than its survivor, title ids identical, no text left untrimmed.

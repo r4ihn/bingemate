@@ -13,8 +13,7 @@ datasource db {
 
 enum Role {
   ADMIN
-  CREATOR
-  CONSUMER
+  MEMBER
 }
 
 enum MediaType {
@@ -46,9 +45,9 @@ enum PersonRole {
 model User {
   id           String   @id @default(cuid())
   email        String   @unique
-  username     String? // display name; the imported dataset's reviewers have one, signed-up users may not
+  username     String? // nullable for legacy users; lower(username) is unique via a migration expression index
   passwordHash String
-  role         Role     @default(CONSUMER)
+  role         Role     @default(MEMBER)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

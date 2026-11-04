@@ -21,7 +21,7 @@ const PERSON = 'M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 6v2h18v-2c0-3
 function navLinks(user: AuthUser | null) {
   const links = [{ to: '/browse', label: 'Browse' }];
   if (user) links.push({ to: '/me/lists', label: 'My Lists' });
-  if (user?.role === Role.CREATOR) {
+  if (user?.role === Role.MEMBER) {
     links.push({ to: '/creator', label: 'Creator' });
   }
   if (user?.role === Role.ADMIN) links.push({ to: '/admin', label: 'Admin' });

@@ -13,7 +13,7 @@ beforeEach(resetDatabases);
 
 describe('real title submissions', () => {
   it('submission starts pending, admin approval checks updatedAt, and creator edits require moderation again', async () => {
-    const creator = await createUser('CREATOR');
+    const creator = await createUser('MEMBER');
     const admin = await createUser('ADMIN');
     const created = await request(app)
       .post('/api/titles')
@@ -59,7 +59,7 @@ describe('real title submissions', () => {
   it.each(['reviewed', 'listed'] as const)(
     'creator deletion preserves a title another user has %s',
     async (activity) => {
-      const creator = await createUser('CREATOR');
+      const creator = await createUser('MEMBER');
       const consumer = await createUser();
       const title = await createTitle({ createdById: creator.id });
       const activityResponse =
@@ -101,7 +101,7 @@ describe('real title submissions', () => {
   );
 
   it('creator deletion without other activity removes the title and Mongo bodies and poster', async () => {
-    const creator = await createUser('CREATOR');
+    const creator = await createUser('MEMBER');
     const title = await createTitle({ createdById: creator.id });
     // Mongo leftovers have no PostgreSQL review activity. They must still be cleaned up.
     const reviewId = randomUUID();
@@ -148,7 +148,7 @@ describe('real title submissions', () => {
   });
 
   it('admin deletion of a reviewed title removes the review, its replies, its body and the poster', async () => {
-    const creator = await createUser('CREATOR');
+    const creator = await createUser('MEMBER');
     const consumer = await createUser();
     const admin = await createUser('ADMIN');
     const title = await createTitle({ status: 'APPROVED', createdById: creator.id });
@@ -223,7 +223,7 @@ describe('real title submissions', () => {
 
   it('delete versus list-add serializes on the title row across ten concurrent races', async () => {
     for (let iteration = 0; iteration < 10; iteration++) {
-      const creator = await createUser('CREATOR');
+      const creator = await createUser('MEMBER');
       const consumer = await createUser();
       const title = await createTitle({ createdById: creator.id });
       const [listed, deleted] = await Promise.all([

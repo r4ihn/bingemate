@@ -11,8 +11,7 @@ import { useAsync } from '../../hooks/useAsync.js';
 import type { AdminUser } from '../../types/admin.js';
 
 const ROLE_LABEL: Record<Role, string> = {
-  [Role.CONSUMER]: 'Consumer',
-  [Role.CREATOR]: 'Creator',
+  [Role.MEMBER]: 'Member',
   [Role.ADMIN]: 'Admin',
 };
 

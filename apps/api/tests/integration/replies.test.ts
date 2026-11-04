@@ -23,8 +23,8 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-const as = (id = 'u1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CONSUMER') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'u1', role: 'MEMBER' | 'ADMIN' = 'MEMBER') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const ID = '64b7f0f2a1b2c3d4e5f60718'; // a well-formed MongoDB id
@@ -56,7 +56,7 @@ beforeEach(() => {
   prisma.review.findFirst.mockReset().mockResolvedValue({ id: 'r1' });
   prisma.user.findMany
     .mockReset()
-    .mockResolvedValue([{ id: 'u1', username: 'maya_r', role: 'CONSUMER' }]);
+    .mockResolvedValue([{ id: 'u1', username: 'maya_r', role: 'MEMBER' }]);
   Object.values(reply).forEach((fn) => fn.mockReset());
   vi.spyOn(console, 'error').mockImplementation(() => undefined);
 });
@@ -103,8 +103,8 @@ describe('GET /api/reviews/:reviewId/replies', () => {
     finder([doc(), doc({ _id: 'b', userId: 'u2', editedAt: new Date('2026-10-03T10:00:00Z') })]);
     reply.countDocuments.mockResolvedValue(2);
     prisma.user.findMany.mockResolvedValue([
-      { id: 'u1', username: 'maya_r', role: 'CONSUMER' },
-      { id: 'u2', username: null, role: 'CREATOR' },
+      { id: 'u1', username: 'maya_r', role: 'MEMBER' },
+      { id: 'u2', username: null, role: 'MEMBER' },
     ]);
 
     const res = await request(app).get('/api/reviews/r1/replies');
@@ -113,7 +113,7 @@ describe('GET /api/reviews/:reviewId/replies', () => {
       id: ID,
       reviewId: 'r1',
       body: 'Thanks!',
-      author: { id: 'u1', name: 'maya_r', role: 'CONSUMER' },
+      author: { id: 'u1', name: 'maya_r', role: 'MEMBER' },
       createdAt: '2026-10-02T10:00:00.000Z',
     });
     expect(res.body.data[0]).not.toHaveProperty('editedAt');
@@ -212,7 +212,7 @@ describe('POST /api/reviews/:reviewId/replies', () => {
   it.each([
     ['a reader', 'u9', as('u9')],
     ['the review’s own author', 'u1', as('u1')],
-    ['a creator', 'c1', as('c1', 'CREATOR')],
+    ['a member who owns the title', 'c1', as('c1', 'MEMBER')],
   ])('lets %s reply, as themselves and with trimmed text', async (_who, userId, cookie) => {
     const res = await post({ body: '  Nice one  ' }, cookie);
 

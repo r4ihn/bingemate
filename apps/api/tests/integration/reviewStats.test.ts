@@ -95,8 +95,8 @@ describe('GET /api/reviews/top-reviewers', () => {
     ]);
     prisma.user.findMany.mockResolvedValueOnce([{ id: 'admin' }]).mockResolvedValueOnce([
       { id: 'admin', username: 'Admin', role: 'ADMIN' },
-      { id: 'u1', username: 'Maya', role: 'CONSUMER' },
-      { id: 'u2', username: 'Lee', role: 'CREATOR' },
+      { id: 'u1', username: 'Maya', role: 'MEMBER' },
+      { id: 'u2', username: 'Lee', role: 'MEMBER' },
     ]);
     const res = await request(app).get('/api/reviews/top-reviewers?type=TV_SHOW&limit=1');
     expect(res.status).toBe(200);

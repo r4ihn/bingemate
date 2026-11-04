@@ -14,7 +14,7 @@ const DEV_PASSWORD = 'Password123!'; // same as prisma/seed.ts
 const BATCH = 2000;
 const TX_TIMEOUT_MS = 10 * 60 * 1000; // the full dataset loads in well under this
 
-type Role = 'ADMIN' | 'CREATOR' | 'CONSUMER';
+type Role = 'ADMIN' | 'MEMBER';
 type PersonRole = 'AUTHOR' | 'DIRECTOR' | 'ACTOR' | 'SHOWRUNNER' | 'WRITER';
 type MediaType = 'MOVIE' | 'TV_SHOW' | 'BOOK';
 type ListStatus = 'COMPLETED' | 'IN_PROGRESS' | 'PLAN_TO';
@@ -75,7 +75,7 @@ export async function main(): Promise<void> {
             id,
             email: u['email'] ?? '',
             username: u['username'] ?? null,
-            role: (u['role'] ?? 'CONSUMER') as Role,
+            role: (u['role'] ?? 'MEMBER') as Role,
             passwordHash,
           };
         });

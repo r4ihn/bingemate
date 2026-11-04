@@ -7,9 +7,9 @@ import { asyncHandler } from '../../utils/asyncHandler.js';
 import { listOwnSubmissions } from '../titles/submissions.service.js';
 import { statsForCreator } from './creator.service.js';
 
-/** Mounted at /creator. Creators only. */
+/** Mounted at /creator. Members only. */
 export const creatorRouter: Router = Router();
-creatorRouter.use(authenticate, authorize(Role.CREATOR));
+creatorRouter.use(authenticate, authorize(Role.MEMBER));
 
 creatorRouter.get(
   '/titles',

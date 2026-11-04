@@ -28,7 +28,7 @@ export async function resetDatabases(): Promise<void> {
   await refreshViews();
 }
 
-export function createUser(role: Role = 'CONSUMER') {
+export function createUser(role: Role = 'MEMBER') {
   return prisma.user.create({
     data: {
       email: `${randomUUID()}@real-tests.example`,
@@ -38,7 +38,7 @@ export function createUser(role: Role = 'CONSUMER') {
   });
 }
 
-export function as(user: Pick<User, 'id' | 'email' | 'role'>) {
+export function as(user: Pick<User, 'id' | 'email' | 'role' | 'username'>) {
   return { Cookie: `token=${signToken(user)}` };
 }
 

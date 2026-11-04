@@ -9,16 +9,23 @@ import type { ReactNode } from 'react';
 export function Field({
   label,
   error,
+  hint,
   children,
 }: {
   label: string;
   error?: string;
+  hint?: string;
   children: ReactNode;
 }) {
   const errorId = useId();
+  const hintId = useId();
+  const description = [hint ? hintId : '', error ? errorId : ''].filter(Boolean).join(' ');
   const control =
-    error && isValidElement<Record<string, unknown>>(children)
-      ? cloneElement(children, { 'aria-invalid': true, 'aria-describedby': errorId })
+    description && isValidElement<Record<string, unknown>>(children)
+      ? cloneElement(children, {
+          'aria-invalid': error ? true : undefined,
+          'aria-describedby': description,
+        })
       : children;
 
   return (
@@ -27,6 +34,11 @@ export function Field({
         <span>{label}</span>
         {control}
       </label>
+      {hint && (
+        <p id={hintId} className="text-sm text-muted">
+          {hint}
+        </p>
+      )}
       {error && (
         <p id={errorId} role="alert" className="text-sm text-danger">
           {error}

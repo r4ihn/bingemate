@@ -54,14 +54,14 @@ describe('TitleDetail', () => {
   });
 
   it('offers one Reply button per review, not one per reply', async () => {
-    renderTitle('mock-1', Role.CONSUMER);
+    renderTitle('mock-1', Role.MEMBER);
     await screen.findByText('Great pacing in the second half.');
     // The first page shows 5 reviews; r-mock-1-0 has four replies but still a single button
     expect(screen.getAllByRole('button', { name: /^Reply to review by / })).toHaveLength(5);
   });
 
   it('badges the creator of this title in the thread, but not the same account on another title', async () => {
-    const studio = { id: 'u-studio', name: 'studio_north', role: Role.CREATOR };
+    const studio = { id: 'u-studio', name: 'studio_north', role: Role.MEMBER };
     const reply = (reviewId: string): Reply => ({
       id: `x-${reviewId}`,
       reviewId,
@@ -83,7 +83,7 @@ describe('TitleDetail', () => {
   });
 
   it('posting a reply adds it under the review', async () => {
-    renderTitle('mock-1', Role.CONSUMER);
+    renderTitle('mock-1', Role.MEMBER);
     await screen.findByText('Great pacing in the second half.');
     const u = userEvent.setup();
     const [open] = screen.getAllByRole('button', { name: /^Reply to review by / });
@@ -96,7 +96,7 @@ describe('TitleDetail', () => {
   });
 
   it('posting a review replaces the empty state with the new review', async () => {
-    renderTitle('mock-20', Role.CONSUMER);
+    renderTitle('mock-20', Role.MEMBER);
     await screen.findByText('No reviews yet');
     const u = userEvent.setup();
     await rate(u, 5);
@@ -119,7 +119,7 @@ describe('TitleDetail when the reviews change', () => {
   const mine = (titleId: string) => ({
     id: 'r-mine',
     titleId,
-    author: { id: 'test-user', name: 'You', role: Role.CONSUMER },
+    author: { id: 'test-user', name: 'You', role: Role.MEMBER },
     rating: 4,
     body: 'My own take',
     createdAt: new Date().toISOString(),
@@ -128,7 +128,7 @@ describe('TitleDetail when the reviews change', () => {
   it('posting a review raises the review count and average in the overview', async () => {
     const title = db.titles.find((t) => t.id === 'mock-20')!;
     Object.assign(title, { avgRating: 3, reviewCount: 4 });
-    renderTitle('mock-20', Role.CONSUMER);
+    renderTitle('mock-20', Role.MEMBER);
     await screen.findByText('No reviews yet');
     expect(countText()).toBe('4 reviews');
     const u = userEvent.setup();
@@ -141,7 +141,7 @@ describe('TitleDetail when the reviews change', () => {
   });
 
   it('after posting, the form gives way to a message that the user has reviewed this title', async () => {
-    renderTitle('mock-20', Role.CONSUMER);
+    renderTitle('mock-20', Role.MEMBER);
     await screen.findByText('No reviews yet');
     const u = userEvent.setup();
     await rate(u, 5);
@@ -155,7 +155,7 @@ describe('TitleDetail when the reviews change', () => {
     const title = db.titles.find((t) => t.id === 'mock-20')!;
     Object.assign(title, { avgRating: 4, reviewCount: 1 });
     db.reviews.push(mine('mock-20'));
-    renderTitle('mock-20', Role.CONSUMER);
+    renderTitle('mock-20', Role.MEMBER);
     await screen.findByText('My own take');
     expect(screen.getByText(/You have already reviewed this title/)).toBeInTheDocument();
     const u = userEvent.setup();
@@ -167,7 +167,7 @@ describe('TitleDetail when the reviews change', () => {
 
   it('still lets a user who already reviewed reply under a review more than once', async () => {
     db.reviews.push(mine('mock-1'));
-    renderTitle('mock-1', Role.CONSUMER);
+    renderTitle('mock-1', Role.MEMBER);
     await screen.findByText('Great pacing in the second half.');
     const u = userEvent.setup();
     const card = screen.getAllByRole('article')[0] as HTMLElement;
@@ -240,7 +240,7 @@ describe('TitleDetail layout', () => {
   });
 
   it('offers Add to list to signed-in users and a sign-in link to visitors', async () => {
-    const view = renderTitle('mock-20', Role.CONSUMER);
+    const view = renderTitle('mock-20', Role.MEMBER);
     expect(await screen.findByRole('combobox', { name: 'Add to list' })).toBeInTheDocument();
     view.unmount();
     renderTitle('mock-20');

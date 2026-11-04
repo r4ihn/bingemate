@@ -20,7 +20,7 @@ interface ReplyDoc {
 
 
 /** A writer whose account is gone still has their words shown, under a neutral name. */
-const removedUser = (id: string): AuthorDTO => ({ id, name: 'Deleted user', role: Role.CONSUMER });
+const removedUser = (id: string): AuthorDTO => ({ id, name: 'Deleted user', role: Role.MEMBER });
 
 function toReply(doc: ReplyDoc, authors: Map<string, AuthorDTO>): ReplyDTO {
   return {

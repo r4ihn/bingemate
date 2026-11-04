@@ -17,7 +17,7 @@ const tv: TitleSummary = { ...base, name: 'Harbour Nine', mediaType: MediaType.T
 const fake: Review = {
   id: 'r1',
   titleId: 'mock-20',
-  author: { id: 'mock-user', name: 'You', role: Role.CONSUMER },
+  author: { id: 'mock-user', name: 'You', role: Role.MEMBER },
   rating: 4,
   body: 'Great',
   createdAt: new Date().toISOString(),
@@ -25,7 +25,7 @@ const fake: Review = {
 
 function mount(title = movie, onSubmitted = vi.fn()) {
   renderWithProviders(<ReviewForm title={title} onSubmitted={onSubmitted} />, {
-    role: Role.CONSUMER,
+    role: Role.MEMBER,
   });
   return { onSubmitted, user: userEvent.setup() };
 }
@@ -136,7 +136,7 @@ describe('ReviewForm', () => {
   });
 
   it('shows a message with the rating instead of the form when the user already reviewed the title', async () => {
-    db.reviews.push({ ...fake, author: { id: 'test-user', name: 'You', role: Role.CONSUMER } });
+    db.reviews.push({ ...fake, author: { id: 'test-user', name: 'You', role: Role.MEMBER } });
     mount();
     expect(await screen.findByText(/You have already reviewed this title/)).toBeInTheDocument();
     expect(screen.getByRole('img', { name: '4 out of 5 stars' })).toBeInTheDocument();
@@ -147,7 +147,7 @@ describe('ReviewForm', () => {
     db.reviews.push({
       ...fake,
       titleId: 'mock-21',
-      author: { id: 'test-user', name: 'You', role: Role.CONSUMER },
+      author: { id: 'test-user', name: 'You', role: Role.MEMBER },
     });
     mount();
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
@@ -169,7 +169,7 @@ describe('ReviewForm', () => {
   it('tells the creator of the title they can reply but not review, with no form', async () => {
     renderWithProviders(
       <ReviewForm title={{ ...movie, createdById: 'test-user' }} onSubmitted={vi.fn()} />,
-      { role: Role.CREATOR },
+      { role: Role.MEMBER },
     );
     expect(await screen.findByText(/You created this title/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
@@ -178,13 +178,13 @@ describe('ReviewForm', () => {
   it('still shows the form to a creator on a title someone else created', async () => {
     renderWithProviders(
       <ReviewForm title={{ ...movie, createdById: 'someone-else' }} onSubmitted={vi.fn()} />,
-      { role: Role.CREATOR },
+      { role: Role.MEMBER },
     );
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
   });
 
   describe('editing', () => {
-    const mine = { ...fake, author: { id: 'test-user', name: 'You', role: Role.CONSUMER } };
+    const mine = { ...fake, author: { id: 'test-user', name: 'You', role: Role.MEMBER } };
 
     async function edit() {
       db.reviews.push({ ...mine });

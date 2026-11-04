@@ -17,7 +17,12 @@ export function renderWithProviders(
   } = {},
 ): RenderResult {
   const user = opts.role
-    ? { id: 'test-user', email: `${opts.role.toLowerCase()}@test.dev`, role: opts.role }
+    ? {
+        username: null,
+        id: 'test-user',
+        email: `${opts.role.toLowerCase()}@test.dev`,
+        role: opts.role,
+      }
     : null;
   const { pathname, search } = new URL(opts.route ?? '/', 'http://localhost');
   return render(

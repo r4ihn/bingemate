@@ -19,7 +19,7 @@ The grade is 25% relational and 25% NoSQL, so about half of the page budget shou
 
 ### 1. Problem and requirements (WH)
 
-The product in three sentences, the three user roles (reader, creator, admin), and what the project spec requires of the data layer. Source: `README.md`, the project description PDF.
+The product in three sentences, visitor, member and admin access (persisted roles are `MEMBER` and `ADMIN`), and what the project spec requires of the data layer. Source: `README.md`, the project description PDF.
 
 ### 2. Architecture and why two databases (WH)
 
@@ -46,7 +46,7 @@ The write order (PostgreSQL transaction, then MongoDB, then undo the header if t
 
 ### 6. Roles, security and approval (RA)
 
-Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the rules (admins never write reviews, creators cannot review their own title), the approval workflow with the optimistic `updatedAt` version check, re-moderation on edit or image change. Say plainly that admin user management and review moderation are not finished.
+Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the rules (admins never submit titles or write reviews or replies; members cannot review their own titles but can reply under them), the approval workflow with the optimistic `updatedAt` version check, re-moderation on edit or image change. Explain signup usernames: Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. PostgreSQL enforces a unique constraint through the expression index on `lower("username")` in migration `20261103140000_members_and_usernames`; later colliding legacy names receive suffixes such as ` (2)`. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap. Say plainly that admin user management and review moderation are not finished.
 
 ### 7. Performance (SJ)
 

@@ -45,7 +45,8 @@ describe('ApprovalQueue', () => {
   it('reloads after approval and shows a title beyond the first response', async () => {
     const pending = title('mock-25');
     const next = title('mock-28');
-    const load = vi.spyOn(adminApi, 'pendingTitles')
+    const load = vi
+      .spyOn(adminApi, 'pendingTitles')
       .mockResolvedValueOnce([pending])
       .mockResolvedValue([next]);
     vi.spyOn(adminApi, 'setTitleStatus').mockResolvedValue();
@@ -85,7 +86,12 @@ describe('ApprovalQueue', () => {
     await u.type(await screen.findByLabelText(`Reason for ${name}`), 'Poster missing');
     await u.click(screen.getByRole('button', { name: `Reject ${name}` }));
     await vi.waitFor(() => expect(screen.queryByRole('cell', { name })).not.toBeInTheDocument());
-    expect(setStatus).toHaveBeenCalledWith('mock-25', TitleStatus.REJECTED, 'Poster missing', undefined);
+    expect(setStatus).toHaveBeenCalledWith(
+      'mock-25',
+      TitleStatus.REJECTED,
+      'Poster missing',
+      undefined,
+    );
     expect(title('mock-25').rejectionReason).toBe('Poster missing');
   });
 
@@ -111,7 +117,8 @@ describe('ApprovalQueue', () => {
     const message = 'This title changed after you opened it. Reload the queue and review it again.';
     const pending = { ...title('mock-25'), version: '2026-11-02T00:00:00.000Z' };
     const changed = { ...pending, name: 'Updated title', version: '2026-11-02T01:00:00.000Z' };
-    const load = vi.spyOn(adminApi, 'pendingTitles')
+    const load = vi
+      .spyOn(adminApi, 'pendingTitles')
       .mockResolvedValueOnce([pending])
       .mockResolvedValue([changed]);
     vi.spyOn(adminApi, 'setTitleStatus').mockRejectedValue(new ApiError(409, message));
@@ -156,17 +163,19 @@ describe('UsersTable', () => {
   it('lists users and pages through them', async () => {
     const u = renderAdmin('/admin/users');
     expect(await screen.findByText('user1@mock.dev')).toBeInTheDocument();
+    expect(screen.getAllByRole('option', { name: 'Member' }).length).toBeGreaterThan(0);
     expect(screen.queryByText('user11@mock.dev')).not.toBeInTheDocument();
     await u.click(screen.getByRole('button', { name: 'Next' }));
     expect(await screen.findByText('user11@mock.dev')).toBeInTheDocument();
   });
 
   it('changing a role saves it', async () => {
+    db.users[2]!.role = Role.ADMIN;
     const setRole = vi.spyOn(adminApi, 'setRole');
     const u = renderAdmin('/admin/users');
-    await u.selectOptions(await screen.findByLabelText('Role for user3@mock.dev'), Role.CREATOR);
-    await vi.waitFor(() => expect(setRole).toHaveBeenCalledWith('user-3', Role.CREATOR));
-    expect(db.users.find((x) => x.id === 'user-3')?.role).toBe(Role.CREATOR);
+    await u.selectOptions(await screen.findByLabelText('Role for user3@mock.dev'), Role.MEMBER);
+    await vi.waitFor(() => expect(setRole).toHaveBeenCalledWith('user-3', Role.MEMBER));
+    expect(db.users.find((x) => x.id === 'user-3')?.role).toBe(Role.MEMBER);
   });
 
   it("an admin's own role cannot be changed from the table", async () => {
@@ -178,12 +187,13 @@ describe('UsersTable', () => {
   });
 
   it('a failed role change rolls back and shows an error', async () => {
+    db.users[2]!.role = Role.ADMIN;
     vi.spyOn(adminApi, 'setRole').mockRejectedValue(new ApiError(500, 'boom'));
     const u = renderAdmin('/admin/users');
     const select = await screen.findByLabelText('Role for user3@mock.dev');
-    await u.selectOptions(select, Role.CREATOR);
+    await u.selectOptions(select, Role.MEMBER);
     expect(await screen.findByRole('alert')).toHaveTextContent(/Could not/);
-    expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.CONSUMER);
+    expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.ADMIN);
   });
 });
 
@@ -227,7 +237,7 @@ describe('Admin regressions from the final review', () => {
     expect(within(dialog).getByRole('heading', { name: /admin/i })).toBeInTheDocument();
     await u.click(within(dialog).getByRole('button', { name: 'Cancel' }));
     expect(setRole).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.CONSUMER);
+    expect(screen.getByLabelText('Role for user3@mock.dev')).toHaveValue(Role.MEMBER);
   });
 
   it('confirming promotion to Admin saves it', async () => {
@@ -238,13 +248,14 @@ describe('Admin regressions from the final review', () => {
   });
 
   it('an earlier failed role change does not undo a later successful one', async () => {
+    db.users[2]!.role = Role.ADMIN;
     let rejectFirst!: (e: unknown) => void;
     vi.spyOn(adminApi, 'setRole').mockImplementationOnce(
       () => new Promise((_, reject) => (rejectFirst = reject)),
     ); // later calls use the real mock implementation
     const u = renderAdmin('/admin/users');
     const select = await screen.findByLabelText('Role for user3@mock.dev');
-    await u.selectOptions(select, Role.CREATOR); // request A, still pending
+    await u.selectOptions(select, Role.MEMBER); // request A, still pending
     await u.selectOptions(select, Role.ADMIN); // request B
     await u.click(within(screen.getByRole('dialog')).getByRole('button', { name: 'Make admin' }));
     await vi.waitFor(() => expect(db.users.find((x) => x.id === 'user-3')?.role).toBe(Role.ADMIN));

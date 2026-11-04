@@ -13,8 +13,8 @@ afterEach(() => vi.restoreAllMocks());
 
 const at = (m: number) => new Date(Date.UTC(2026, 9, 17, 10, m)).toISOString();
 type Person = { id: string; name: string; role: Role };
-const owner: Person = { id: 'studio', name: 'studio_north', role: Role.CREATOR };
-const fan: Person = { id: 'fan', name: 'maya_r', role: Role.CONSUMER };
+const owner: Person = { id: 'studio', name: 'studio_north', role: Role.MEMBER };
+const fan: Person = { id: 'fan', name: 'maya_r', role: Role.MEMBER };
 const reply = (id: string, author: Person, body: string, m: number) => ({
   id,
   reviewId: 'r-x',
@@ -43,7 +43,7 @@ describe('ReplyThread', () => {
 
   it('offers a single Reply button that names whose review it answers, and no comment box', async () => {
     renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />, {
-      role: Role.CONSUMER,
+      role: Role.MEMBER,
     });
     await screen.findByText('Great pacing in the second half.');
     expect(screen.getAllByRole('button', { name: /^Reply/ })).toHaveLength(1);
@@ -54,7 +54,7 @@ describe('ReplyThread', () => {
 
   it('opens the form on Reply with focus in the box, posts, closes, and returns focus', async () => {
     renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />, {
-      role: Role.CONSUMER,
+      role: Role.MEMBER,
     });
     const u = userEvent.setup();
     await u.click(await screen.findByRole('button', { name: /^Reply to review by / }));
@@ -70,7 +70,7 @@ describe('ReplyThread', () => {
   it('Cancel closes the form without posting and returns focus to Reply', async () => {
     const create = vi.spyOn(repliesApi, 'create');
     renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />, {
-      role: Role.CONSUMER,
+      role: Role.MEMBER,
     });
     const u = userEvent.setup();
     await u.click(await screen.findByRole('button', { name: /^Reply to review by / }));
@@ -84,7 +84,7 @@ describe('ReplyThread', () => {
   it('does not post an empty reply', async () => {
     const create = vi.spyOn(repliesApi, 'create');
     renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />, {
-      role: Role.CONSUMER,
+      role: Role.MEMBER,
     });
     const u = userEvent.setup();
     await u.click(await screen.findByRole('button', { name: /^Reply to review by / }));
@@ -101,7 +101,7 @@ describe('ReplyThread', () => {
 
   it('lets the author of the review reply under it like anyone else', async () => {
     renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="test-user" />, {
-      role: Role.CONSUMER,
+      role: Role.MEMBER,
     });
     expect(await screen.findByRole('button', { name: /^Reply to review by / })).toBeInTheDocument();
   });
@@ -151,7 +151,7 @@ describe('ReplyThread', () => {
     });
   });
   describe('action row', () => {
-    const mine = { id: 'test-user', name: 'sam_k', role: Role.CONSUMER } as Person;
+    const mine = { id: 'test-user', name: 'sam_k', role: Role.MEMBER } as Person;
     const own = reply('own', mine, 'my words', 1);
 
     it("shows Reply and the review's own actions together in one row", async () => {
@@ -162,7 +162,7 @@ describe('ReplyThread', () => {
           reviewAuthor="maya_r"
           actions={<button type="button">Edit review</button>}
         />,
-        { role: Role.CONSUMER },
+        { role: Role.MEMBER },
       );
       const row = (await screen.findByRole('button', { name: /^Reply to review by / }))
         .parentElement;
@@ -187,7 +187,7 @@ describe('ReplyThread', () => {
 
     it('shows the reply count beside Reply once there are replies', async () => {
       renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />, {
-        role: Role.CONSUMER,
+        role: Role.MEMBER,
       });
       expect(
         await screen.findByRole('button', { name: /^Reply to review by maya_r, 4 replies/ }),
@@ -197,7 +197,7 @@ describe('ReplyThread', () => {
     it('says "1 reply" for a single reply', async () => {
       vi.spyOn(repliesApi, 'list').mockResolvedValue([reply('a', fan, 'only one', 1)]);
       renderWithProviders(<ReplyThread reviewId="r-x" reviewAuthor="maya_r" />, {
-        role: Role.CONSUMER,
+        role: Role.MEMBER,
       });
       expect(await screen.findByRole('button', { name: /, 1 reply$/ })).toBeInTheDocument();
     });
@@ -205,7 +205,7 @@ describe('ReplyThread', () => {
     it('marks your own reply with You and gives it Edit and Delete', async () => {
       vi.spyOn(repliesApi, 'list').mockResolvedValue([own, reply('a', fan, 'fan words', 2)]);
       renderWithProviders(<ReplyThread reviewId="r-x" reviewAuthor="maya_r" />, {
-        role: Role.CONSUMER,
+        role: Role.MEMBER,
       });
       await screen.findByText('my words');
       const row = screen.getByText('my words').parentElement as HTMLElement;
@@ -231,11 +231,11 @@ describe('ReplyThread', () => {
   });
 
   describe('editing a reply', () => {
-    const mine = { id: 'test-user', name: 'sam_k', role: Role.CONSUMER } as Person;
+    const mine = { id: 'test-user', name: 'sam_k', role: Role.MEMBER } as Person;
     const setupOwn = async () => {
       vi.spyOn(repliesApi, 'list').mockResolvedValue([reply('own', mine, 'my words', 1)]);
       const view = renderWithProviders(<ReplyThread reviewId="r-x" reviewAuthor="maya_r" />, {
-        role: Role.CONSUMER,
+        role: Role.MEMBER,
       });
       const u = userEvent.setup();
       await u.click(await screen.findByRole('button', { name: 'Edit reply by sam_k' }));
@@ -336,7 +336,7 @@ describe('ReplyThread', () => {
 
     it('unfolds after you post, so your own reply is not hidden', async () => {
       renderWithProviders(<ReplyThread reviewId="r-mock-1-0" reviewAuthor="maya_r" />, {
-        role: Role.CONSUMER,
+        role: Role.MEMBER,
       });
       const u = userEvent.setup();
       await u.click(await screen.findByRole('button', { name: /^Reply to review by / }));

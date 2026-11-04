@@ -47,11 +47,11 @@ export function AuthTestProvider({
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-/** Dev-only: set VITE_MOCK_ROLE=ADMIN|CREATOR|CONSUMER to skip the backend while building UI. */
+/** Dev-only: set VITE_MOCK_ROLE=ADMIN|MEMBER to skip the backend while building UI. */
 function mockUser(): AuthUser | null {
   const role = import.meta.env.DEV ? import.meta.env.VITE_MOCK_ROLE : undefined;
   if (!role || !Object.values(Role).includes(role)) return null;
-  return { id: 'mock-user', email: `${role.toLowerCase()}@mock.dev`, role };
+  return { username: null, id: 'mock-user', email: `${role.toLowerCase()}@mock.dev`, role };
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {

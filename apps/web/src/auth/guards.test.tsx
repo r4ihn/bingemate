@@ -14,7 +14,7 @@ function routes() {
       <Route element={<ProtectedRoute roles={[Role.ADMIN]} />}>
         <Route path="/admin" element={<p>admin page</p>} />
       </Route>
-      <Route element={<ProtectedRoute roles={[Role.CREATOR]} />}>
+      <Route element={<ProtectedRoute roles={[Role.MEMBER]} />}>
         <Route path="/creator" element={<p>creator page</p>} />
       </Route>
     </Routes>
@@ -27,9 +27,14 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('login page')).toBeInTheDocument();
   });
 
-  it('sends a CONSUMER to /forbidden when roles=[ADMIN]', () => {
-    renderWithProviders(routes(), { route: '/admin', role: Role.CONSUMER });
+  it('sends a MEMBER to /forbidden when roles=[ADMIN]', () => {
+    renderWithProviders(routes(), { route: '/admin', role: Role.MEMBER });
     expect(screen.getByText('forbidden page')).toBeInTheDocument();
+  });
+
+  it('lets a MEMBER through to Creator', () => {
+    renderWithProviders(routes(), { route: '/creator', role: Role.MEMBER });
+    expect(screen.getByText('creator page')).toBeInTheDocument();
   });
 
   it('lets an ADMIN through', () => {
@@ -37,7 +42,7 @@ describe('ProtectedRoute', () => {
     expect(screen.getByText('admin page')).toBeInTheDocument();
   });
 
-  it('sends an ADMIN to /forbidden when roles=[CREATOR]', () => {
+  it('sends an ADMIN to /forbidden when roles=[MEMBER]', () => {
     renderWithProviders(routes(), { route: '/creator', role: Role.ADMIN });
     expect(screen.getByText('forbidden page')).toBeInTheDocument();
     expect(screen.queryByText('creator page')).not.toBeInTheDocument();
@@ -47,15 +52,15 @@ describe('ProtectedRoute', () => {
 describe('RoleGate', () => {
   it('renders children for an allowed role and the fallback otherwise', () => {
     const gate = (
-      <RoleGate roles={[Role.CREATOR]} fallback={<span>nope</span>}>
+      <RoleGate roles={[Role.MEMBER]} fallback={<span>nope</span>}>
         <span>creator tools</span>
       </RoleGate>
     );
-    const allowed = renderWithProviders(gate, { role: Role.CREATOR });
+    const allowed = renderWithProviders(gate, { role: Role.MEMBER });
     expect(screen.getByText('creator tools')).toBeInTheDocument();
     allowed.unmount();
 
-    renderWithProviders(gate, { role: Role.CONSUMER });
+    renderWithProviders(gate, { role: Role.ADMIN });
     expect(screen.getByText('nope')).toBeInTheDocument();
     expect(screen.queryByText('creator tools')).not.toBeInTheDocument();
   });

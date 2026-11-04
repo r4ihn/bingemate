@@ -10,7 +10,7 @@ bingemate/
 │   │   ├── prisma/
 │   │   │   ├── schema.prisma             # users, titles (+status, created_by), genres, people, junctions, list_entries, reviews (header)
 │   │   │   ├── migrations/
-│   │   │   └── seed.ts                   # roles + demo admin/creator/consumer + sample titles
+│   │   │   └── seed.ts                   # roles + demo admin/two members + sample titles
 │   │   ├── src/
 │   │   │   ├── config/
 │   │   │   │   └── env.ts                # Zod-validated env (DATABASE_URL, MONGO_URI, JWT_SECRET…)
@@ -19,7 +19,7 @@ bingemate/
 │   │   │   │   └── mongo.ts              # Mongoose connection
 │   │   │   ├── middleware/
 │   │   │   │   ├── authenticate.ts       # verify JWT → req.user
-│   │   │   │   ├── authorize.ts          # authorize('ADMIN', 'CREATOR')
+│   │   │   │   ├── authorize.ts          # authorize('ADMIN', 'MEMBER')
 │   │   │   │   ├── validate.ts           # Zod request validation
 │   │   │   │   ├── rateLimit.ts
 │   │   │   │   └── errorHandler.ts
@@ -150,6 +150,14 @@ Cross-database link: PostgreSQL `Review.id` equals MongoDB `ReviewBody._id`; rep
 [Architecture diagram](docs/architecture.svg): app-level middleware parses JSON and cookies and enables credentialed CORS; routers are followed by the final 404 and error handlers. `authenticate`, `optionalAuthenticate`, `authorize(role)` and Zod validation are attached to individual routes or feature routers as required, with no global authentication, validation or rate-limit pipeline. Only login/register and poster PUT/DELETE are rate limited. The React client sends the JWT in the httpOnly `token` cookie using `credentials: 'include'`.
 
 The `admin` module implements title listing and status changes. Separate admin user, role and review-moderation endpoints remain planned (RA); the existing review DELETE endpoint already allows an admin to remove a review. The four SQL views are `title_rating_stats`, `genre_filter_options`, `trending_titles` and `creator_title_stats`; the materialized view `title_rank_in_type` uses `RANK` and `PERCENT_RANK` per media type and is read for title-page ranking. ETL scripts, `cleanupOrphans`, `backfill-undated-dates`, benchmark seed/run/explain scripts and the isolated real-database test suite are tooling outside the runtime tiers.
+
+## Authentication and membership
+
+Visitors have no authenticated role; persisted roles are `ADMIN` and `MEMBER`, with `MEMBER` the signup default. All members can use the **Creator** page and own-title routes. Admins do not submit titles or write reviews or replies; a member cannot review their own title, but can reply under its reviews. Ownership controls editing and deletion: members delete only their own titles while no other user has reviewed or listed them. Edits and member image replacements on approved titles return them to `PENDING`; image removal alone does not.
+
+Signup requires email, username and password. Both API and web use `packages/shared/src/username.ts`: Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. The migration `20261103140000_members_and_usernames` merges the former non-admin roles, repairs case-insensitive collisions with suffixes such as ` (2)` (oldest `createdAt`, then `id`, wins), and creates `User_username_lower_key` on `lower("username")`. Username remains nullable for legacy rows, with the `user-xxxxxx` author fallback. The unique index enforces race-safe conflicts: 409 `Email already in use` or `Username already taken`.
+
+JWTs carry the username as well as id, email and role; verification maps legacy non-admin role values to `MEMBER` until those tokens expire (default two hours). A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap. The count and insert share a transaction under `pg_advisory_xact_lock(hashtext(userId))`, preventing concurrent creations from exceeding the cap.
 
 ## Trending refresh lifecycle
 

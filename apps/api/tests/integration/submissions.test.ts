@@ -10,10 +10,11 @@ process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 // No databases: check the query arguments and return the selected title fields.
 const calls: string[] = [];
 const prisma = {
-  title: { create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  title: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
   review: { findMany: vi.fn(), count: vi.fn() },
   listEntry: { count: vi.fn() },
   $queryRaw: vi.fn(),
+  $executeRaw: vi.fn(),
   $transaction: vi.fn(),
 };
 const mongo = {
@@ -36,14 +37,19 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-const as = (id = 'c1', role: 'CONSUMER' | 'CREATOR' | 'ADMIN' = 'CREATOR') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+const as = (id = 'c1', role: 'MEMBER' | 'ADMIN' = 'MEMBER') => ({
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 const updatedAt = new Date('2026-11-02T01:02:03.456Z');
 
 beforeEach(() => {
   calls.length = 0;
+  prisma.$executeRaw.mockReset().mockImplementation(async () => calls.push('submission-lock'));
+  prisma.title.count.mockReset().mockImplementation(async () => {
+    calls.push('pending-count');
+    return 0;
+  });
   prisma.$queryRaw.mockReset().mockImplementation(async () => calls.push('lock'));
   prisma.$transaction
     .mockReset()
@@ -108,7 +114,7 @@ describe('GET /api/creator/titles', () => {
     expect(prisma.title.findMany).not.toHaveBeenCalled();
   });
 
-  it.each(['CONSUMER', 'ADMIN'] as const)('refuses a %s', async (role) => {
+  it.each(['ADMIN'] as const)('refuses a %s', async (role) => {
     const res = await request(app).get('/api/creator/titles').set(as('u1', role));
 
     expect(res.status).toBe(403);
@@ -117,7 +123,7 @@ describe('GET /api/creator/titles', () => {
   });
 
   it.each(['', '?createdById=other'])(
-    'lists only the signed-in creator\'s titles, newest first (query: %s)',
+    'lists only the signed-in member\'s titles, newest first (query: %s)',
     async (query) => {
       const res = await request(app).get(`/api/creator/titles${query}`).set(as());
 
@@ -193,8 +199,8 @@ describe('DELETE /api/titles/:id', () => {
     expectNoDelete();
   });
 
-  it('refuses a consumer even when their id matches the owner', async () => {
-    const res = await del(as('c1', 'CONSUMER'));
+  it('refuses a member who does not own the title', async () => {
+    const res = await del(as('u1', 'MEMBER'));
 
     expect(res.status).toBe(403);
     expect(res.body.error).toBeTypeOf('string');
@@ -423,7 +429,7 @@ describe('PATCH /api/titles/:id', () => {
     expect(prisma.title.update).not.toHaveBeenCalled();
   });
 
-  it.each(['CONSUMER', 'ADMIN'] as const)('refuses a %s', async (role) => {
+  it.each(['ADMIN'] as const)('refuses a %s', async (role) => {
     const res = await patch({ name: 'Dune Messiah' }, as('c1', role));
 
     expect(res.status).toBe(403);
@@ -567,7 +573,7 @@ describe('POST /api/titles', () => {
     expect(prisma.title.create).not.toHaveBeenCalled();
   });
 
-  it.each(['CONSUMER', 'ADMIN'] as const)('refuses a %s', async (role) => {
+  it.each(['ADMIN'] as const)('refuses a %s', async (role) => {
     const res = await post({ name: 'Dune', mediaType: 'MOVIE' }, as('u1', role));
 
     expect(res.status).toBe(403);
@@ -575,7 +581,33 @@ describe('POST /api/titles', () => {
     expect(prisma.title.create).not.toHaveBeenCalled();
   });
 
-  it('creates a PENDING title owned by the creator', async () => {
+  it('allows the tenth pending submission and locks before counting', async () => {
+    prisma.title.count.mockImplementation(async () => { calls.push('pending-count'); return 9; });
+    prisma.title.create.mockImplementationOnce(async ({ data }) => {
+      calls.push('submission-create');
+      return { id: 't10', avgRating: 0, reviewCount: 0, posterUrl: null, rejectionReason: null, updatedAt, ...data };
+    });
+    const res = await post({ name: 'Tenth', mediaType: 'MOVIE' });
+    expect(res.status).toBe(201);
+    expect(calls).toEqual(['submission-lock', 'pending-count', 'submission-create']);
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
+    const [sql, userId] = prisma.$executeRaw.mock.calls[0] ?? [];
+    expect((sql as string[]).join('?')).toBe('SELECT pg_advisory_xact_lock(hashtext(?))');
+    expect(userId).toBe('c1');
+    expect(prisma.title.count).toHaveBeenCalledWith({ where: { createdById: 'c1', status: 'PENDING' } });
+  });
+
+  it.each([10, 11])('refuses a submission with %s pending titles', async pending => {
+    prisma.title.count.mockResolvedValue(pending);
+    const res = await post({ name: 'Eleventh', mediaType: 'MOVIE' });
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.' });
+    expect(prisma.$transaction).toHaveBeenCalledOnce();
+    expect(prisma.$executeRaw).toHaveBeenCalledOnce();
+    expect(prisma.title.create).not.toHaveBeenCalled();
+  });
+
+  it('creates a PENDING title owned by the member', async () => {
     const res = await post({ name: '  Dune  ', mediaType: 'MOVIE', description: 'Sand.' });
 
     expect(res.status).toBe(201);

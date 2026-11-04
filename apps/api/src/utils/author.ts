@@ -11,8 +11,7 @@ export const authorSelect = {
 type AuthorRow = Prisma.UserGetPayload<{ select: typeof authorSelect }>;
 
 /**
- * Signed-up users have no username yet (register only takes an email), and an email address must
- * not be shown to other readers, so they get a short stable name from their id.
+ * Legacy users may have no username. Keep their email private with a stable fallback from their id.
  */
 export function toAuthor(u: AuthorRow): AuthorDTO {
   return { id: u.id, name: u.username ?? `user-${u.id.slice(0, 6)}`, role: u.role };

@@ -39,7 +39,7 @@ npm run prisma:generate
 
 Before you start the API, replace the example `JWT_SECRET` in `apps/api/.env` with a long random string. The API requires at least 16 characters. The example database URLs match Compose: PostgreSQL uses database, user and password `bingemate`; MongoDB uses database `bingemate`.
 
-Choose **one** data option below. Do not seed before loading the dataset.
+Choose **one** data option below. On a newly created database, `npm run prisma:migrate` already runs the demo seed, so the demo accounts and sample titles exist after the commands above; Option A replaces them with the dataset.
 
 ### Option A: load the dataset
 
@@ -47,14 +47,14 @@ You need the raw inputs described in [the ETL README](../data/etl/README.md) in 
 
 ```sh
 npx tsx data/etl/clean-all.ts
-npx tsx data/etl/load-all.ts
+npx tsx data/etl/load-all.ts --reset
 npx tsx data/etl/verify-load.ts
 npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
 ```
 
-The loader reads `apps/api/.env`. It loads PostgreSQL headers and MongoDB bodies together. It refuses non-empty stores without `--reset`. That flag wipes and reloads data, so use it only when you intend to replace your local dataset. Do not reset just one store; their IDs must agree.
+The loader reads `apps/api/.env`. It loads PostgreSQL headers and MongoDB bodies together. It refuses non-empty stores without `--reset`, and a new database is not empty (the migrate step seeded it), so the first load needs `--reset`. That flag wipes both stores and reloads them, so use it only when you intend to replace what is in your local databases. Do not reset just one store; their IDs must agree.
 
-You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every loaded user has password `Password123!`. There is **no `consumer@bingemate.dev`** after this option. Use an imported reader such as `user4@seed.bingemate.local`, as listed in the root README. Imported titles are approved and have no creator owner.
+You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every loaded user has password `Password123!`. There is **no `consumer@bingemate.dev`** after this option. Use an imported member such as `user4@seed.bingemate.local`, as listed in the root README. Imported titles are approved and have no creator owner.
 
 ### Option B: use the small demo seed
 
@@ -62,15 +62,17 @@ You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every
 npm run seed
 ```
 
-On a fresh database, you get these accounts. Each has password `Password123!`.
+On a new database the migrate step has already run this seed, so you have these accounts after the setup commands; running `npm run seed` again changes nothing. Each has password `Password123!`.
 
-| Email                  | Role     |
-| ---------------------- | -------- |
-| admin@bingemate.dev    | Admin    |
-| creator@bingemate.dev  | Creator  |
-| consumer@bingemate.dev | Consumer |
+| Email                  | Role   |
+| ---------------------- | ------ |
+| admin@bingemate.dev    | Admin  |
+| creator@bingemate.dev  | Member |
+| consumer@bingemate.dev | Member |
 
-You also get approved sample titles `Inception`, `Dune` and `Breaking Bad`, plus the creator's pending `My Indie Film`. This seed does not create reviews or MongoDB review bodies. Existing accounts are kept by the seed; it does not reset their passwords.
+The seed usernames are **BingeMate Admin**, **Demo Maker** and **Demo Viewer**, respectively. `creator@bingemate.dev` and `consumer@bingemate.dev` are both ordinary members; the email names are historical. The loaded dataset keeps its own usernames: `admin` for `admin@bingemate.dev` and `demo_creator` for `creator@bingemate.dev` (from `data/processed/users.csv`).
+
+You also get approved sample titles `Inception`, `Dune` and `Breaking Bad`, plus the member's pending `My Indie Film`. This seed does not create reviews or MongoDB review bodies. Existing accounts are kept by the seed; it does not reset their passwords.
 
 ### Start the API and website
 
@@ -94,7 +96,7 @@ For a persistent web setting, optionally run `cp apps/web/.env.example apps/web/
 
 ## 4. Using the site
 
-The steps below come from routes, components and API rules in the source. The creator, admin and reader flows (submit with an image, approve, reject, the stale-version message, review, reply, lists, delete) were also run in a real browser on 3 Nov 2026; see `docs/manual-test-checklist.md` for exactly what was and was not covered.
+The steps below come from routes, components and API rules in the source. The member submission, admin and member reading flows (submit with an image, approve, reject, the stale-version message, review, reply, lists, delete) were also run in a real browser on 3 Nov 2026; see `docs/manual-test-checklist.md` for exactly what was and was not covered.
 
 ### Visitor
 
@@ -119,9 +121,19 @@ On Home, the **Trending now** strip shows the top cards from the trending API. I
 
 To see the raw trending data, open `http://localhost:4000/api/trending`. You receive JSON, not a website page. The API supports `type=MOVIE|TV_SHOW|BOOK`, `limit=1` through `50`, and `sort=score|recent`. Score is the default. Recent sorting uses counts over a fixed 1460-day window calculated during refresh. You cannot change that window with a `days` parameter. The candidates remain the SQL score view's top 50 per type. Deleted or unapproved titles are excluded from the response.
 
-### Signed-in reader
+### Member
 
-Choose **Sign in**, then **Create an account**, or open `/register`. Enter an email and password and choose **Create account**. Your password needs at least eight characters, a letter and a digit. Registration creates a consumer account. You cannot select a creator or admin role here. To use an existing account, enter its credentials at `/login` and choose **Log in**. Choose **Log out** in the top bar to end the session.
+#### Registration
+
+Choose **Sign in**, then **Create an account**, or open `/register`. Enter **Email**, **Username** and **Password**, then choose **Create account**. Your password needs at least eight characters, a letter and a digit. Registration signs you in as a member; members can read, review, list and submit titles through **Creator**. You cannot select an admin role here. To use an existing account, enter its credentials at `/login` and choose **Log in**. Choose **Log out** in the top bar to end the session.
+
+Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. Letters must belong to Latin, Cyrillic, Greek, Han, Hiragana, Katakana, Hangul, Arabic, Hebrew, Devanagari or Thai. Other alphabets return `Username contains letters from an unsupported alphabet`. A name may use one alphabet, any subset of {Han, Hiragana, Katakana} with or without Latin, or any subset of {Han, Hangul} with or without Latin. Thus Latin may accompany any of Han, Hiragana, Katakana or Hangul, but Hangul cannot mix with Hiragana or Katakana. All other combinations return `Username cannot mix letters from different alphabets`. Digits, spaces and `_ - .` do not count toward the alphabet set. After normalisation, invisible characters (`Default_Ignorable_Code_Point`, including Hangul fillers, soft hyphen and zero-width characters) are refused with `Username cannot contain invisible characters`. Validation order is length, allowed characters, invisible characters, start/end, alphabets, then reserved names.
+
+The reserved words `admin`, `administrator`, `moderator`, `bingemate`, `support` and `system` are refused with `This username is reserved` using a skeleton only for this check. The skeleton lower-cases the normalised name, applies NFKD, removes every Unicode mark (accents), removes spaces, underscores, hyphens and periods, then maps the supported Cyrillic, Greek and leetspeak lookalikes plus Latin small capitals and dotless forms to ASCII. Any remaining non-ASCII Latin-script letter becomes the wildcard `?`; other scripts never become wildcards. A reserved word matches only when the whole skeleton has the same length and every position is equal or a wildcard, with no substring or token matching. Thus `ádmin`, `admiń`, `ᴀᴅᴍɪɴ`, `admın`, `ꜱyꜱtem`, `ѕуѕтем` and `Supp0rt` are reserved, while `Padmini`, `Madmin`, `BingeMate Fan`, `Søren`, `Zoë`, `Łukasz`, `Müller`, `管理員` and `系统管理员账号` remain valid. This conservative wildcard rule can refuse a rare genuine name such as `Suppørt`, a deliberate false positive trade-off. This is a practical subset of Unicode confusable detection: there is no full TR39 table and no check across non-Latin scripts beyond the mapped Cyrillic and Greek letters. Uniqueness is exact ignoring case, so a lookalike of another member's name is not detected.
+
+HTTP 409 **Email already in use** means the email is registered; **Username already taken** appears under **Username** for a name taken in any case. Existing users whose names collided ignoring case were renamed with a suffix such as ` (2)`. Legacy usernames can remain null, with an author name fallback of `user-xxxxxx`.
+
+#### Reading and reviewing
 
 On an approved title page, use **Write a review**. Choose 1 to 5 whole stars, enter text in **Your review**, and choose **Post review**. You can have only one review per title. Half stars are refused. Review text must be non-empty and at most 10,000 characters.
 
@@ -129,35 +141,41 @@ If you already reviewed the title, choose **Edit review** above the reviews or *
 
 Choose **Reply** under a review, enter text, and choose **Post reply**. Replies form one flat list, oldest first. Longer threads have a control to show more replies. You can **Edit** your own reply and choose **Save changes**, or **Delete** it with confirmation. Reply text must be non-empty and at most 2,000 characters. A changed reply shows an edited mark. An admin can delete replies too.
 
-Creators can review other people's titles, but cannot review a title they created. They can reply under their own titles. Admins never write or edit reviews or replies. Reviews and replies are available only under approved titles.
+Members can review other people's titles, but cannot review a title they created (403 **You cannot review a title you created**). They can reply under their own titles. Admins never write or edit reviews or replies. Reviews and replies are available only under approved titles.
+
+#### Lists
 
 On a title page, use **Add to list** and choose **Completed**, **In progress** or **Plan to**. These correspond to `COMPLETED`, `IN_PROGRESS` and `PLAN_TO`. Use the same control to change status or choose **Remove from list**. A title can appear only once in your list.
 
 Open **My Lists** or **Save** to see your entries at `/me/lists`. Choose a status tab and media type. Change an entry's status with its dropdown. Choose **Remove** and confirm **Remove** to take it out. Entries for titles that are no longer approved are hidden. You see only your own list.
 
-### Creator
+#### Submitting and managing your own titles
 
-Sign in with the creator account. Open **Creator** at `/creator`. The page is headed **Creator** and says "Your submissions". A table lists each title with its type, status and a **Note** column for the rejection reason, and each row has **Edit** and **Delete**.
+Sign in as any member. Open **Creator** at `/creator`. The page is headed **Creator** and says "Your submissions". A table lists each title with its type, status and a **Note** column for the rejection reason, and each row has **Edit** and **Delete**.
 
 Choose **New submission**. Enter **Title**, choose **Type**, and enter **Synopsis** if needed. You may choose a **Poster image (optional)**. The form accepts JPEG, PNG or WebP and rejects files over 8 MB. It shrinks the image before uploading; the API accepts at most 1 MB. Wait for image preparation to finish, then choose **Submit for approval**.
+
+A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap.
 
 The title is saved before the optional image is uploaded. If creation succeeds but image upload fails, the message says the title was saved. Return to your submissions and edit that title to retry the image.
 
 | Stored status | Meaning for you                                                                    |
 | ------------- | ---------------------------------------------------------------------------------- |
 | PENDING       | Waiting for approval. Hidden from public Browse and title detail.                  |
-| APPROVED      | Publicly available. Readers can review and list it.                                |
+| APPROVED      | Publicly available. Members can review and list it.                                |
 | REJECTED      | Not public. Read the reason in Note, if the admin supplied one. Edit and resubmit. |
 
 Choose **Edit** on a submission and **Save changes** after editing. The type cannot change after creation. Saving an approved or rejected submission sends it back to `PENDING` and clears the rejection reason. For an approved title, confirm **Save and re-submit**. It stays hidden until an admin approves it again.
 
-Replacing or uploading an approved title's image as its creator also sends it to `PENDING`. Removing an image through the image DELETE endpoint alone does not change status. Saving through the edit form still resubmits the title because that form also saves its text fields. **Remove image** first discards a newly chosen replacement; a second press removes the existing image.
+Replacing or uploading an approved title's image as its owning member also sends it to `PENDING`. Removing an image through the image DELETE endpoint alone does not change status. Saving through the edit form still resubmits the title because that form also saves its text fields. **Remove image** first discards a newly chosen replacement; a second press removes the existing image.
 
 Choose **Delete** on a submission or approved-title stats row. Read **Delete this title? This cannot be undone.** Choose **Confirm** to delete or **Cancel** to keep it. You can delete your own title only while no other user has reviewed or listed it. Otherwise the API refuses deletion and tells you to ask an admin. An admin can delete through the title DELETE API; the approval queue has no title-delete button.
 
-Choose **Stats** at `/creator/stats`. You see your approved titles with **Avg rating**, **Reviews** and **List adds**. Pending and rejected titles do not appear on this screen. Imported titles have no creator owner, so they do not populate the demo creator's stats.
+Choose **Stats** at `/creator/stats`. You see your approved titles with **Avg rating**, **Reviews** and **List adds**. Pending and rejected titles do not appear on this screen. Imported titles have no creator owner, so they do not populate the demo member's stats.
 
 ### Admin
+
+Admins do not submit titles and never write reviews or replies. The `/creator` web guard sends admins to **Not allowed**, and the Creator link is hidden. Creator API routes and title creation return HTTP 403.
 
 Sign in with the admin account and open **Admin**, then **Approval queue** at `/admin/queue`. The queue lists pending titles oldest first. The web client requests up to 50 titles at once. After decisions, it reloads the queue.
 
@@ -240,46 +258,49 @@ The seed refuses non-empty targets unless you request `--reset`, which deletes b
 
 ## 8. Troubleshooting
 
-| Problem                                                                                      | What you can do                                                                                                                                                                                                                                             |
-| -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Docker cannot start the database containers                                                  | Start Docker, then retry `docker compose up -d`. Use `docker compose ps` to check the containers and their health.                                                                                                                                          |
-| A port is already in use                                                                     | Stop the conflicting local service or earlier BingeMate process. The expected ports are 5173, 4000, 5432 and 27017. Keep 5173 free so the web origin matches `WEB_ORIGIN`.                                                                                  |
-| API fails to connect, or PostgreSQL authentication fails                                     | Check `DATABASE_URL` in `apps/api/.env` and any exported override. For the supplied Compose setup use `postgresql://bingemate:bingemate@localhost:5432/bingemate?schema=public`. Check `MONGO_URI` too, then restart the API.                               |
-| Tables or SQL views are missing                                                              | Run `npm run prisma:migrate` and `npm run prisma:generate` against your local application database, then restart the API.                                                                                                                                   |
-| API reports invalid environment configuration                                                | Copy the API env example, fill required values, and ensure `JWT_SECRET` has at least 16 characters. `TRENDING_REFRESH_MINUTES` must be an integer from 0 to 1440.                                                                                           |
-| You still see fake titles after importing                                                    | Restart the website with `VITE_USE_MOCKS=false`. Check `.env.local` for overrides and remove `VITE_MOCK_ROLE` when checking real accounts.                                                                                                                  |
-| `consumer@bingemate.dev` cannot log in after dataset loading                                 | Use `user4@seed.bingemate.local` with `Password123!`, or register an account. The dataset does not create the demo consumer.                                                                                                                                |
-| Trending JSON is empty                                                                       | Run the refresh CLI in section 5. The small seed has no reviews, so the trending SQL view has no candidates until approved titles receive reviews. Home's strip is separate and does not show this cache.                                                   |
-| Images do not show with an absolute `VITE_API_URL`                                           | Use a reachable API base including `/api`, such as `http://localhost:4000/api`, and restart Vite. Root-relative poster URLs resolve against that API host. Check that the image exists; pending/rejected images are visible only to their owner and admins. |
-| HTTP 401 `Invalid email or password`                                                         | Check your email, password and chosen data option. Both an unknown email and a wrong password produce this message.                                                                                                                                         |
-| HTTP 401 `Not authenticated` or `Invalid or expired token`                                   | Log in again. Protected requests require the session cookie. Keep the browser host consistent with your API and configured web origin.                                                                                                                      |
-| HTTP 403 `Forbidden`                                                                         | Use the account role required by that route. Registration gives you a consumer account.                                                                                                                                                                     |
-| HTTP 403 `You cannot review a title you created` or `Admins cannot write reviews or replies` | Reply as the owning creator, or use a consumer to review. Admin accounts cannot write reviews or replies.                                                                                                                                                   |
-| HTTP 409 `You have already reviewed this title`                                              | Edit your existing review, or delete it before posting a new one.                                                                                                                                                                                           |
-| HTTP 409 `This title is already on your list`                                                | Reload the title/list and change its existing status instead of adding a duplicate entry.                                                                                                                                                                   |
-| HTTP 409 `Email already in use`                                                              | Log in with that email or register a different email. Email is trimmed and lowercased.                                                                                                                                                                      |
-| HTTP 409 while deleting your title                                                           | Other users have reviewed or listed it. Ask an admin to remove it. Retrying as the creator cannot bypass this restriction.                                                                                                                                  |
-| HTTP 409 while deciding an approval                                                          | Reload and review the current title. The exact stale-version message is in the admin instructions above.                                                                                                                                                    |
-| Creator image upload fails after title creation                                              | Return to the Creator page and edit the saved title. Retry with JPEG, PNG or WebP. Do not submit a duplicate title.                                                                                                                                         |
-| Users or Moderation fails to load with mocks off                                             | Those real admin endpoints are missing. Use the implemented Approval queue; there is no setup command that enables the missing screens.                                                                                                                     |
+| Problem                                                                                                  | What you can do                                                                                                                                                                                                                                             |
+| -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Docker cannot start the database containers                                                              | Start Docker, then retry `docker compose up -d`. Use `docker compose ps` to check the containers and their health.                                                                                                                                          |
+| A port is already in use                                                                                 | Stop the conflicting local service or earlier BingeMate process. The expected ports are 5173, 4000, 5432 and 27017. Keep 5173 free so the web origin matches `WEB_ORIGIN`.                                                                                  |
+| API fails to connect, or PostgreSQL authentication fails                                                 | Check `DATABASE_URL` in `apps/api/.env` and any exported override. For the supplied Compose setup use `postgresql://bingemate:bingemate@localhost:5432/bingemate?schema=public`. Check `MONGO_URI` too, then restart the API.                               |
+| Tables or SQL views are missing                                                                          | Run `npm run prisma:migrate` and `npm run prisma:generate` against your local application database, then restart the API.                                                                                                                                   |
+| API reports invalid environment configuration                                                            | Copy the API env example, fill required values, and ensure `JWT_SECRET` has at least 16 characters. `TRENDING_REFRESH_MINUTES` must be an integer from 0 to 1440.                                                                                           |
+| You still see fake titles after importing                                                                | Restart the website with `VITE_USE_MOCKS=false`. Check `.env.local` for overrides and remove `VITE_MOCK_ROLE` when checking real accounts.                                                                                                                  |
+| `consumer@bingemate.dev` cannot log in after dataset loading                                             | Use `user4@seed.bingemate.local` with `Password123!`, or register an account. The dataset does not create that historical demo member account.                                                                                                              |
+| Trending JSON is empty                                                                                   | Run the refresh CLI in section 5. The small seed has no reviews, so the trending SQL view has no candidates until approved titles receive reviews. Home's strip is separate and does not show this cache.                                                   |
+| Images do not show with an absolute `VITE_API_URL`                                                       | Use a reachable API base including `/api`, such as `http://localhost:4000/api`, and restart Vite. Root-relative poster URLs resolve against that API host. Check that the image exists; pending/rejected images are visible only to their owner and admins. |
+| HTTP 401 `Invalid email or password`                                                                     | Check your email, password and chosen data option. Both an unknown email and a wrong password produce this message.                                                                                                                                         |
+| HTTP 401 `Not authenticated` or `Invalid or expired token`                                               | Log in again. Protected requests require the session cookie. Keep the browser host consistent with your API and configured web origin.                                                                                                                      |
+| HTTP 403 `Forbidden`                                                                                     | Use the account role required by that route. Registration gives you a member account. Admins receive 403 on `/api/creator/*` and `POST /api/titles`; the web guard refuses `/creator`.                                                                      |
+| HTTP 403 `You cannot review a title you created` or `Admins cannot write reviews or replies`             | Reply as the owning member, or use another member to review. Admin accounts cannot write reviews or replies.                                                                                                                                                |
+| HTTP 409 `You have already reviewed this title`                                                          | Edit your existing review, or delete it before posting a new one.                                                                                                                                                                                           |
+| HTTP 409 `This title is already on your list`                                                            | Reload the title/list and change its existing status instead of adding a duplicate entry.                                                                                                                                                                   |
+| HTTP 409 `Email already in use`                                                                          | Log in with that email or register a different email. Email is trimmed and lowercased.                                                                                                                                                                      |
+| HTTP 409 `Username already taken`                                                                        | Choose another username; uniqueness ignores case. The error appears under Username.                                                                                                                                                                         |
+| HTTP 409 `You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.` | Wait for approval decisions before creating another title; edits do not count against the cap.                                                                                                                                                              |
+| HTTP 409 while deleting your title                                                                       | Other users have reviewed or listed it. Ask an admin to remove it. Retrying as the owning member cannot bypass this restriction.                                                                                                                            |
+| HTTP 409 while deciding an approval                                                                      | Reload and review the current title. The exact stale-version message is in the admin instructions above.                                                                                                                                                    |
+| Creator image upload fails after title creation                                                          | Return to the Creator page and edit the saved title. Retry with JPEG, PNG or WebP. Do not submit a duplicate title.                                                                                                                                         |
+| Users or Moderation fails to load with mocks off                                                         | Those real admin endpoints are missing. Use the implemented Approval queue; there is no setup command that enables the missing screens.                                                                                                                     |
 
 ## Known gaps
 
-The following tracker entries are copied from [TASKS.md section 12](../TASKS.md#12-known-gaps-and-follow-ups-found-in-code-review-2930-oct). Their test-status statements are the tracker's record, not tests performed for this manual. The final entry's separate-poster-query claim is stale: `apps/api/src/jobs/refreshTrending.ts` now joins poster URLs in its ranking SQL.
+These entries reflect [TASKS.md section 12](../TASKS.md#12-known-gaps-and-follow-ups-found-in-code-review-2930-oct) and the current source. Historical verification notes are not checks performed during this documentation update.
 
 - [x] **500 on malformed JSON** — fixed on 3 Nov: parser errors return fixed 400/413 JSON responses; unknown routes return 404 `{error: 'Not found'}`. Unexpected errors still log `Unhandled error:` and return only 500 `{error: 'InternalServerError'}`. Regression tests added; API Supertest execution remains pending outside the sandbox (listen EPERM) _(WH)_
 
 - [~] **A reply posted while its review is being deleted can be left behind.** The reply check passes, the review and its replies are deleted, then the reply is saved. `cleanupOrphans` covers this race by removing Mongo review bodies and replies whose PostgreSQL review is gone, in bounded batches. Run manually from the repo root: `npx tsx --env-file=apps/api/.env apps/api/src/jobs/cleanupOrphans.ts`. Unit tests use stubbed stores; real-database verification is pending. The job is not scheduled automatically _(HS)_
 
 - [~] **Deleting a title leaves nothing behind in MongoDB** now (review bodies, replies and the image are removed after the PostgreSQL delete, and a MongoDB failure is logged without failing the delete). **Deleting a user still leaves its review bodies and replies behind**; whoever builds user delete must remove them too _(RA)_. The trending read now drops cards whose title is no longer approved, so a deleted, rejected or re-submitted title stops showing there at once
-- [x] **A creator can change the image of an approved title with no re-moderation**: done on `main` (PR #11). A creator's image replacement sends an approved title back to `PENDING` before the stored bytes are overwritten, so the old public URL never serves an unreviewed image. Removing the image does not re-moderate, since nothing unreviewed is published _(WH, JW)_
+- [x] **A member can change the image of an approved title with no re-moderation**: done on `main` (PR #11). A member's image replacement sends an approved title back to `PENDING` before the stored bytes are overwritten, so the old public URL never serves an unreviewed image. Removing the image does not re-moderate, since nothing unreviewed is published _(WH, JW)_
 - [x] **The owner cannot see the image of their own pending title**: done on `main` (PR #11). The owner and admins can fetch it; everyone else gets the same 404 as for a missing image _(WH)_
 - [x] **An empty `trending_titles` view keeps existing cards.** The refresh job warns and returns `{upserted: 0, removed: 0}` without writes or deletion. Socket-free unit and existing job tests pass; non-empty upserts and stale-card deletion are unchanged. Live-database verification remains pending _(SJ)_
-- [ ] Small shared helpers are repeated across modules (the title id param schema, the admin-cannot-write check, the page/pageSize schema), and `titles.routes.ts` still uses try/catch instead of the `route()` helper. The trending job also reads poster URLs with a second query that could be a JOIN in its ranking SQL. Tidy once the modules have merged _(WH)_
+- [ ] Some pagination validation remains repeated across modules, and `titles.routes.ts` still uses try/catch instead of the `route()` helper. The admin-cannot-write check is shared in `utils/assertCanWrite.ts`, and the trending job now joins poster URLs in its ranking SQL. Tidy once the modules have merged _(WH)_
 
 Additional open problems from the tracker and current code:
 
+- Signup usernames and the member role merge are implemented (migration `20261103140000_members_and_usernames`; test counts: see the PR). The updated signup browser checks still need a run; the historical results in the manual test checklist do not verify them. Lookalikes beyond the practical reserved-name mapping can still evade the username validator.
 - Admin user/role and review-moderation endpoints are not built. Their screens have mock implementations only. Title approval endpoints are implemented.
 - Search uses `ILIKE`. Whether to add the `pg_trgm` extension is still a team decision after rare-term searches approached 100 ms on synthetic scale data (section 6).
 - Browse still performs a total count for pagination. The tracker records about 25 ms on the synthetic benchmark data, now the largest part of a browse request (section 6).
-- Browse has no minimum-rating or release-year control (API only), and the large title at the top of Home is not a trending one. The creator, admin and reader flows were walked through in a real browser on 3 Nov 2026 (`docs/manual-test-checklist.md`); keyboard-only use, screen readers and the phone layout of the creator and admin screens are still unchecked.
+- Browse has no minimum-rating or release-year control (API only), and the large title at the top of Home is not a trending one. The member submission, admin and member reading flows were walked through in a real browser on 3 Nov 2026 (`docs/manual-test-checklist.md`); keyboard-only use, screen readers and the phone layout of the creator and admin screens are still unchecked.

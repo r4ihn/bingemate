@@ -32,11 +32,11 @@ pnpm-debug.log*
 coverage/
 .nyc_output/
 
-# Datasets (keep .gitkeep, ignore contents)
-data/raw/*
+# Share raw inputs and cleaned datasets; keep load-specific mappings and logs local.
 data/processed/*
-!data/raw/.gitkeep
 !data/processed/.gitkeep
+!data/processed/*.csv
+!data/processed/review_bodies.jsonl
 
 # Benchmark output
 benchmarks/results/*
