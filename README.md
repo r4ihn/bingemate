@@ -25,10 +25,11 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local   # optional
 
 # 4. Create the DB schema + generate the Prisma client
+#    (on a newly created database this also runs the seed in step 5 by itself)
 npm run prisma:migrate
 npm run prisma:generate
 
-# 5. Seed demo data (admin / two members, sample titles)
+# 5. Seed demo data (admin / two members, sample titles); safe to run again
 npm run seed
 
 # 6. Run both apps
@@ -40,6 +41,8 @@ npm run dev:web      # http://localhost:5173
 
 Demo accounts (password `Password123!`): `admin@bingemate.dev`, `creator@bingemate.dev`, `consumer@bingemate.dev`.
 The seed usernames are **BingeMate Admin** (admin), **Demo Maker** and **Demo Viewer**. `creator@bingemate.dev` and `consumer@bingemate.dev` are ordinary members; their email names are historical. Loaded dataset accounts keep their usernames: `admin` and `demo_creator`, respectively for `admin@bingemate.dev` and `creator@bingemate.dev`.
+
+To use the full dataset instead of the demo seed, run `npx tsx data/etl/clean-all.ts` and then `npx tsx data/etl/load-all.ts --reset` (see `data/etl/README.md`). The `--reset` is needed the first time because step 4 already seeded the demo data, and the load replaces it.
 
 After the dataset load (`data/etl/load-all.ts`) there is no `consumer@bingemate.dev`; any imported user works instead, for example `user4@seed.bingemate.local`.
 

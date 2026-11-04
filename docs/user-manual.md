@@ -39,7 +39,7 @@ npm run prisma:generate
 
 Before you start the API, replace the example `JWT_SECRET` in `apps/api/.env` with a long random string. The API requires at least 16 characters. The example database URLs match Compose: PostgreSQL uses database, user and password `bingemate`; MongoDB uses database `bingemate`.
 
-Choose **one** data option below. Do not seed before loading the dataset.
+Choose **one** data option below. On a newly created database, `npm run prisma:migrate` already runs the demo seed, so the demo accounts and sample titles exist after the commands above; Option A replaces them with the dataset.
 
 ### Option A: load the dataset
 
@@ -47,12 +47,12 @@ You need the raw inputs described in [the ETL README](../data/etl/README.md) in 
 
 ```sh
 npx tsx data/etl/clean-all.ts
-npx tsx data/etl/load-all.ts
+npx tsx data/etl/load-all.ts --reset
 npx tsx data/etl/verify-load.ts
 npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
 ```
 
-The loader reads `apps/api/.env`. It loads PostgreSQL headers and MongoDB bodies together. It refuses non-empty stores without `--reset`. That flag wipes and reloads data, so use it only when you intend to replace your local dataset. Do not reset just one store; their IDs must agree.
+The loader reads `apps/api/.env`. It loads PostgreSQL headers and MongoDB bodies together. It refuses non-empty stores without `--reset`, and a new database is not empty (the migrate step seeded it), so the first load needs `--reset`. That flag wipes both stores and reloads them, so use it only when you intend to replace what is in your local databases. Do not reset just one store; their IDs must agree.
 
 You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every loaded user has password `Password123!`. There is **no `consumer@bingemate.dev`** after this option. Use an imported member such as `user4@seed.bingemate.local`, as listed in the root README. Imported titles are approved and have no creator owner.
 
@@ -62,7 +62,7 @@ You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every
 npm run seed
 ```
 
-On a fresh database, you get these accounts. Each has password `Password123!`.
+On a new database the migrate step has already run this seed, so you have these accounts after the setup commands; running `npm run seed` again changes nothing. Each has password `Password123!`.
 
 | Email                  | Role   |
 | ---------------------- | ------ |

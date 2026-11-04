@@ -14,7 +14,7 @@ To load the cleaned data (Docker running, `apps/api/.env` copied from `.env.exam
 docker compose up -d
 npm run prisma:migrate                           # tables, CHECK constraint, views
 npx tsx data/etl/clean-all.ts                    # data/raw -> data/processed
-npx tsx data/etl/load-all.ts                     # both stores in order; add --reset to wipe and reload
+npx tsx data/etl/load-all.ts --reset             # both stores in order; --reset is needed on a new database (see below)
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
 
@@ -30,7 +30,9 @@ Both loaders refuse a database that is not on this machine (`DATABASE_URL`/`MONG
 localhost) unless you pass `--allow-remote`.
 
 Skip `npm run seed`: the dataset already contains `admin@bingemate.dev` and `creator@bingemate.dev`
-(password `Password123!`, same as the seed), and the loaders refuse a non-empty database without `--reset`.
+(password `Password123!`, same as the seed). **Use `--reset` the first time.** On a newly created database,
+`npm run prisma:migrate` (`prisma migrate dev`) runs the demo seed by itself, so the database is not empty and
+the loaders refuse it without `--reset`; the reset replaces the seeded demo accounts and sample titles with the dataset.
 
 No dependencies were added: a small CSV reader/writer lives in `lib/csv.ts`. Each step is
 idempotent and reads only `../raw/` (except `clean-lists`, which reads the reviews that survived).
