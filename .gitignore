@@ -32,10 +32,8 @@ pnpm-debug.log*
 coverage/
 .nyc_output/
 
-# Datasets (keep .gitkeep, ignore contents)
-data/raw/*
+# Raw datasets are shared in Git; generated outputs stay local.
 data/processed/*
-!data/raw/.gitkeep
 !data/processed/.gitkeep
 
 # Benchmark output

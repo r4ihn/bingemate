@@ -1,0 +1,5479 @@
+user_id,username,role_id
+1,admin,3
+2,demo_creator,2
+3,James Berardinelli,1
+4,Steve Rhodes,1
+5,Harvey S.,1
+6,Cheng-Jih Chen,1
+7,Dustin Putman,1
+8,Dennis Schwartz,1
+9,Chad Polenz,1
+10,Mark R.,1
+11,Walter Frith,1
+12,Homer Yen,1
+13,Berge Garabedian,1
+14,"""Average Joe""",1
+15,Scott Renshaw,1
+16,Michael Redman,1
+17,Christopher Null,1
+18,Jamey Hughton,1
+19,Eugene Novikov,1
+20,Steve Kong,1
+21,Greg King,1
+22,Matt Williams,1
+23,Bill Chambers,1
+24,A. Estey,1
+25,James Brundage,1
+26,Robert Workman,1
+27,Mark O'Hara,1
+28,John Smyth,1
+29,Luke Buckmaster,1
+30,Jeffrey Huston,1
+31,Michael Dequina,1
+32,Pierce Dalton,1
+33,Victory Marasigan,1
+34,Seth Bookey,1
+35,Nick Amado,1
+36,Joy Wyse,1
+37,"Kleszczewski, Nicholas",1
+38,David Dalgleish,1
+39,Murali Krishnan,1
+40,Matt Prigge,1
+41,Nikki Lesley,1
+42,Ralph Benner,1
+43,Sarah Elkins,1
+44,Edwin Jahiel,1
+45,Steve Fritzinger,1
+46,Michael J.,1
+47,Zak Forsman,1
+48,Lori Ann,1
+49,Scott Mendelson,1
+50,Larry Mcgillicuddy,1
+51,Lewis Butler,1
+52,Rebecca Wan,1
+53,Andrew Hicks,1
+54,B Reitt,1
+55,Ross Anthony,1
+56,Edward Johnson-Ott,1
+57,Allan Toombs,1
+58,Paul-Michael Agapow,1
+59,Gharlane of,1
+60,Eric Grossman,1
+61,Joan Ellis,1
+62,J. D.,1
+63,Michelle Dean,1
+64,Monika Huebner,1
+65,Sue Roberts,1
+66,Melissa Martin,1
+67,Brian Koller,1
+68,Susan Granger,1
+69,MR JONATHAN,1
+70,John Carroll,1
+71,Kevin Patterson,1
+72,Chuck Dowling,1
+73,Brian Matherly,1
+74,James Sanford,1
+75,David Sunga,1
+76,Akiva Gottlieb,1
+77,Noel Wood,1
+78,Michael Elliott,1
+79,Tim Chandler,1
+80,Athan Bezaitis,1
+81,David Landers,1
+82,Shay Casey,1
+83,Mac VerStandig,1
+84,Shannon Patrick,1
+85,Rose 'Bams',1
+86,John Beachem,1
+87,Bob Bloom,1
+88,Jon Popick,1
+89,Chuck Schwartz,1
+90,Matt Pusateri,1
+91,Lars Lindahl,1
+92,Brian Takeshita,1
+93,Jerry Saravia,1
+94,Jason Wallis,1
+95,Christian Pyle,1
+96,Eric Robinette,1
+97,Jonathan Richards,1
+98,Marty Mapes,1
+99,Jesse Kopelman,1
+100,Ben Hoffman,1
+101,Nigel Bridgeman,1
+102,Dan Kim,1
+103,Tim Voon,1
+104,George McAdams,1
+105,Alex Fung,1
+106,Larry McGillicuddy,1
+107,Ted Prigge,1
+108,David N.,1
+109,Mike Borzumate,1
+110,Jeremy Vay,1
+111,Nathaniel R.,1
+112,Holly Baublitz,1
+113,Jonathan Hauer,1
+114,Gary Jones,1
+115,Frankie Paiva,1
+116,Jack Choo,1
+117,Stephen Graham,1
+118,Robin Clifford,1
+119,Robert Strohmeyer,1
+120,JONATHAN RICHARDS,1
+121,Laura Clifford,1
+122,John Sylva,1
+123,Richard Scheib,1
+124,Rory Mackay,1
+125,James Kendrick,1
+126,M. Doyle,1
+127,Jeff Pidgeon,1
+128,Thomas Wheeler,1
+129,Jonathan F.,1
+130,Blake French,1
+131,Jeffrey Graebner,1
+132,Dragan Antulov,1
+133,Jon A.,1
+134,J. Young,1
+135,Craig Roush,1
+136,David Butterworth,1
+137,David Nusair,1
+138,David E.,1
+139,Jamie Peck,1
+140,Andrew Hall,1
+141,Horst Tellioglu,1
+142,Martijn van,1
+143,Eric Lurio,1
+144,Nick Schaden,1
+145,Randy Turgeon,1
+146,Rick Ferguson,1
+147,"Travis ""Howling",1
+148,Phil Brady,1
+149,Travis Daub,1
+150,Jeff Walters,1
+151,David Wilcock,1
+152,Jason Overbeck,1
+153,Ryan Davis,1
+154,Choo Eng,1
+155,Allan Jenoff,1
+156,Ron Small,1
+157,Shane Burridge,1
+158,Norm Schrager,1
+159,Karina Montgomery,1
+160,Rob Slater,1
+161,Jon A,1
+162,Sridhar Prasad,1
+163,Graeme Huggan,1
+164,Curtis Edmonds,1
+165,Martin Urch,1
+166,Alex Crouvier,1
+167,Max Messier,1
+168,Brandon Herring,1
+169,Matthew K.,1
+170,Aaron Michaels,1
+171,Eric C.,1
+172,Bruce Miller,1
+173,Ivana Redwine,1
+174,Phil Curtolo,1
+175,Bryant Frazer,1
+176,Jon Ridge,1
+177,Max Scheinin,1
+178,Mike Joyce,1
+179,John Bauer,1
+180,Joe Blenkle,1
+181,Bradley Null,1
+182,Peter W.,1
+183,Greg Dean,1
+184,Joe Chamberlain,1
+185,Jeremiah Kipp,1
+186,Chad Polenz@aol.com,1
+187,Roger Mellor,1
+188,Evelyn C.,1
+189,Justin Felix,1
+190,Craig Good,1
+191,George V.,1
+192,Joseph Brenner,1
+193,JONATHAN F,1
+194,Keith Meng-Wei,1
+195,Travis Cottreau,1
+196,LARRY MCGILLICUDDY,1
+197,Thaiphong Vo,1
+198,SSG Syndicate,1
+199,Chris Webb,1
+200,Brian Finkelstein,1
+201,George Papadopoulos,1
+202,Justin K.,1
+203,Anders Fagerholt,1
+204,Boyd Petrie,1
+205,Alex Ioshpe,1
+206,Jeff Shooman,1
+207,Chris Casino,1
+208,E. Benjamin,1
+209,Laurence Mixson,1
+210,Serdar Yegulalp,1
+211,Terri Buchman,1
+212,Matt Petras,1
+213,Jeremiah Rickert,1
+214,Louis Butler,1
+215,Gregory N.,1
+216,Simon Calloway,1
+217,Sean Siska,1
+218,Rob Strong,1
+219,Jim Moody,1
+220,Pedro Sena,1
+221,S Ananthasubramanian,1
+222,Mina Kumar,1
+223,Hessel Visser,1
+224,Nigel Polhill,1
+225,Louis Proyect,1
+226,Bernie Rauscher,1
+227,Randy Parker,1
+228,Laurie D.,1
+229,Donlee Brussel,1
+230,Ian Waldron-Mantgani,1
+231,Christina Gross,1
+232,John Schuurman,1
+233,Martin Rich,1
+234,Neil Smith,1
+235,Fontaine Lien,1
+236,Frank Maloney,1
+237,Ian Waldron,1
+238,Hal Render,1
+239,Thuan N.,1
+240,James Mork,1
+241,Michael R.,1
+242,Christopher Roberson,1
+243,Malcolm Austin,1
+244,Ron Hogan,1
+245,Jon Webb,1
+246,Max Hoffmann,1
+247,Raul Cairo,1
+248,Dave Gross,1
+249,Paul X,1
+250,Will FitzHugh,1
+251,Jonathan Pringle,1
+252,Mark Shapiro,1
+253,Chris Loar,1
+254,Zachary McGhee,1
+255,Sean Linaweaver,1
+256,Ronald O.,1
+257,K. Harris,1
+258,Zeke M.,1
+259,Joshua Tyler,1
+260,Lee Lady,1
+261,Kevin W.,1
+262,Robert McLachlan,1
+263,Yosha Bourgea,1
+264,Jim Straus,1
+265,Pete Croatto,1
+266,Heather Picker,1
+267,Nicole Lesley,1
+268,George Wu,1
+269,Lon Ponschock,1
+270,"MILLER, JIMMY",1
+271,Theodore Potter,1
+272,Joe Clark,1
+273,D. Agnew,1
+274,Jeff Bogart,1
+275,Indra Moeljadi,1
+276,Oystein Brekke,1
+277,Scott Hunt,1
+278,Edward W.,1
+279,Freddie Elmer,1
+280,James Pyke,1
+281,Omar Odeh,1
+282,Zach Ralston,1
+283,Joshua McAdams,1
+284,Dave Cowen,1
+285,Adam Godfrey,1
+286,Allan Woodward,1
+287,Danielle Flynn,1
+288,Wil Tirion,1
+289,Cameron Shelley,1
+290,The Flying,1
+291,Paul Haynes,1
+292,Wayne Citrin,1
+293,Sean P.,1
+294,Vince Deehan,1
+295,Mikkel Lodahl,1
+296,Mark Farinas,1
+297,Timothy W.,1
+298,Scott Derby,1
+299,Denes House,1
+300,Jonathan P.,1
+301,J. C.,1
+302,Richard F.,1
+303,Mike V,1
+304,Robin Starvling,1
+305,Annette Cardwell,1
+306,Brian L.,1
+307,Stephen Donaldson,1
+308,Rob Furr,1
+309,wizardru <wizardru@netaxs.com>,1
+310,T. Robin,1
+311,P Douglas,1
+312,Dave Thompsen,1
+313,Mark D.,1
+314,Kristian Lin,1
+315,Chris Eades,1
+316,Fred Edwords,1
+317,David G.,1
+318,William Loguidi,1
+319,Adrian Preston,1
+320,David Furtney,1
+321,Adam Joyce,1
+322,C.J. Webb,1
+323,Rory Aronsky,1
+324,Paul Miller,1
+325,Jesse Kaplan,1
+326,C.J Hill,1
+327,Bill Clark,1
+328,Alex Christensen,1
+329,Scott Marcus,1
+330,John Robertson,1
+331,"Jeremiah ""Spassvogel""",1
+332,NANETTE AGUIRRE,1
+333,Josh Byer,1
+334,Kelvyn Harris,1
+335,Ryan Kohler,1
+336,Ahmed I,1
+337,Sean Lee,1
+338,Kevin Maguire,1
+339,P. Clark,1
+340,Ife Hsu,1
+341,Chew Joo,1
+342,Steve Schear,1
+343,Bernard Eric,1
+344,Roger Snappy,1
+345,The Phantom,1
+346,Eric Walker,1
+347,Andrew Kuchling,1
+348,Jason D,1
+349,Robert Dorsett,1
+350,Wallace Baine,1
+351,Charles Henderson,1
+352,Phineas Narco,1
+353,Christina Nunez,1
+354,Nemanja Dundjerovic,1
+355,Jeff Sullivan,1
+356,Amanda Tuttle,1
+357,Chong Yu,1
+358,James J.,1
+359,John Oswalt,1
+360,greg king,1
+361,Doug Skiles,1
+362,Hosun Smashing,1
+363,"""jasanfor"" <jasanfor@MCI2000.com>",1
+364,Scott J,1
+365,Kirsten Starcher,1
+366,Brandon Stahl,1
+367,Hanson Yoo,1
+368,John Eung,1
+369,Greg Nowak,1
+370,Frederick Vallaeys,1
+371,Steve Baumgarten,1
+372,eye WEEKLY,1
+373,Stephen J.,1
+374,Amanda Miller,1
+375,the Rev.,1
+376,Tom McDonald,1
+377,Alex Brenner,1
+378,Samuel Stoddard,1
+379,Dan Chodos,1
+380,Ann Alvarez,1
+381,Alan Jay,1
+382,Greg Goebel,1
+383,Krishin Asnani,1
+384,Cuda Brown,1
+385,Ron Strong,1
+386,Thomas E.,1
+387,Jeff Meyer,1
+388,Steve Kramer,1
+389,Friday Jones,1
+390,David M.,1
+391,Jason John,1
+392,John Wagner,1
+393,Vince Waldron,1
+394,Sheri K.,1
+395,Julian Lim,1
+396,Jeffrey R,1
+397,Cooper Redwine,1
+398,A. S.,1
+399,Rogers Cadenhead,1
+400,Jane Taylor,1
+401,Jesus Garcia,1
+402,"Rob Slade,",1
+403,Paul Presley,1
+404,Eric Mankin,1
+405,Mike Ryan,1
+406,Evan Beach,1
+407,Matthias Rackwitz,1
+408,Peter Reiher,1
+409,Karl Rackwitz,1
+410,Victor-charles Scafati,1
+411,Rob Reser,1
+412,Jon Cohen,1
+413,Tim Larison,1
+414,Michael K.,1
+415,Jeremy Krug,1
+416,Sarah M.,1
+417,Mark Santora,1
+418,Randall Rhea,1
+419,2fatguys@tdis.icpsr.umich.edu (Too,1
+420,Tim Horton,1
+421,Raymond Johnston,1
+422,Elisabeth Riba,1
+423,dg-rtp!fnalo.fnal.gov!morrow (Captain,1
+424,Dan Frank,1
+425,Michael S.,1
+426,Berge Garabedian<joblo@joblo.com>,1
+427,Risto 'Rise',1
+428,Eric Townsend,1
+429,K. Prasad,1
+430,Ann Hodgins,1
+431,Dr. David,1
+432,Sandra J.,1
+433,Ron Schnell,1
+434,Nathan Shafer,1
+435,Scott Hamilton,1
+436,Mr. Bryan,1
+437,Dale L.,1
+438,Burke Cox,1
+439,Dwight Joe,1
+440,Chris Holland,1
+441,gracjanski,1
+442,kyle20ellis,1
+443,drlowdon,1
+444,Tony1984,1
+445,ibejohn818,1
+446,Verne Gay,1
+447,Allison Keene,1
+448,Hanh Nguyen,1
+449,Tim Goodman,1
+450,Sonia Saraiya,1
+451,Troy Patterson,1
+452,Emily VanDerWerff,1
+453,PsychopathicTim,1
+454,Guo56,1
+455,TriviumLover69,1
+456,brockcheese,1
+457,IntrovertRobot,1
+458,sebastianali,1
+459,SayreTX,1
+460,Eric Kohn,1
+461,Matt Zoller Seitz,1
+462,Robert Lloyd,1
+463,Joseph Falcone,1
+464,Ken Tucker,1
+465,Nick Romano,1
+466,Alan Sepinwall,1
+467,PochoEpic,1
+468,MrWolfy_,1
+469,AnalogousPants5,1
+470,Wavybone,1
+471,Lamarwest,1
+472,WDJ,1
+473,Ojo78,1
+474,chasekucinski,1
+475,Amonnemo,1
+476,bigmackk,1
+477,All_ButTrU4,1
+478,MarshallCavalli,1
+479,hejtyjaa,1
+480,David Wiegand,1
+481,Chuck Barney,1
+482,Robert Bianco,1
+483,Terry Terrones,1
+484,Linda Stasi,1
+485,Joanne Ostrow,1
+486,Hank Stuever,1
+487,Tom Gliatto,1
+488,Clark Collis,1
+489,Matt Roush,1
+490,Brian Lowry,1
+491,James Poniewozik,1
+492,David Hinckley,1
+493,Mike Hale,1
+494,Ross Langager,1
+495,JayRizzle,1
+496,Zenon52,1
+497,SanoAmary,1
+498,MasterNat,1
+499,corinthians,1
+500,mazewaxie,1
+501,nyoung808,1
+502,CaIi,1
+503,Nearco,1
+504,danygreenwood,1
+505,PartlyCloudy,1
+506,frightopia,1
+507,CONMA,1
+508,jens76,1
+509,ProfAmateur,1
+510,JLuis_001,1
+511,naufri27,1
+512,kman1014,1
+513,Brian Tallerico,1
+514,Matthew Gilbert,1
+515,Tom Shales,1
+516,Gail Pennington,1
+517,Eric Mink,1
+518,Howard Rosenberg,1
+519,Mike Duffy,1
+520,Terry Kelleher,1
+521,Phil Gallo,1
+522,Jonathan Storm,1
+523,Hal Boedeker,1
+524,Ed Bark,1
+525,Bill Goodykoontz,1
+526,Diane Werts,1
+527,Phil Rosenthal,1
+528,Scraper,1
+529,Ross Bonaime,1
+530,Manuel Betancourt,1
+531,Jack Seale,1
+532,Steve Greene,1
+533,Myles McNutt,1
+534,Paolo Ragusa,1
+535,Daniel Fienberg,1
+536,Ashlie D. Stevens,1
+537,Daniel D'Addario,1
+538,Nick Schager,1
+539,Shirley Li,1
+540,Kathryn VanArendonk,1
+541,Joel Keller,1
+542,Alexandra Schwartz,1
+543,potatoman222,1
+544,SeleneG,1
+545,OJMorris,1
+546,Davrosdaleks1,1
+547,Adam Chitwood,1
+548,Richard Roeper,1
+549,Kelly Lawler,1
+550,Dennis Perkins,1
+551,Darren Franich,1
+552,Jen Chaney,1
+553,Kristi Turnquist,1
+554,Andrew Bloom,1
+555,Judy Berman,1
+556,Adam White,1
+557,NavyBean,1
+558,flattenedspace,1
+559,NobodyYouKnow,1
+560,onurcan,1
+561,HaloFever,1
+562,Nukelear,1
+563,TVJerry,1
+564,UncleWillard,1
+565,j1train,1
+566,Kristen Lopez,1
+567,Coleman Spilde,1
+568,Rebecca Nicholson,1
+569,Aramide Tinubu,1
+570,Ben Dowell,1
+571,Kimber Myers,1
+572,Ben Travers,1
+573,Angie Han,1
+574,Le_Mental,1
+575,Zaki Hasan,1
+576,Maggie Boccella,1
+577,Tara Bennett,1
+578,Ed Power,1
+579,Anita Singh,1
+580,masonholmes700,1
+581,John Anderson,1
+582,Robert Daniels,1
+583,Lucy Mangan,1
+584,Daki1105,1
+585,EDU_4804,1
+586,PersiaZlt,1
+587,CactusXo,1
+588,Doug Elfman,1
+589,Glenn Garvin,1
+590,Mark Dawidziak,1
+591,Barry Garron,1
+592,Maureen Ryan,1
+593,David Zurawik,1
+594,Aaron Barnhart,1
+595,Michael Buening,1
+596,Melanie McFarland,1
+597,Charlie McCollum,1
+598,AshenWon,1
+599,JonathanCash,1
+600,Benji Wilson,1
+601,Caroline Framke,1
+602,Lily Moayeri,1
+603,Carol Midgley,1
+604,Chris Willman,1
+605,David Ehrlich,1
+606,David Anthony,1
+607,Randy Lewis,1
+608,Carlos Valladares,1
+609,Deanomite,1
+610,tamtam12,1
+611,mariaskolo,1
+612,Lea Palmieri,1
+613,GautamDeka,1
+614,VOIIIXI,1
+615,amheretojudge,1
+616,NewNewAmsterdam,1
+617,Chris Cabin,1
+618,OlavL,1
+619,notor12,1
+620,Erik Adams,1
+621,DukeJon,1
+622,PalomoNero,1
+623,yupmarsie,1
+624,angelsanzcorrea,1
+625,Daniberns,1
+626,Kuggz,1
+627,theirrelephants,1
+628,Inkoo Kang,1
+629,Rob Owen,1
+630,Jenn Adams,1
+631,Sophie Gilbert,1
+632,Saypapoy,1
+633,IntegrateDan,1
+634,Thatoneguywholo,1
+635,jaaackyboyyy,1
+636,Gavolc260,1
+637,brasilia23,1
+638,richardwinters,1
+639,CoreGamer1408,1
+640,javierrivano,1
+641,eva3si0n,1
+642,Yesgo,1
+643,Callum29392,1
+644,WatchinMovies,1
+645,Pan_Krytyk,1
+646,djconnexion,1
+647,John935,1
+648,Dorothy Rabinowitz,1
+649,Kristen Baldwin,1
+650,Constance Grady,1
+651,Fiona Sturges,1
+652,leroy_j,1
+653,Kiko Martinez,1
+654,Roxana Hadadi,1
+655,Mark Feeney,1
+656,Chris Bennion,1
+657,Christian Gallichio,1
+658,Melissa Maerz,1
+659,Joshua Alston,1
+660,Vicki Hyman,1
+661,Nancy DeWolf Smith,1
+662,Colin Fitzgerald,1
+663,Mark A. Perigard,1
+664,Ellen E Jones,1
+665,Sean O'Grady,1
+666,David Craig,1
+667,Boonie2000,1
+668,Jeff Jensen,1
+669,Michael Haigis,1
+670,Jacob Oller,1
+671,Danette Chavez,1
+672,FullmetalWalrus,1
+673,Angelaaaa00117,1
+674,vahidsa,1
+675,sep_ehr,1
+676,nathanleebush,1
+677,maythe4bewithu,1
+678,zNeverSleeping,1
+679,VseVoLoD_,1
+680,maddewshan,1
+681,littykitty,1
+682,HiFi-RUSH,1
+683,Pesarak99,1
+684,TudorPopescu,1
+685,Redacted_Kaos,1
+686,AtheisT_,1
+687,alexmlabelle,1
+688,Lufixus,1
+689,shahroozleon,1
+690,mostafa22saj,1
+691,V0X_Populi,1
+692,SillyLove,1
+693,Drybones2015,1
+694,ehtaco,1
+695,gtrfienddv8,1
+696,NShep53,1
+697,Surg3on,1
+698,Millenia,1
+699,vikin,1
+700,jesynelson,1
+701,StLexion,1
+702,MyNameIsDark,1
+703,EdwardPepelu,1
+704,Cglh,1
+705,Spadanus,1
+706,Mjcarrillo96,1
+707,dogboy,1
+708,viroodiem,1
+709,AlextheamazingR,1
+710,SoBirdieFlyAway,1
+711,Xcomufo2,1
+712,ChrisPaniagua,1
+713,Kayla Kumari Upadhyaya,1
+714,Bessie Yuill,1
+715,Jude Dry,1
+716,Rachael Sigee,1
+717,Josh Sorokach,1
+718,Willa Paskin,1
+719,Catherine Gee,1
+720,Kaitlin Thomas,1
+721,Liz Shannon Miller,1
+722,Margaret Lyons,1
+723,everinquisitive,1
+724,Bitash,1
+725,Jace Lacob,1
+726,Ellen Gray,1
+727,Tirdad Derakhshani,1
+728,Gwen Ihnat,1
+729,Carlos Aguilar,1
+730,marioinspace,1
+731,EROCKQ,1
+732,Eliina,1
+733,Bertaut1,1
+734,ajzeg01,1
+735,miguelsgamingch,1
+736,acemax,1
+737,YummyBieb,1
+738,LispectorLTX,1
+739,PersianImm0rtal,1
+740,Shakoi,1
+741,TardisBlue,1
+742,Daniel_San,1
+743,BhavyaVS,1
+744,Jonesalex,1
+745,TonyTheSonyPony,1
+746,AlissonCosta,1
+747,Smallthing,1
+748,Alissa Wilkinson,1
+749,Curt Wagner,1
+750,Ruth Kinane,1
+751,eddyandrade,1
+752,jpalvest,1
+753,Willixns,1
+754,Dakka,1
+755,Mystichydra,1
+756,Drock88,1
+757,Arturos,1
+758,dermac,1
+759,O-NONOTHISGUY,1
+760,Davide88,1
+761,Ashley Ray-Harris,1
+762,Fabiancsc,1
+763,AtomilkDelta,1
+764,angelgabe,1
+765,branflakes4547,1
+766,Napieracz,1
+767,JamesIrish68,1
+768,Meredith Hobbs Coons,1
+769,Chris Nashawaty,1
+770,Ed Cumming,1
+771,DHarland,1
+772,countyourmacros,1
+773,Nephroid,1
+774,AndreasBekk,1
+775,hkm,1
+776,RidingHood,1
+777,ItGeraltOfRivia,1
+778,abm0,1
+779,Dubeau,1
+780,MATPW,1
+781,Schlafrockman,1
+782,Blade-Runner,1
+783,Mindurbidniss,1
+784,EludiumQ36,1
+785,Hoping,1
+786,Kevin Fallon,1
+787,OneSubtleDose,1
+788,Andrew Bundy,1
+789,Paper_Kay,1
+790,bertobellamy,1
+791,OlivierPiel,1
+792,David Cote,1
+793,Bob Strauss,1
+794,Clint Worthington,1
+795,Rodrigo Perez,1
+796,Max Covill,1
+797,David Fear,1
+798,Robert P. Laurence,1
+799,Scott D. Pierce,1
+800,Ann Hodges,1
+801,John Levesque,1
+802,Ray Richmond,1
+803,Caryn James,1
+804,James Collins,1
+805,Manuel Mendoza,1
+806,keleluh,1
+807,Moviefan98,1
+808,ALMJ,1
+809,AReedy,1
+810,Lacy Baugher,1
+811,Nina Metz,1
+812,Jeff Ewing,1
+813,Morgan Cormack,1
+814,David Opie,1
+815,Barbara Ellen,1
+816,Gavia Baker-Whitelaw,1
+817,Julia Raeside,1
+818,Caroline Siede,1
+819,Custis,1
+820,G. Allen Johnson,1
+821,madmar,1
+822,Mahmus,1
+823,SeyeerGame,1
+824,Jattaman,1
+825,Gittoplo,1
+826,LowMerc,1
+827,Olgierd2281,1
+828,UltraBrasileiro,1
+829,BleedingJester,1
+830,manicure,1
+831,Shasarak,1
+832,Broyax,1
+833,Staff [Not Credited],1
+834,Robert Goldberg,1
+835,acecyan,1
+836,BarryDexter,1
+837,ruizmigang,1
+838,Jovyy,1
+839,ErsatzGood,1
+840,Malcolm Venable,1
+841,Kay B,1
+842,Tambay Obenson,1
+843,Adrian Horton,1
+844,John J. O'Connor,1
+845,Rick Kogan,1
+846,Michael Fleming,1
+847,John Haslett,1
+848,Don Shirley,1
+849,Erdenes,1
+850,Xectia,1
+851,Uujgii,1
+852,mwowta,1
+853,Marya E. Gates,1
+854,Maggie Lovitt,1
+855,ocean10,1
+856,Arod85,1
+857,bstrdbwn,1
+858,vennusis,1
+859,dlaw88,1
+860,Tidal,1
+861,Spasiva,1
+862,7000fists,1
+863,saimariejohnson,1
+864,LienTsuki,1
+865,Hestya444,1
+866,CaetanoF,1
+867,Dahlias,1
+868,MichaelTom2425,1
+869,NiNEnjoyer,1
+870,irmavepkitty,1
+871,CerisesBlue,1
+872,PJMZdanowski,1
+873,Exceladeogun,1
+874,JorgeGonzalez92,1
+875,Fedyacritic228,1
+876,DawdlingPoet,1
+877,Richard Corliss,1
+878,Todd McCarthy,1
+879,Mary McNamara,1
+880,Emily Nussbaum,1
+881,Lori Rackl,1
+882,katezoe,1
+883,VCS2022,1
+884,MoogleUK,1
+885,manutsawin_j,1
+886,r3506,1
+887,joelgreenberg,1
+888,redpola,1
+889,a_scott_a,1
+890,joshwashere,1
+891,carlossolrac,1
+892,night4,1
+893,deadskre,1
+894,bigb159,1
+895,Elsbieta,1
+896,Benny555,1
+897,obscurist,1
+898,Samy3333,1
+899,Pogoscribe,1
+900,Kenneth Turan,1
+901,Neil Genzlinger,1
+902,Peter Keough,1
+903,ryanoliveira3,1
+904,ConnorIngold12,1
+905,T0mmyturtle99,1
+906,GuantanamoTaco,1
+907,EZrev2006,1
+908,johndoe2014,1
+909,ArturReview,1
+910,hello_world,1
+911,Atum_,1
+912,Noahboy,1
+913,alandisnc,1
+914,Sasuke6,1
+915,Tostoyevski,1
+916,phaedrusamerica,1
+917,spiderfighter54,1
+918,RollingMelon,1
+919,Zach_Moser,1
+920,KeybladeWarrior,1
+921,mande77,1
+922,elpsycongruent,1
+923,ryanjackkay,1
+924,YoMammy,1
+925,jamesmoore825,1
+926,valerygui,1
+927,JeBjBo,1
+928,CoolSun,1
+929,StaindSoul,1
+930,ElliottHeutel,1
+931,Catherine Caruso,1
+932,Michael Phillips,1
+933,ZackMurph,1
+934,gmonster320,1
+935,Jeff Korbelik,1
+936,David James,1
+937,Charlie Mason,1
+938,Vinnie Mancuso,1
+939,MrPajamas,1
+940,emirbud,1
+941,mihmanz,1
+942,DEDtm,1
+943,leoterra,1
+944,Voodoo123,1
+945,VanillaSky96,1
+946,itsLukeNunn,1
+947,Trineo99,1
+948,antipants94,1
+949,mickrussom,1
+950,Panchogul,1
+951,Joraks,1
+952,Calcal18,1
+953,meinsouza,1
+954,jcpjunior,1
+955,FlaviuDreptate,1
+956,Sachamos1505,1
+957,Diodread,1
+958,semkoartem,1
+959,Rachel Aroesti,1
+960,Emily Baker,1
+961,Jessie Thompson,1
+962,Jasper Rees,1
+963,Gerard Gilbert,1
+964,Isobel Lewis,1
+965,Nick Hilton,1
+966,Grendizer,1
+967,Nick2468,1
+968,conurtrol,1
+969,Skitzofreniq,1
+970,Cybotico,1
+971,Tom11th,1
+972,Mirianatp,1
+973,Conq_,1
+974,dr_Tre,1
+975,BigYeedus,1
+976,Dave Nemetz,1
+977,TalkTeaV,1
+978,IndyHCKM,1
+979,MariusL,1
+980,foundfootage,1
+981,Deralac,1
+982,HughMBehavior,1
+983,pdw123,1
+984,Kaiya Shunyata,1
+985,Chase Hutchinson,1
+986,Saloni Gajjar,1
+987,treif,1
+988,RAJSOD06,1
+989,MrSantyno,1
+990,Swolekirb1992,1
+991,Peanuts_dx,1
+992,Araman,1
+993,Thundag,1
+994,spicy617,1
+995,BeggarSoldier,1
+996,ponnamgam089,1
+997,lennyjoanthan05,1
+998,ZeroHart,1
+999,vergildmc5,1
+1000,Tinajero21,1
+1001,Uriuwu,1
+1002,elepejelagarto,1
+1003,VISHAL2006,1
+1004,bigdrakenery,1
+1005,Miguelrgomes,1
+1006,IgorSantiago,1
+1007,Randy Myers,1
+1008,d13golov,1
+1009,Mitchel Broussard,1
+1010,David Sims,1
+1011,Robyn Bahr,1
+1012,Ed Gonzalez,1
+1013,Molly Eichel,1
+1014,deanlovests13,1
+1015,Bulhy,1
+1016,Marielcrzz,1
+1017,krrish,1
+1018,SamCman,1
+1019,Quellejedi,1
+1020,PedBeloni,1
+1021,PositronPos,1
+1022,napoleon5432,1
+1023,leon80,1
+1024,rutin21,1
+1025,PraetorsGhost,1
+1026,bsandler1992,1
+1027,tanloc072,1
+1028,Dylandrennan,1
+1029,Turgon16,1
+1030,VinnyVo,1
+1031,TheZangoose,1
+1032,sidewinder3000,1
+1033,Smadarp,1
+1034,Rana33,1
+1035,lordking242,1
+1036,lageeok666,1
+1037,pamplona,1
+1038,PamBloom,1
+1039,Srishtirajotia,1
+1040,Esther Zuckerman,1
+1041,Kate Kulzick,1
+1042,Alessandra Stanley,1
+1043,Inlike,1
+1044,ohwhen,1
+1045,Gregory Lawrence,1
+1046,Andrew Crump,1
+1047,Drew Gillis,1
+1048,Shannon Miller,1
+1049,Josh Spiegel,1
+1050,Chancellor Agard,1
+1051,Tim Grierson,1
+1052,Nick Allen,1
+1053,A.A. Dowd,1
+1054,Stephanie Zacharek,1
+1055,Rob Lowman,1
+1056,Ben Kenigsberg,1
+1057,Chuck Bowen,1
+1058,Peter Debruge,1
+1059,Xbluannax,1
+1060,Zumbie101,1
+1061,Gwendolyn Smith,1
+1062,Amy Wilkinson,1
+1063,sachineldho,1
+1064,Ananisapta,1
+1065,Jacqueline Cutler,1
+1066,Ira Madison III,1
+1067,Lukewarmpuke,1
+1068,Roger Ebert,1
+1069,rspain003,1
+1070,hamioon,1
+1071,Hjallie,1
+1072,esteemedcolleag,1
+1073,skywhy,1
+1074,John Leonard,1
+1075,Robert Abele,1
+1076,Valerie Complex,1
+1077,Charles Barfield,1
+1078,John Serba,1
+1079,Laura Miller,1
+1080,Jeff Sneider,1
+1081,Kayla Cobb,1
+1082,Mary Elizabeth Williams,1
+1083,Katie Rife,1
+1084,Tom Long,1
+1085,Lorraine Ali,1
+1086,Helen Daly,1
+1087,Stuart Jeffries,1
+1088,17Punk,1
+1089,Dipp,1
+1090,mandstyles,1
+1091,jonspilbor,1
+1092,SOLTAVIR83,1
+1093,Noone0000,1
+1094,MandyMary,1
+1095,Soulrytu,1
+1096,Camu_Camu,1
+1097,ZXSth,1
+1098,Resoul,1
+1099,Chriskriss,1
+1100,BulgarianCritic,1
+1101,RavenFighter,1
+1102,SouzaBreno,1
+1103,PeppoPig,1
+1104,lazyssj,1
+1105,Robobob,1
+1106,lemony,1
+1107,Elthor,1
+1108,FilipeNeto,1
+1109,Nobilis1984,1
+1110,hertzian68,1
+1111,GewoonFerre,1
+1112,Lakyslav,1
+1113,Alitayyeb,1
+1114,Ri22,1
+1115,elchicogamer16,1
+1116,OliverCed,1
+1117,nursevimy,1
+1118,sabinoplane,1
+1119,NoneName,1
+1120,ukrScorpion,1
+1121,ReviewSnap,1
+1122,linkduturfu,1
+1123,Juanriera,1
+1124,Marcologie,1
+1125,Karen Han,1
+1126,Jon Negroni,1
+1127,Laurence Vittes,1
+1128,Ginia Bellafante,1
+1129,Jim Heinrich,1
+1130,nisabella,1
+1131,booond,1
+1132,Jonah Krueger,1
+1133,Chris Vognar,1
+1134,Marianne Levy,1
+1135,Annie Berke,1
+1136,Whitney Friedlander,1
+1137,Richard Lawson,1
+1138,Allison Picurro,1
+1139,charlespedronso,1
+1140,Bethonie Butler,1
+1141,Heidi Patalano,1
+1142,Greg Dawson,1
+1143,John Engstrom,1
+1144,Marvin Kitman,1
+1145,Sara Smith,1
+1146,mdbackes,1
+1147,NoMoreMarmite,1
+1148,LeeRG,1
+1149,Gedfan,1
+1150,James Hibbs,1
+1151,Boyd Hilton,1
+1152,James Jackson,1
+1153,Nick Duerden,1
+1154,Kevin P. Sullivan,1
+1155,David Bianculli,1
+1156,Carina Chocano,1
+1157,Gillian Flynn,1
+1158,Mike McDaniel,1
+1159,Amy Amatangelo,1
+1160,Monica Collins,1
+1161,infin,1
+1162,Victor_Magnus,1
+1163,truerock,1
+1164,kirkender,1
+1165,DelayedReviews,1
+1166,Jade Budowski,1
+1167,Nathan Frontiero,1
+1168,Niv M. Sultan,1
+1169,Fletcher Peters,1
+1170,Meghan O'Keefe,1
+1171,Sam Wollaston,1
+1172,Leila Latif,1
+1173,Poppie Platt,1
+1174,Steve Johnson,1
+1175,Terry Jackson,1
+1176,lm4727,1
+1177,bloody9,1
+1178,Jojo99,1
+1179,TallSaint,1
+1180,Koestank,1
+1181,nagaina,1
+1182,tatesfellow,1
+1183,MattHarter,1
+1184,Mal81,1
+1185,GenTurgidson,1
+1186,DennisDolan99,1
+1187,Gumdrop,1
+1188,apurdy,1
+1189,Carly Lane,1
+1190,Rendy Jones,1
+1191,Marco Vito Oddo,1
+1192,ExTexan,1
+1193,Gfrost,1
+1194,Digsteach,1
+1195,Vi_joe,1
+1196,Lucas565,1
+1197,Fra101,1
+1198,Janette1998,1
+1199,section20mi6,1
+1200,barbiesuperfan,1
+1201,Barny,1
+1202,ReviewerPH,1
+1203,puna,1
+1204,seantotherescue,1
+1205,blackcowboy,1
+1206,RoyCRoberts,1
+1207,dr_om,1
+1208,hhf2,1
+1209,fedefreaks,1
+1210,Soulshocker,1
+1211,BobShapiro,1
+1212,Kokikai7,1
+1213,Allison Shoemaker,1
+1214,kimRN20,1
+1215,Crustyleaf,1
+1216,hufcpaul,1
+1217,GrenRa,1
+1218,HenryF,1
+1219,DontBeAJinx,1
+1220,Meraun,1
+1221,SeniorG,1
+1222,Lynchio,1
+1223,diontoradan,1
+1224,dylan111,1
+1225,Cattmom,1
+1226,Cpthurley,1
+1227,Tmagic,1
+1228,AnnualLeopard,1
+1229,True-Gaming1,1
+1230,ErnaniRosas,1
+1231,tabooretka7,1
+1232,ROMANS_10_9,1
+1233,GanZ107,1
+1234,davidlovesfilm,1
+1235,Paolocarouche,1
+1236,Proma Khosla,1
+1237,Michael E. Ross,1
+1238,Sono_Momo,1
+1239,aamm4030,1
+1240,Dan_B,1
+1241,helena1,1
+1242,Tayloroutsold,1
+1243,mariahsheeran,1
+1244,mattaluck,1
+1245,After_peep08,1
+1246,Diliawandawako,1
+1247,RyanHerofTime,1
+1248,DrBlahBlah,1
+1249,KJ_20,1
+1250,MercureXXVI,1
+1251,Maxsio8,1
+1252,Fionalegislador,1
+1253,VRush73,1
+1254,Ska-Tea,1
+1255,MissMez,1
+1256,HannibalB,1
+1257,Rekiaz,1
+1258,sbosch,1
+1259,Mick LaSalle,1
+1260,Kimoro,1
+1261,notacritick,1
+1262,thebethbentley,1
+1263,LaToya Ferguson,1
+1264,Sarah Huggins,1
+1265,Mekeisha Madden Toby,1
+1266,Adya1980,1
+1267,Saraa2004,1
+1268,Ariana Bade,1
+1269,Kyle Turner,1
+1270,Keith Uhlich,1
+1271,Michael Starr,1
+1272,Simmy04,1
+1273,Himmellaeufer,1
+1274,GrahameryJonas,1
+1275,Alexis Gunderson,1
+1276,Shane Ryan,1
+1277,Tom Philip,1
+1278,Therese Lacson,1
+1279,Michael Hogan,1
+1280,theelite,1
+1281,Diptanshu,1
+1282,Giopy,1
+1283,Rhoninus,1
+1284,nejnej55,1
+1285,pnoyfilmtvadik,1
+1286,dwondra,1
+1287,MongoKalresian,1
+1288,CWED,1
+1289,lemail,1
+1290,Juanoldead,1
+1291,MzK,1
+1292,bestingame312,1
+1293,Edward Love,1
+1294,CDemon,1
+1295,RoyReno,1
+1296,MediocreDude,1
+1297,LsakaL,1
+1298,HelloSweetie,1
+1299,RiciJimmy,1
+1300,Mikutoga96,1
+1301,think8,1
+1302,SirSplendid,1
+1303,AmenAllahRhouma,1
+1304,Skywax,1
+1305,WebGamer,1
+1306,Toastyyyyyy,1
+1307,PhoenixReveiws,1
+1308,Miyuki_,1
+1309,Jusilvar06,1
+1310,ZetaJiffils,1
+1311,Sean L. McCarthy,1
+1312,Todd Lazarski,1
+1313,lajonesy,1
+1314,Sam Woolf,1
+1315,Ned Ehrbar,1
+1316,Sarah Rodman,1
+1317,David Weigel,1
+1318,Tabh88,1
+1319,RichieValero,1
+1320,SgtFilko,1
+1321,sodhims,1
+1322,Steffy1997,1
+1323,Amanda Whiting,1
+1324,Jess Bacon,1
+1325,Lauren Chval,1
+1326,Olly Richards,1
+1327,Abby Robinson,1
+1328,pollorojo,1
+1329,John Teti,1
+1330,Alee Karim,1
+1331,Phillip Maciak,1
+1332,Luis Sanchez,1
+1333,David Canfield,1
+1334,Sohrab Ahmari,1
+1335,Kayla Sutton,1
+1336,Kristen Reid,1
+1337,Rafael Motamayor,1
+1338,Quinci LeGardye,1
+1339,Annabel Nugent,1
+1340,Kaveh Jalinous,1
+1341,Chitra Ramaswamy,1
+1342,edgarffgomes,1
+1343,toddlintown,1
+1344,Ciara Wardlow,1
+1345,Courtney Smith,1
+1346,BIXCOITO,1
+1347,fmm,1
+1348,lkroencke,1
+1349,anna9,1
+1350,mairimsp2003,1
+1351,crankyerma,1
+1352,skykappah,1
+1353,Marah Eakin,1
+1354,aiko10012019,1
+1355,cylun,1
+1356,FadeBlack,1
+1357,Emily L. Stephens,1
+1358,DeathTheHusky,1
+1359,Tim Surette,1
+1360,Patrick Ryan,1
+1361,Noel Murray,1
+1362,Emily Yahr,1
+1363,nabiyax,1
+1364,thelastlegacy,1
+1365,Folklore014,1
+1366,sofisofisofi,1
+1367,luis_isassi,1
+1368,juancasta,1
+1369,Zana_Haji_Said,1
+1370,Lifeiscurvy,1
+1371,demi_,1
+1372,Calypsoo,1
+1373,Bawin,1
+1374,nilsjoberg13,1
+1375,Kashishshah,1
+1376,BradleyFrancke,1
+1377,gibibikow,1
+1378,kanelixx,1
+1379,Taylorswifties,1
+1380,kbar,1
+1381,kuser123,1
+1382,deguzmanviceroy,1
+1383,MassEffectDA,1
+1384,khanhpnuii,1
+1385,Myway,1
+1386,IRONAGU,1
+1387,PhantomWatcher,1
+1388,ubeguysmiley,1
+1389,iCampoRamil,1
+1390,Ryo91,1
+1391,BradEdwards,1
+1392,tshrimp,1
+1393,Isaac Feldberg,1
+1394,Jayyfeathrr,1
+1395,Postyposterson,1
+1396,FreeGordito,1
+1397,rfields,1
+1398,DHSB87,1
+1399,Andermaquivar,1
+1400,saunakatana,1
+1401,rfdub,1
+1402,WeldyWalker,1
+1403,johnmocon,1
+1404,DanSometimes,1
+1405,shoulderoforion,1
+1406,replaysons,1
+1407,bambony,1
+1408,Adam Smith,1
+1409,Vikram Murthi,1
+1410,David Hiltbrand,1
+1411,redhawk,1
+1412,Katherine Smith,1
+1413,Anna Russell,1
+1414,Eleanor Bley Griffiths,1
+1415,Haversham,1
+1416,Andy Swift,1
+1417,Christina Izzo,1
+1418,Spencer Kornhaber,1
+1419,Amy Jones,1
+1420,Rick Porter,1
+1421,Paige Wiser,1
+1422,umrttl,1
+1423,AlderDuchannes,1
+1424,Joseluismay,1
+1425,RedOrchet,1
+1426,ElSolis,1
+1427,Barbara_Barus,1
+1428,Zoeki,1
+1429,CasandraComplex,1
+1430,aemfariz,1
+1431,kayrako,1
+1432,Krutais,1
+1433,doebrei,1
+1434,QueenDalia,1
+1435,moirons,1
+1436,MattBrady99,1
+1437,globalnomad,1
+1438,Alper2003,1
+1439,Floydsframes,1
+1440,AlcoholicGoat,1
+1441,Mauro_Lanari,1
+1442,Bigguy00,1
+1443,CharlieBrown8,1
+1444,Oskad,1
+1445,anaveragehuman,1
+1446,Mandirigma88,1
+1447,Peter Hartlaub,1
+1448,Guy Lodge,1
+1449,Stephen Dalton,1
+1450,Michael Slezak,1
+1451,Joe Dziemianowicz,1
+1452,Amber Dowling,1
+1453,Johnny Oleksinski,1
+1454,BarbaraD,1
+1455,09291946,1
+1456,Tom Feran,1
+1457,Helen Brown,1
+1458,Robert Rorke,1
+1459,SootR,1
+1460,CoKronakan,1
+1461,lidiosky,1
+1462,Docholliday504,1
+1463,Bernard Boo,1
+1464,Bennythegamer,1
+1465,denjamie,1
+1466,Procrustes7,1
+1467,doublebrutal,1
+1468,MaryTennyson,1
+1469,Eid,1
+1470,Jonny_Greatbrow,1
+1471,OzanDK,1
+1472,Dolan64,1
+1473,Findwriters,1
+1474,Real35,1
+1475,Sunflower67,1
+1476,betsybaber,1
+1477,argentshard,1
+1478,mlnfacebook,1
+1479,digoldy,1
+1480,JoeCoffee,1
+1481,Carolynne,1
+1482,SaintPatrick,1
+1483,IndianaParkWars,1
+1484,Cody Ray Shafer,1
+1485,Ray Rahman,1
+1486,Mark Peikert,1
+1487,stevekm,1
+1488,Talleyrand,1
+1489,ubuhubbub,1
+1490,JDDallas1,1
+1491,Dlbruce,1
+1492,Angie99,1
+1493,ILexaI,1
+1494,Leronov,1
+1495,Zac03,1
+1496,Cloudboyyuh,1
+1497,Gorbunov2004,1
+1498,antonzhalob,1
+1499,Daripiki,1
+1500,WRCBSi,1
+1501,Sil542,1
+1502,finn13524,1
+1503,SadForester8586,1
+1504,MiguelT,1
+1505,Jessica Shaw,1
+1506,David Knowles,1
+1507,Geoff Berkshire,1
+1508,JoshTurkey,1
+1509,Bunkd,1
+1510,Abscess2,1
+1511,Ian Freer,1
+1512,dvgdev,1
+1513,Michele Greppi,1
+1514,Linda Fries,1
+1515,Preston Turegano,1
+1516,Keith Phipps,1
+1517,MrMLK,1
+1518,popdod,1
+1519,Henry Goldblatt,1
+1520,Jerminator,1
+1521,Rezazaad,1
+1522,Maxwoo,1
+1523,EaglEBeKA,1
+1524,AshtonMM06,1
+1525,Jesus_Saves,1
+1526,Kianmahmoudi2,1
+1527,Thatrandomguy10,1
+1528,halukdemirkaya,1
+1529,SirSX3,1
+1530,Happylive,1
+1531,daniel307,1
+1532,Boomahly,1
+1533,Viroh,1
+1534,DunyG,1
+1535,Josh Wilding,1
+1536,Matt Webb Mitovich,1
+1537,Alex McLevy,1
+1538,Andrew James Myers,1
+1539,Aja Romano,1
+1540,MorfinGrey,1
+1541,TheVegan,1
+1542,Rayosjema,1
+1543,Sassypants25,1
+1544,XGothicPixieX,1
+1545,matthewmead99,1
+1546,Bex257,1
+1547,Mellieduck,1
+1548,serenity_dah,1
+1549,kevscorner,1
+1550,Watchingstuff,1
+1551,kayouh,1
+1552,cassandra123,1
+1553,Isabella Soares,1
+1554,Virginia Heffernan,1
+1555,Latchback,1
+1556,Jonathan555,1
+1557,YellowApple,1
+1558,Yomomma1118,1
+1559,Dpn291,1
+1560,Nova3490,1
+1561,Zords,1
+1562,Holo7001,1
+1563,NL23,1
+1564,zprestridge,1
+1565,iskendersoysal,1
+1566,SiomeArchangel,1
+1567,Qwazar,1
+1568,Flapazim,1
+1569,Moksu,1
+1570,Murwioa,1
+1571,IHomelanderI,1
+1572,SpryAdix,1
+1573,IGoBySparky,1
+1574,MaxClark14,1
+1575,Allan Johnson,1
+1576,Michael Speier,1
+1577,Lisa Leigh Parney,1
+1578,Jason Clark,1
+1579,mariavictoriah,1
+1580,LouieP,1
+1581,insertusername,1
+1582,Riottide,1
+1583,jaquevventura,1
+1584,Silvana00,1
+1585,vick23,1
+1586,M4t7theNinjaX,1
+1587,Veronicap11,1
+1588,acroburn,1
+1589,i_tdias,1
+1590,Fiuliupiu,1
+1591,Pegusto,1
+1592,nicoleterego,1
+1593,Maoer,1
+1594,Luisferrr96,1
+1595,daniellspm,1
+1596,Ismaelcrit,1
+1597,RyanCPorto,1
+1598,Israel00,1
+1599,Nubells,1
+1600,Viktor_,1
+1601,mariolanes7788,1
+1602,Jeebus117,1
+1603,Criticasdecine,1
+1604,ihonestlydn,1
+1605,supratt1jz,1
+1606,RefinedInsights,1
+1607,imaroacateran,1
+1608,Tss5078,1
+1609,jayman69,1
+1610,Dvpenna60,1
+1611,jkastin,1
+1612,D.F. Lovett,1
+1613,Genevieve Valentine,1
+1614,Britt Lawrence,1
+1615,Paul Katz,1
+1616,Bill Gibron,1
+1617,Third_Era,1
+1618,Misha Davenport,1
+1619,Kai82,1
+1620,ChanekeCholo,1
+1621,Mindkiller7522,1
+1622,Gina McIntyre,1
+1623,Jason Hughes,1
+1624,PTownFrankie,1
+1625,TrentDarko,1
+1626,Andrew Lawrence,1
+1627,Hanif Abdurraqib,1
+1628,Ross McIndoe,1
+1629,Alison Herman,1
+1630,NerdyFanatic,1
+1631,soverymeta,1
+1632,BestTaste,1
+1633,Shazanji,1
+1634,OppressedWriter,1
+1635,Metalover,1
+1636,Mrehr89,1
+1637,EFRAM,1
+1638,Ridnir2,1
+1639,damy_pro,1
+1640,SmillingS,1
+1641,RichJ,1
+1642,Zannef,1
+1643,Docreep,1
+1644,Jam0_,1
+1645,hajin,1
+1646,CLos55,1
+1647,Kamamura,1
+1648,shag00,1
+1649,kelpoggers,1
+1650,Aniket43,1
+1651,DanyaBlin,1
+1652,Pota,1
+1653,JakePelkey,1
+1654,brennenmorrow,1
+1655,GrantD243,1
+1656,Lotan52,1
+1657,Admiral_Jim,1
+1658,Mattf1414,1
+1659,carlosperba,1
+1660,Vasot,1
+1661,badnutz,1
+1662,PrestigeBR2,1
+1663,borbsauce,1
+1664,sepiabadger,1
+1665,obiwan_34,1
+1666,Jeffjay,1
+1667,Tomsson80,1
+1668,vasilis35,1
+1669,JoanV,1
+1670,Mesdot,1
+1671,DuncanMac,1
+1672,EllynReviews,1
+1673,Skeletor71,1
+1674,Antibazelos30,1
+1675,khousesc21,1
+1676,Adam Markovitz,1
+1677,Heather Havrilesky,1
+1678,Paul Brownfield,1
+1679,andrada,1
+1680,wollam11,1
+1681,Bruceiscontent,1
+1682,Alex Kirshner,1
+1683,Britta DeVore,1
+1684,Katie Rosseinsky,1
+1685,Francesca Steele,1
+1686,PorkRoad,1
+1687,Patapouf,1
+1688,fabsrocha,1
+1689,Shamal,1
+1690,ideafix13,1
+1691,Hyacinth75,1
+1692,Joan127,1
+1693,Aaron Riccio,1
+1694,rockytopthad,1
+1695,Lon Grahnke,1
+1696,Richard Zoglin,1
+1697,Joe Stein,1
+1698,Carlos_Andrade,1
+1699,MidAirMan,1
+1700,Vorcia,1
+1701,Ertsinvestor,1
+1702,Brianna Wellen,1
+1703,Robert Levin,1
+1704,Pilot Viruet,1
+1705,Ebbtide,1
+1706,PrThKi,1
+1707,June115,1
+1708,AidanParish,1
+1709,Lord-Xaffax,1
+1710,SchroederRock,1
+1711,cindysandiego,1
+1712,Alphaomegadeth7,1
+1713,Chrihol,1
+1714,Mselle,1
+1715,TomHug,1
+1716,AuntieCoco,1
+1717,WhosTheDoc,1
+1718,Maxx71,1
+1719,ACEjhc,1
+1720,NikolayG,1
+1721,Parkerv,1
+1722,Pollyanna,1
+1723,Biga,1
+1724,JWall,1
+1725,PlantAstro,1
+1726,asskitten,1
+1727,Liblovesmovies,1
+1728,phishakid10,1
+1729,JJorg,1
+1730,AlyssaStephens,1
+1731,Emma Kiely,1
+1732,Peter Travers,1
+1733,James White,1
+1734,Mary Siroky,1
+1735,Aubry D'Arminio,1
+1736,Spike23,1
+1737,concernedfan,1
+1738,Chukree,1
+1739,tstempert,1
+1740,Elbando33,1
+1741,Gondar,1
+1742,Benga_baby,1
+1743,mrnice,1
+1744,monthofsundaes,1
+1745,JJavier,1
+1746,curzon_dax,1
+1747,tonyGreen,1
+1748,thunderboltway,1
+1749,NikitaKuzhel,1
+1750,dangerfar,1
+1751,adamcsor,1
+1752,Laura Fries,1
+1753,Michael Abernethy,1
+1754,Neil Armstrong,1
+1755,kevinbastian,1
+1756,Josh Bell,1
+1757,slicelook,1
+1758,anthonyglo,1
+1759,h8g7k9,1
+1760,plumpudding,1
+1761,Dana Schwartz,1
+1762,Mccusky,1
+1763,CO2017,1
+1764,ajtprop,1
+1765,Emma Fraser,1
+1766,Max Gao,1
+1767,Akos Peterbencze,1
+1768,Martin Carr,1
+1769,Daynah Burnett,1
+1770,kstacy,1
+1771,Lauren O'Neill,1
+1772,Bill Keveney,1
+1773,apcannock,1
+1774,RPrevidi,1
+1775,Highlander2,1
+1776,gingerninja11,1
+1777,geewah,1
+1778,metacritiqueur,1
+1779,VicFerrari,1
+1780,TomWish,1
+1781,bl1rt,1
+1782,max1c,1
+1783,Bopspops,1
+1784,Xax,1
+1785,Zoolybebe,1
+1786,snorkiss,1
+1787,Ryan78,1
+1788,SuperbaDMIke,1
+1789,Broben5,1
+1790,John Freeman,1
+1791,Sean Higgins,1
+1792,Peter_Bison,1
+1793,VeliNuck,1
+1794,nwessler,1
+1795,RavenclawGuy,1
+1796,arekusu,1
+1797,kirbykeeb,1
+1798,Paulus4242,1
+1799,nylsenmajk,1
+1800,Stoutfam,1
+1801,BarMitzvahBoi,1
+1802,TristanYH,1
+1803,JamesWhitehead,1
+1804,wrognibene,1
+1805,HansV,1
+1806,Method__Man,1
+1807,zephyr0418,1
+1808,Jim222001,1
+1809,cpegeo,1
+1810,DasEichenlaub,1
+1811,MarcoBisc82,1
+1812,mickajeux,1
+1813,Carewolf,1
+1814,Halexatro,1
+1815,crownalike,1
+1816,Arezou Amin,1
+1817,Rory Doherty,1
+1818,Molly Moss,1
+1819,Nicola Austin,1
+1820,Mike McCahill,1
+1821,Treeppy,1
+1822,lenassa,1
+1823,caserodio,1
+1824,Kyrie22,1
+1825,Andiof,1
+1826,SaveTheBees,1
+1827,Anxttuya,1
+1828,MetacriticOnur,1
+1829,maaden_swe,1
+1830,Rebecca Landman,1
+1831,Jenna Scherer,1
+1832,Cristina Escobar,1
+1833,Kelly Connolly,1
+1834,FireStorm1010,1
+1835,bigteets23,1
+1836,DukeCumberjack,1
+1837,MarcoPercy,1
+1838,Nateblum7,1
+1839,cherry12,1
+1840,Ekinlaw,1
+1841,Katscratch,1
+1842,geethanksari,1
+1843,Yaquian,1
+1844,PeterSant,1
+1845,Real_g22,1
+1846,sleepless_six,1
+1847,Andrew-sama,1
+1848,Ruzzera,1
+1849,carlito72,1
+1850,marvenlambo,1
+1851,youngwarrior017,1
+1852,tommcgoatald,1
+1853,JustJoshing,1
+1854,whoischarlotte,1
+1855,Ralfbergs,1
+1856,Rammstreisand,1
+1857,Terri White,1
+1858,Ella Kemp,1
+1859,Sacha Zimmerman,1
+1860,John Maynard,1
+1861,Joanna Weiss,1
+1862,Mary Kate Carr,1
+1863,Emma Stefansky,1
+1864,shokhmatic,1
+1865,rajeevfromca,1
+1866,Radhika Menon,1
+1867,krustykrbpizza,1
+1868,navidtw,1
+1869,20mcnuggets,1
+1870,Aradraf,1
+1871,RT198000,1
+1872,DreadG,1
+1873,Fishonmike,1
+1874,Andre879,1
+1875,Asgard0822,1
+1876,toke22,1
+1877,pacman7293,1
+1878,angry_farmer,1
+1879,stAmbrosius,1
+1880,Aslannn62,1
+1881,Smiami,1
+1882,bignoisedoyle,1
+1883,Cuq,1
+1884,Joy Press,1
+1885,Alynda Wheat,1
+1886,Daryl H. Miller,1
+1887,Globe77,1
+1888,cglen,1
+1889,alohaitssara,1
+1890,Jdank,1
+1891,kpaul,1
+1892,Cdhclr,1
+1893,Yourmumsbills,1
+1894,Erica Campbell,1
+1895,Krutika Mallikarjuna,1
+1896,Erin Brady,1
+1897,Annie Lyons,1
+1898,kerminator,1
+1899,tom325,1
+1900,BigManReviewer,1
+1901,Howard Cohen,1
+1902,AlliDoisWatchTv,1
+1903,m2014317,1
+1904,Maitrify,1
+1905,EMDR,1
+1906,ginger_critique,1
+1907,Contrail,1
+1908,JoshuaKlink,1
+1909,PulSy,1
+1910,Sandyphilly23,1
+1911,macinsfo,1
+1912,Lurufu,1
+1913,tvcinefanatic,1
+1914,ErrorSource,1
+1915,Tania Hussain,1
+1916,Lucashood00,1
+1917,OkieDokieOak,1
+1918,Joshuaphine,1
+1919,Mike2k777,1
+1920,Dragnox,1
+1921,maxcash04,1
+1922,Lucashoodll,1
+1923,MaskedIntrovert,1
+1924,Scooterbru,1
+1925,profsal,1
+1926,ARTPOPsickle,1
+1927,RowanBlack,1
+1928,Luke9648,1
+1929,Jakieboy999,1
+1930,tvtropesfans5,1
+1931,Lord_Lymburner,1
+1932,wkolman,1
+1933,Funny7Cloud,1
+1934,nerdalyst,1
+1935,lequocduc2k2,1
+1936,BBBrrr222,1
+1937,Kamikaze4791,1
+1938,vacantmind,1
+1939,NoahsNexus,1
+1940,Michael04,1
+1941,tr3y_evans,1
+1942,amk0619,1
+1943,dylanbeattie,1
+1944,harveyiscute,1
+1945,borannogay,1
+1946,blakeb15,1
+1947,neverhadabagel,1
+1948,CloudXz,1
+1949,glomman,1
+1950,blank1134,1
+1951,kup108,1
+1952,LuthorBraxton,1
+1953,myval2012,1
+1954,Noora7939,1
+1955,luizasavattone,1
+1956,Churchino,1
+1957,Yaseen,1
+1958,PotterheadGleek,1
+1959,samsaraswat,1
+1960,nur121202,1
+1961,Liz Kocan,1
+1962,Jackson McHenry,1
+1963,joaop1430,1
+1964,Brian P. Kelly,1
+1965,Cactuar900,1
+1966,Phil Dyess-Nugent,1
+1967,Tanner Stransky,1
+1968,Cynthia Fuchs,1
+1969,graygray22,1
+1970,Marlo11X,1
+1971,AlanBatisX1,1
+1972,MariettaGuest,1
+1973,Randomguy207,1
+1974,Elijah Gonzalez,1
+1975,Jesse Hassenger,1
+1976,Brian Farvour,1
+1977,Reuben Baron,1
+1978,Vl_cz,1
+1979,Stevenw4,1
+1980,Evan Valentine,1
+1981,Jason Zinoman,1
+1982,Ian Spelling,1
+1983,Staff (Not Credited),1
+1984,Noel Holston,1
+1985,M.S. Mason,1
+1986,Jeff Giles,1
+1987,John Doyle,1
+1988,screenplayhouse,1
+1989,Scott92,1
+1990,Justadude84,1
+1991,habibf44,1
+1992,PoeticDumpling,1
+1993,johnnyupset,1
+1994,Merdoc1982,1
+1995,nilsy,1
+1996,GabrielnLA,1
+1997,rox_roli,1
+1998,GodOne,1
+1999,Eprom,1
+2000,foxdust42,1
+2001,Oldboy-it,1
+2002,froglegs,1
+2003,Denvers,1
+2004,Technoj,1
+2005,Drew Taylor,1
+2006,Brett White,1
+2007,Keri Lumm,1
+2008,Matt Melis,1
+2009,cantbelieve,1
+2010,Uncleking,1
+2011,Marco della Cava,1
+2012,AdrianVeidt,1
+2013,Janju,1
+2014,Joei,1
+2015,ShaMana,1
+2016,kayrakaanonline,1
+2017,MohammadBAghri,1
+2018,Win Fanning,1
+2019,Kay Gardella,1
+2020,Stuart Bykofsky,1
+2021,Marilynn Preston,1
+2022,Gerald B. Jordan,1
+2023,Bud Wilkinson,1
+2024,Lee Winfrey,1
+2025,Marisa Carroll,1
+2026,Nancy Franklin,1
+2027,Sid Smith,1
+2028,Michael Andor Brodeur,1
+2029,Tim Dowling,1
+2030,Tyler Aquilina,1
+2031,Liam Mathews,1
+2032,Ashwyatt1318,1
+2033,Dedy,1
+2034,Cordiehart7,1
+2035,Jonezee,1
+2036,MidwestRdnck,1
+2037,hafizzle,1
+2038,kidcassidy14,1
+2039,BlueRaja,1
+2040,Signal1,1
+2041,jbrooke,1
+2042,uforoboso,1
+2043,tarekali,1
+2044,danielbielak82,1
+2045,MLR,1
+2046,9to5_critic,1
+2047,kevjot,1
+2048,DaKilla,1
+2049,newmarket2,1
+2050,MrMorden,1
+2051,koreanman01,1
+2052,Gnomungus,1
+2053,JohnnyC4077,1
+2054,Don Kaplan,1
+2055,Frank Scheck,1
+2056,Jennifer Wulff,1
+2057,Belle Elving,1
+2058,ssvv,1
+2059,SlayerKarma,1
+2060,http://www.popmatters.com/pm/tv/reviews/44018/state-of-mind/,1
+2061,Juseph,1
+2062,Rome,1
+2063,Eleanor2911,1
+2064,Daniel_N,1
+2065,Patrick Gomez,1
+2066,Lynnette Porter,1
+2067,David Kronke,1
+2068,Todd Everett,1
+2069,raulmedinah,1
+2070,Qhasi,1
+2071,pangipingu,1
+2072,spud,1
+2073,Remus Noronha,1
+2074,Kyndall Cunningham,1
+2075,Annelander,1
+2076,LucyX,1
+2077,samelfero,1
+2078,Louise Griffin,1
+2079,Sophie Butcher,1
+2080,Nicole Vassell,1
+2081,Meredith Blake,1
+2082,Alex Abad-Santos,1
+2083,David Rooney,1
+2084,Hanami,1
+2085,audreyficus,1
+2086,Asper12,1
+2087,c0nsume,1
+2088,pastor43,1
+2089,bozinoz,1
+2090,AlejandroRam,1
+2091,its_a_me_jesus,1
+2092,Lebandit,1
+2093,JMB23,1
+2094,cronokun,1
+2095,JonathanDennis,1
+2096,Esha2712,1
+2097,mike453,1
+2098,Glagaire,1
+2099,JPK,1
+2100,Yapmanpac,1
+2101,rivetallthetime,1
+2102,Saylor,1
+2103,sqwosh,1
+2104,alejandro970,1
+2105,Mikey O'Connell,1
+2106,Dan Snierson,1
+2107,Meranthios,1
+2108,Diako83,1
+2109,ProfMoriarty,1
+2110,xReeferCrazedx,1
+2111,CoconuttPete,1
+2112,Lordofexcess,1
+2113,charles_barkin,1
+2114,Boxtears,1
+2115,NathanFan,1
+2116,stressowl,1
+2117,LiveseyMD,1
+2118,Discovery,1
+2119,mit_m,1
+2120,Flophi0207,1
+2121,br3nt,1
+2122,amontillado,1
+2123,Krolius,1
+2124,Gribbledul,1
+2125,veruszetec,1
+2126,latenights1982,1
+2127,adamtwar,1
+2128,Zepp-8,1
+2129,RICO6KILLER,1
+2130,Lenip95,1
+2131,Damowolf,1
+2132,Dee-Jay_Deli,1
+2133,Rob Brunner,1
+2134,Marlow Stern,1
+2135,Liladiz,1
+2136,Littlegizmo,1
+2137,Dsros96,1
+2138,sychopet,1
+2139,Thaohihihi,1
+2140,sirtimothy27,1
+2141,fooh,1
+2142,lordex,1
+2143,Donut_man,1
+2144,CoringaMate,1
+2145,Tamarlo,1
+2146,blackjag27,1
+2147,JayQuiroz,1
+2148,watchnrant,1
+2149,vilekermano20,1
+2150,Aspxct,1
+2151,Aaryan16,1
+2152,fblp,1
+2153,Gabrielggb,1
+2154,frederikbh,1
+2155,ManVil81,1
+2156,KeenWatcher,1
+2157,ManagerJP,1
+2158,Deathangel,1
+2159,Patriot173,1
+2160,Langgoose,1
+2161,Marionnnnnne,1
+2162,Dzimas,1
+2163,ninjawaiter,1
+2164,neiable,1
+2165,jjnoahjames,1
+2166,Megan Vick,1
+2167,Lesley Smith,1
+2168,lessacebola,1
+2169,Necrophat,1
+2170,dahurtbizness,1
+2171,stupidperson420,1
+2172,Blkmamba,1
+2173,Ray916,1
+2174,Orville52,1
+2175,Tina Jordan,1
+2176,assasins7,1
+2177,PopTartNotReal,1
+2178,Tomk,1
+2179,Randee Dawn,1
+2180,Geoffrey Berkshire,1
+2181,PrincessTeeHee,1
+2182,thecolonel,1
+2183,johnbolling,1
+2184,Lili Loofbourow,1
+2185,Lyvie Scott,1
+2186,Casey Epstein-Gross,1
+2187,Gpankhurst,1
+2188,Ali Barthwell,1
+2189,affcosta7,1
+2190,yujibones,1
+2191,MaxRaider,1
+2192,ElsaFowl,1
+2193,SirCroft97,1
+2194,xosparkz,1
+2195,ale5,1
+2196,SonyBros,1
+2197,5hadowCroft,1
+2198,aelamine7,1
+2199,DanielCroft29,1
+2200,Miracoulus7,1
+2201,mauroveliz23,1
+2202,qwarrock,1
+2203,wbtpopcorn,1
+2204,Narkamin,1
+2205,LauraCroft,1
+2206,zexxx,1
+2207,Agoj2905,1
+2208,Major_PC_92,1
+2209,valeriiege,1
+2210,edoardaland,1
+2211,shekt,1
+2212,John Nugent,1
+2213,Naomi Fry,1
+2214,Kyle Anderson,1
+2215,Jon Caramanica,1
+2216,Agostini96,1
+2217,ggsanti,1
+2218,Niranjan25,1
+2219,RaptorInvaders,1
+2220,alrod76,1
+2221,MasterMind5,1
+2222,sumi29,1
+2223,TheS1rRaldi,1
+2224,Rodrisni,1
+2225,gamingmachinery,1
+2226,TuMakoSezy,1
+2227,excal-,1
+2228,justWicho,1
+2229,Kevin41,1
+2230,Erich_v,1
+2231,priyaRai,1
+2232,Breanne L. Heldman,1
+2233,jadic,1
+2234,Gilbert Cruz,1
+2235,Dana Stevens,1
+2236,Len Sousa,1
+2237,Hosein_Agdam,1
+2238,oxidaniel,1
+2239,Iamsarfarazshk,1
+2240,Mahdireza,1
+2241,Veneltra,1
+2242,lukidior,1
+2243,Boring_Girl,1
+2244,juliee_xs,1
+2245,bigsean53,1
+2246,BroadTS,1
+2247,fsdgfd,1
+2248,alexandra1,1
+2249,Mastermich_,1
+2250,13keeper13,1
+2251,qaminniemouse,1
+2252,jevi,1
+2253,Broker2022,1
+2254,dtippy,1
+2255,Ken Parish Perkins,1
+2256,Patricia O'Connell,1
+2257,Ron Miller,1
+2258,Frederic M. Biddle,1
+2259,Irv Letofsky,1
+2260,Sxphia123,1
+2261,Marianka Swain,1
+2262,Ellen Johnson,1
+2263,Flora Carr,1
+2264,Katie Collins,1
+2265,Emma Kemp,1
+2266,Fireflyfannie,1
+2267,JNavas,1
+2268,Solreth,1
+2269,Jonnygalliano,1
+2270,Asdsm,1
+2271,Fortius,1
+2272,tvideo,1
+2273,Bobsled,1
+2274,elserath,1
+2275,Gryffinsmore,1
+2276,ByronMerritt,1
+2277,Auntorious,1
+2278,Syffer,1
+2279,Dupre299,1
+2280,Smoey,1
+2281,Leomasc7,1
+2282,CrunchyBoy,1
+2283,Mr_Breaker,1
+2284,Totoleelee,1
+2285,scott_324,1
+2286,SevenThunders,1
+2287,Papou,1
+2288,Cthulhu5000,1
+2289,Shireke,1
+2290,Maulcun,1
+2291,Pizaclaton,1
+2292,JawaOfNevarro,1
+2293,Nerdcall,1
+2294,Daniel Rasmus,1
+2295,Ernest Macias,1
+2296,Helenaduberry,1
+2297,CulinaryDropOut,1
+2298,Georgielaceyx,1
+2299,CuteSabii,1
+2300,Mavisssss,1
+2301,sammillermedia,1
+2302,Emilystanford,1
+2303,alex21a,1
+2304,apullou,1
+2305,geostar12,1
+2306,KeepsHaram,1
+2307,johhan,1
+2308,Alexishallock,1
+2309,kdaaron05,1
+2310,Jp1999,1
+2311,fem09,1
+2312,anacarajsvbaja,1
+2313,Pundehm,1
+2314,TBall,1
+2315,LucySilber,1
+2316,dean09199,1
+2317,JJJ,1
+2318,Ann Donahue,1
+2319,Candice Frederick,1
+2320,KawaiiDream,1
+2321,EdgeC,1
+2322,Maksbiel,1
+2323,Demon580,1
+2324,Raft,1
+2325,Steppen_wo1f,1
+2326,Powaup,1
+2327,Evinkuraga,1
+2328,Arioth,1
+2329,Cheesepleese,1
+2330,Salvy97,1
+2331,Jigifly92,1
+2332,cors,1
+2333,Squishy05,1
+2334,Gardoversausage,1
+2335,Aria_ramzani,1
+2336,Adrienalice,1
+2337,paladintapdanse,1
+2338,Boomba,1
+2339,dburks1990,1
+2340,Caitlin PenzeyMoog,1
+2341,SahilSanti,1
+2342,goettel,1
+2343,PvtTucker,1
+2344,Jstinson07,1
+2345,masterninjadog,1
+2346,Ea_o_o,1
+2347,Coert,1
+2348,Jagen,1
+2349,metabad,1
+2350,Promotions,1
+2351,Rincemac,1
+2352,Romanfiend,1
+2353,SuperKev,1
+2354,js1010,1
+2355,Brandon Nowalk,1
+2356,giovanni1998,1
+2357,HeyBroItsBrad,1
+2358,Ljuba28,1
+2359,Jhaft703,1
+2360,MathRedfield,1
+2361,rockaton8a,1
+2362,stricky_bobby,1
+2363,radixlecti84,1
+2364,Storyaddict,1
+2365,BONG10,1
+2366,Kerberus88,1
+2367,megladone,1
+2368,robinsonleeuk,1
+2369,seanfriend23,1
+2370,RMckay,1
+2371,twittytister,1
+2372,FuzzyT,1
+2373,ValBal,1
+2374,veshches,1
+2375,DolphinReviews,1
+2376,GunnerMcDagget,1
+2377,umaumai,1
+2378,getsmelifted,1
+2379,MrFlyby,1
+2380,Butterballer1,1
+2381,zulu64,1
+2382,JenksHero,1
+2383,Gabriel Tate,1
+2384,Keith Watson,1
+2385,Aubry O'Arminio,1
+2386,Keith Staskiewicz,1
+2387,Haleigh Foutch,1
+2388,MarlaIsBack,1
+2389,Kyledavidvs,1
+2390,Partridge12,1
+2391,aleksandarrusic,1
+2392,Arefin_Mahmud,1
+2393,luizana,1
+2394,Miriam_Grammo,1
+2395,Idk1,1
+2396,camsdnlt,1
+2397,Brunoyudi,1
+2398,Suyash07,1
+2399,mantips,1
+2400,Bl4ckC4t,1
+2401,Lumdog,1
+2402,mbeckford,1
+2403,muldjord,1
+2404,Dracoshi,1
+2405,Mf1345,1
+2406,Data1001,1
+2407,NotchFilter,1
+2408,Matdeux,1
+2409,Lisa Weidenfeld,1
+2410,ZacharyWhite,1
+2411,Chaostheory6682,1
+2412,Joelony,1
+2413,Matt Fagerholm,1
+2414,Steven J. Snyder,1
+2415,Chris Conaton,1
+2416,Dan Jardine,1
+2417,movingpictures,1
+2418,Adam Buckman,1
+2419,Chip Crews,1
+2420,LOWB,1
+2421,Klenerschluchti,1
+2422,William Hughes,1
+2423,Kyle Fowle,1
+2424,Charles Bramesco,1
+2425,JoSuddath1,1
+2426,Valerie Kellogg,1
+2427,vacivity,1
+2428,VivaPalestine,1
+2429,LQH11,1
+2430,jamess,1
+2431,Methusalah,1
+2432,LunaticInk,1
+2433,Steven Scaife,1
+2434,Joshua Rivera,1
+2435,fede01_8,1
+2436,Trailesque,1
+2437,MaksRobotENGR,1
+2438,Kranz,1
+2439,bball4224,1
+2440,BalaamsDonkey,1
+2441,Shlizer,1
+2442,Luiz1,1
+2443,OrphanTwin,1
+2444,Dave Trumbore,1
+2445,Benjamin Frisch,1
+2446,Keza MacDonald,1
+2447,Sam Barsanti,1
+2448,vgmkyle,1
+2449,RandallFlagg702,1
+2450,ripear,1
+2451,Brazil1984,1
+2452,Vegeton,1
+2453,CalvinCrack,1
+2454,Righteousindif,1
+2455,BJ Colangelo,1
+2456,Stuart Heritage,1
+2457,Kelcie Mattson,1
+2458,George White,1
+2459,Noel Murry,1
+2460,marick333,1
+2461,Tim Robey,1
+2462,Roger Moore,1
+2463,danieladougan,1
+2464,Dabuuchi,1
+2465,Kc1975,1
+2466,13ganserj,1
+2467,Jnap,1
+2468,Couchcritic22,1
+2469,nataliasbrt,1
+2470,Iamcritical86,1
+2471,jimmygoo,1
+2472,Nursenanny,1
+2473,champaignbob,1
+2474,iffythecat1,1
+2475,Julie Leung,1
+2476,Daniel Carlson,1
+2477,Christopher Muther,1
+2478,Dalene Ravenstine,1
+2479,Mike Lechevallier,1
+2480,Katy Waldman,1
+2481,Victor Beigelman,1
+2482,wireavto,1
+2483,ty92,1
+2484,MichiHogon,1
+2485,Vaedian,1
+2486,Michael Landweber,1
+2487,sophaloaf1,1
+2488,gromak555,1
+2489,jc3113,1
+2490,Nate Richard,1
+2491,Beth Webb,1
+2492,Johnny Loftus,1
+2493,Robert Ham,1
+2494,Will Ashton,1
+2495,Vuin,1
+2496,imthenoob,1
+2497,John Semley,1
+2498,melock,1
+2499,Jose_2408,1
+2500,PaolaPaola,1
+2501,rcal26,1
+2502,geometrical,1
+2503,filipipmelo,1
+2504,tlmrodriguez,1
+2505,Davisb123,1
+2506,Fleetway,1
+2507,BoxCow,1
+2508,elirac,1
+2509,juzathecloud,1
+2510,F1Z2I3,1
+2511,dylieboi69,1
+2512,MagicMan111,1
+2513,raam89,1
+2514,Scottlander100,1
+2515,MikeCJones,1
+2516,Tash0687,1
+2517,Chipotle333,1
+2518,Joseph Stanichar,1
+2519,Ryan Larson,1
+2520,Bruce Westbrook,1
+2521,John Koch,1
+2522,Tony Scott,1
+2523,Jim Kearney,1
+2524,John Haslett-Cuff,1
+2525,BLADELING,1
+2526,MEkuban,1
+2527,Lex Briscuso,1
+2528,Elryser,1
+2529,MatJoker,1
+2530,Karmel,1
+2531,Dunkaccino,1
+2532,Simon Abrams,1
+2533,Barbara D. Phillips,1
+2534,Ramind Zahed,1
+2535,Chris Kaltenbach,1
+2536,Ariel21692,1
+2537,paulomartins,1
+2538,mrmonster,1
+2539,ZeldaNerd,1
+2540,comiekilla,1
+2541,Jaguarnero,1
+2542,Johan-Xavier,1
+2543,goodfellas100,1
+2544,Armitas,1
+2545,greenisgood,1
+2546,The3AcademySins,1
+2547,DanCarter,1
+2548,aenigmaxmachina,1
+2549,K9-BC,1
+2550,Allukard,1
+2551,Mack9393,1
+2552,m1asmatic,1
+2553,VRossy,1
+2554,Louis Chilton,1
+2555,John Townsend,1
+2556,swlC,1
+2557,Dobby,1
+2558,Shaughn,1
+2559,Jadoredior,1
+2560,aldo1953,1
+2561,Mardanlyd3,1
+2562,Daveplaysgames,1
+2563,ecunning,1
+2564,Lisa52,1
+2565,RLA,1
+2566,busiek,1
+2567,Druide379,1
+2568,trayztray,1
+2569,Fahhq,1
+2570,Dallathar,1
+2571,jb1245,1
+2572,Lemings9151,1
+2573,KzArashi,1
+2574,SaintRonan,1
+2575,TheGrackle,1
+2576,Chund3r,1
+2577,W1LL1AN,1
+2578,Certhas,1
+2579,spadge1976,1
+2580,Adwel,1
+2581,Floro,1
+2582,Hoeth,1
+2583,eugeneholton,1
+2584,Tlamatini7,1
+2585,MikeIvanicki,1
+2586,harryharri1976,1
+2587,TioLucho,1
+2588,PhillipJFryy,1
+2589,dgallagher01,1
+2590,Andresandyartgu,1
+2591,Lauren Humphries-Brooks,1
+2592,Clark Collins,1
+2593,David Kallison,1
+2594,DreamoFEssence,1
+2595,plisken_snake,1
+2596,overlordchaos,1
+2597,Azametzin,1
+2598,Peiman,1
+2599,Mara82,1
+2600,floringo2007,1
+2601,Allanbaxter,1
+2602,FeckUZuckerberg,1
+2603,uchitshah,1
+2604,Keisha Hatchett,1
+2605,Ed Siegel,1
+2606,Andy Edelstein,1
+2607,A. Cydney Hayes,1
+2608,rgiublin,1
+2609,Quinnydan,1
+2610,Devil_Hunter,1
+2611,GlassWaffle,1
+2612,snufkin,1
+2613,HayesC,1
+2614,Satanski666,1
+2615,Zack Handlen,1
+2616,SeussMyTub,1
+2617,Amy Glynn,1
+2618,Servase,1
+2619,Stephanie Merry,1
+2620,Ron Wertheimer,1
+2621,phoenixprjct,1
+2622,lorenzo06,1
+2623,Succulent_Dan,1
+2624,Kassady,1
+2625,ATheTiger,1
+2626,omniface,1
+2627,Lightfaller,1
+2628,adamchap,1
+2629,Kjekkenfrekken,1
+2630,something12355,1
+2631,Deckz,1
+2632,Jes1310,1
+2633,steco2000,1
+2634,Shelbystang,1
+2635,Cobthecrazed,1
+2636,ColBuckshot,1
+2637,Ryleegates,1
+2638,samichsupernova,1
+2639,michdaw,1
+2640,lennyi,1
+2641,imjuliocesar,1
+2642,S3XU4LH34L1NG,1
+2643,BahrTuna,1
+2644,iWenyaFox,1
+2645,GundalfTheGrey,1
+2646,Legit_Lee,1
+2647,Chempion1,1
+2648,agg8877,1
+2649,Hennroch,1
+2650,roxxkie97,1
+2651,arthasmenethil8,1
+2652,ReMime,1
+2653,wimbleton_johns,1
+2654,Majestikflow,1
+2655,Supreme_Goose,1
+2656,Mohammed_Saint,1
+2657,webext,1
+2658,Alihmed,1
+2659,Kaprawiec,1
+2660,Scythx,1
+2661,KaBob,1
+2662,Neitsab972,1
+2663,Rick444,1
+2664,Donny_Brook,1
+2665,Kalamir,1
+2666,leaveit,1
+2667,Anton02443,1
+2668,LorenaKai,1
+2669,Neuxz,1
+2670,Myvs,1
+2671,Omieyexo,1
+2672,SpinX22,1
+2673,jcfierro55,1
+2674,jonnyrev,1
+2675,Rezakiam,1
+2676,gamekiamarsi,1
+2677,Dehero1,1
+2678,Joshua5577,1
+2679,AureliusJordan,1
+2680,smallpea,1
+2681,DariaKos,1
+2682,Jafs,1
+2683,ChrisLawson,1
+2684,BryceHonand,1
+2685,Saudswift,1
+2686,Deliniwilson,1
+2687,JACK15q,1
+2688,cemres,1
+2689,DavidStegen,1
+2690,FirstSonOfEarth,1
+2691,LinkAc,1
+2692,art3miz,1
+2693,pur__0_0__,1
+2694,TurtleStompa,1
+2695,WJ0067,1
+2696,Casualvscritics,1
+2697,stanislavf,1
+2698,edzthoughts,1
+2699,Gregnator,1
+2700,Polanik,1
+2701,Vega8ond,1
+2702,routier1642,1
+2703,AzathothWakesUp,1
+2704,Jonathan Dornbush,1
+2705,Bruce Fretts,1
+2706,Gerrad Hall,1
+2707,Ignatiy Vishnevetsky,1
+2708,John Carman,1
+2709,Marisa Guthrie,1
+2710,Rodicar,1
+2711,Katherine Stevens,1
+2712,cwrcwr,1
+2713,Jarrod Jones,1
+2714,Tom Maurstad,1
+2715,Chris E. Hayner,1
+2716,Method559,1
+2717,mrp00pybutthole,1
+2718,phoenixium,1
+2719,marco89py,1
+2720,LanaBanana2072,1
+2721,Seba1906,1
+2722,BabyPuppy,1
+2723,jaayyyna,1
+2724,SC0RP10N,1
+2725,Ckowalsk,1
+2726,tyolico123,1
+2727,danyelvg,1
+2728,LegendaryLass,1
+2729,Scooby4iver,1
+2730,PopBlock,1
+2731,highguyy,1
+2732,thanatopsis,1
+2733,Kludd4Ever,1
+2734,LuissDt2,1
+2735,MrPositiveClint,1
+2736,LAfreeclinic,1
+2737,Ethan Anderton,1
+2738,Shawn Van Horn,1
+2739,Eric Goldman,1
+2740,Willsha,1
+2741,TestMaster,1
+2742,meydianarizki21,1
+2743,BlinkyBill2,1
+2744,MadiSha,1
+2745,adeelisyours,1
+2746,Horrorseeker,1
+2747,danszthedude,1
+2748,madmad90,1
+2749,Sfgbvxxvvf,1
+2750,Sergioaristi,1
+2751,DutchHarry,1
+2752,ObitoUch,1
+2753,Gerray3,1
+2754,Benanarama,1
+2755,YWNS02,1
+2756,Chascoby7,1
+2757,KoRaG,1
+2758,ScienceAdvisor,1
+2759,Chichy81,1
+2760,ZaidA4K,1
+2761,D4rkBunny,1
+2762,Rie1987,1
+2763,Pxels,1
+2764,makubob,1
+2765,jotahcritic,1
+2766,nypinta,1
+2767,dave89791,1
+2768,Steven Shehori,1
+2769,Whitney Matheson,1
+2770,Aubrey Page,1
+2771,JennetP,1
+2772,Sara Stewart,1
+2773,Dorothy Burk Vasquez,1
+2774,vebz_uk,1
+2775,slock,1
+2776,Akius,1
+2777,ivafort,1
+2778,Dasquirls,1
+2779,lydiatravis,1
+2780,Bigpapasmurf,1
+2781,letthemicefree,1
+2782,Alex McCown,1
+2783,JesterTRT,1
+2784,shianasd,1
+2785,Molm,1
+2786,LordZork,1
+2787,s0gman,1
+2788,ander75it,1
+2789,Diane Gordon,1
+2790,Scott Von Doviak,1
+2791,SwiftRespite,1
+2792,Biggun,1
+2793,Kanesux,1
+2794,tay2,1
+2795,HellMordred,1
+2796,BloodGuy,1
+2797,khaki_man,1
+2798,afm185,1
+2799,donatodo,1
+2800,Greenscreenlife,1
+2801,landrydm,1
+2802,CinemaIntorno,1
+2803,Ellie Harrison,1
+2804,JMDGamotia,1
+2805,Adam Graham,1
+2806,Elisabeth Vincentelli,1
+2807,ABirdMan,1
+2808,smarttcareer,1
+2809,Deyanksfan,1
+2810,fscrook17,1
+2811,bubba5,1
+2812,YooperGuy,1
+2813,Hope Sloop,1
+2814,MisterCRT,1
+2815,tasctime,1
+2816,tofupandacosmic,1
+2817,Midgetelf0585,1
+2818,Dunarote,1
+2819,temps,1
+2820,RayM3826,1
+2821,Blacksheep343,1
+2822,Blackbox12,1
+2823,Billafunda,1
+2824,sugarnite,1
+2825,oseggene,1
+2826,rockodagamer,1
+2827,dicksanderson,1
+2828,griffingluckfan,1
+2829,Tim Stack,1
+2830,Lexyyyy,1
+2831,Shehryar23,1
+2832,Jimbob2k666,1
+2833,Kathryn Porter,1
+2834,Valerie Ettenhofer,1
+2835,Nandini Balial,1
+2836,Reyes_VK,1
+2837,Ned Martel,1
+2838,Jennifer Armstrong,1
+2839,Alexander05,1
+2840,Aleksandr04,1
+2841,Kwasie,1
+2842,NicSushi,1
+2843,Kdog152,1
+2844,IUDEX_LIBRATUM,1
+2845,Guilherme12342,1
+2846,strangebrew123,1
+2847,ziolek2000,1
+2848,stifftwig,1
+2849,mattarnold008,1
+2850,Urmomishott,1
+2851,IshtiakHossain,1
+2852,Qgal5kap,1
+2853,knitetemplar,1
+2854,Michael Murray,1
+2855,Ken tucker,1
+2856,Samantha Bornemann,1
+2857,JaysonPullen,1
+2858,fionaspaperbag,1
+2859,Paul Hirons,1
+2860,Blake Gopnik,1
+2861,CelloAfoxx,1
+2862,Dragunald,1
+2863,Ceolona,1
+2864,Samantha Nelson,1
+2865,John Young,1
+2866,Thomas Britt,1
+2867,Sal Cinquemani,1
+2868,Allison Benedikt,1
+2869,Erik Pedersen,1
+2870,Radio Times Staff,1
+2871,Jay-I-Q,1
+2872,Aquasoul,1
+2873,PugThugD,1
+2874,spmuzik,1
+2875,Nardvark,1
+2876,thomasdg,1
+2877,Megan Garber,1
+2878,Laurel Brown,1
+2879,LudlowLover,1
+2880,MsMetaCritic,1
+2881,Lena_ita,1
+2882,Huw Fullerton,1
+2883,Alexis Burling,1
+2884,Renee Graham,1
+2885,Jeremy Gerard,1
+2886,dr_zoidberg590,1
+2887,seidlman1029,1
+2888,jasonalex,1
+2889,Gamer247Carlos,1
+2890,Cynthiajoy,1
+2891,Golconde,1
+2892,GrandAdmiral,1
+2893,SilverFoxx57,1
+2894,Sam Rosenberg,1
+2895,"Kevin Fox, Jr.",1
+2896,Rezsurfer,1
+2897,Archana Ram,1
+2898,Kris King,1
+2899,David Eckstein,1
+2900,Kate Dries,1
+2901,Tommyphsom,1
+2902,Jjsunshine,1
+2903,Christian Holub,1
+2904,Sean O'Neal,1
+2905,Cska_ael,1
+2906,Sadie Gennis,1
+2907,Todd R. Raamlow,1
+2908,Raffi Paul,1
+2909,electronicoffee,1
+2910,Julia Selinger,1
+2911,FreeRunner29,1
+2912,Mark Lukenbill,1
+2913,Gloria Goodale,1
+2914,An-taeus,1
+2915,Dalton Ross,1
+2916,J.C. Macek III,1
+2917,DaisyCross,1
+2918,Will Harris,1
+2919,Elaine Hanson Cardenas,1
+2920,Hansello,1
+2921,DizzyDan,1
+2922,Tgc,1
+2923,tremault,1
+2924,Luvs2sploog,1
+2925,osulle,1
+2926,francoismcgill,1
+2927,usscerritos7556,1
+2928,Rick-Cast,1
+2929,Dr_Tobutz,1
+2930,guilhermefdias,1
+2931,Simon_Says,1
+2932,rafaeldominiqui,1
+2933,AllyC3po,1
+2934,Myrkvir,1
+2935,nicklynett732,1
+2936,seaburn2,1
+2937,DrTacoz34,1
+2938,mhengen,1
+2939,bobopala,1
+2940,mrssnape,1
+2941,icotzabb,1
+2942,Rosieglenn,1
+2943,Doreen St. Félix,1
+2944,Ngria,1
+2945,LeighG,1
+2946,Ayaayaayaaya,1
+2947,Edzone,1
+2948,ginseng,1
+2949,Ughman,1
+2950,Sarah Carson,1
+2951,Brande Victorian,1
+2952,Nadira Goffe,1
+2953,Mike Ward,1
+2954,Kirsten Markson,1
+2955,Jessica Sedgwick,1
+2956,Andrew Wallenstein,1
+2957,Bogdobbler,1
+2958,Lewis Segal,1
+2959,Megan Waitkoff,1
+2960,Andrew Ryan,1
+2961,Anita Gates,1
+2962,Clarky2o2o,1
+2963,Colne,1
+2964,Dmasaprll,1
+2965,RomannRoy,1
+2966,SamCoates,1
+2967,Aziz123,1
+2968,Thunder0,1
+2969,albertbana,1
+2970,Veyni,1
+2971,junjinights,1
+2972,jpmist,1
+2973,Paddzonik,1
+2974,Lphone,1
+2975,Gelatokakes,1
+2976,tonysopranoshi,1
+2977,stanAteez,1
+2978,Leigh H. Edwards,1
+2979,Deborah Day,1
+2980,Lenika Cruz,1
+2981,Slackerjosh,1
+2982,Aswdtmjs6,1
+2983,Anthon,1
+2984,Geonio,1
+2985,Dandy-Mr-D,1
+2986,ArthurMinin,1
+2987,RPF,1
+2988,Candace Scott,1
+2989,"D. DeKeyser ""dekeyser4""",1
+2990,mfranz@msn.com,1
+2991,Dale H. Feik,1
+2992,Cory K. Schmidt,1
+2993,"George R. Beinhorn ""gb""",1
+2994,levi,1
+2995,ShelStar71,1
+2996,J. Farris,1
+2997,tcoordt@earthlink.net,1
+2998,"""egrok""",1
+2999,"""b5_compiler""",1
+3000,Michael H. Zatko,1
+3001,"Jolly Khanna ""Jack""",1
+3002,Frank Fischer,1
+3003,Swords and Plowshares,1
+3004,Igor,1
+3005,Bart Hosier,1
+3006,"""watsonant""",1
+3007,"Sudipto K. Haldar ""Sudipto""",1
+3008,Matthew J Sgarlata,1
+3009,"M.S. ""mtin""",1
+3010,"Thomas Duff ""Duffbert""",1
+3011,"A. N. B. Hardy ""Trader""",1
+3012,"""rick_m_hightower""",1
+3013,Sean Erikson,1
+3014,bub hub,1
+3015,"M. Sajjad ""Hassan Sajjad""",1
+3016,"M. Khan ""M.K""",1
+3017,Josh G.,1
+3018,Hugo Schwyzer,1
+3019,Colin Grover,1
+3020,crystalrt,1
+3021,Allie,1
+3022,"Ms. J. E. Drew ""J. DREW""",1
+3023,A 9-year old reader,1
+3024,"Nelson Searcy ""Pastor & www.ChurchLeaderInsig...",1
+3025,Rio,1
+3026,vo le tam,1
+3027,Ronna L. Gutierrez,1
+3028,Julia,1
+3029,ilnadmy,1
+3030,andrew wright,1
+3031,"M. Kiss ""librarian by blood""",1
+3032,"Rose Crane ""rozsmne""",1
+3033,Jane,1
+3034,Bri,1
+3035,"JL ""JL""",1
+3036,kellychaney,1
+3037,Midwest Book Review,1
+3038,Ed Baldwin,1
+3039,A. Turner,1
+3040,Jewel Williams,1
+3041,sparky_magic_rainbow,1
+3042,JANET KEYMETIAN,1
+3043,McOliveto,1
+3044,J. Washburn,1
+3045,ghostie,1
+3046,"M. McHenry ""Margate Diva""",1
+3047,DJ's Treasures,1
+3048,"Lynn Ellingwood ""The ESOL Teacher""",1
+3049,W. E. Fleming,1
+3050,"MNM Mom ""J""",1
+3051,chanel,1
+3052,The Park School,1
+3053,"Madena ""Madena""",1
+3054,"Beatrice Pinkney ""jpinkney""",1
+3055,tiffany carter,1
+3056,T Willie,1
+3057,June Kyakobye,1
+3058,Tessy,1
+3059,A. Smith,1
+3060,Robert K. West,1
+3061,uncle-buck,1
+3062,darkangel12,1
+3063,Janda R. Sheets,1
+3064,"Jesser2004 ""Jess""",1
+3065,"""theresa33714""",1
+3066,"S.Cameron ""Sandy""",1
+3067,"Meg ""canadianrosee""",1
+3068,"jvdm ""jvdm""",1
+3069,"J COFFMAN ""Jackie""",1
+3070,creativedawn,1
+3071,Jennifer Medlock,1
+3072,Denise I. Matulka,1
+3073,"S. Gould ""gouldpjaks""",1
+3074,"Feles31 ""InkSlinger""",1
+3075,Harriet Klausner,1
+3076,Huntress Reviews,1
+3077,Ganine,1
+3078,pcraig@rainbow.com,1
+3079,"Matthew S. Schweitzer ""zohoe""",1
+3080,"Len Bruce, jlbruce@po-1.camanche.k12.ia.us",1
+3081,"Sojourner ""Learning to Live Life""",1
+3082,Edmund Lau Kok Ming,1
+3083,"Blue Tyson ""- Research Finished""",1
+3084,Stephen B. O'Blenis,1
+3085,lnicholson@winstead.com,1
+3086,Guillermo F. Salas,1
+3087,Cascade BR,1
+3088,Devin Yoshikawa,1
+3089,E. Rotondo,1
+3090,Edward J. Barton,1
+3091,"G. Penilla ""GTPen""",1
+3092,"K. Smith ""Kendi""",1
+3093,sarah park,1
+3094,Christa Rew,1
+3095,Stacie Sharp,1
+3096,Tiana Smith,1
+3097,MTA,1
+3098,Nikki S.,1
+3099,J. R. Wallace,1
+3100,Monica Petersen,1
+3101,"Kendra Patterson ""kendralou""",1
+3102,"Michelle A. Cope ""Author and Illustrator""",1
+3103,Alexandra,1
+3104,"""tiffangel""",1
+3105,J.Lee,1
+3106,"C. Longacre ""Friend of yours""",1
+3107,"Reader ""Carrie""",1
+3108,kung fu girl,1
+3109,Marge Simpson,1
+3110,"The Colors of Amy ""Amy Alderson""",1
+3111,"Kara E. Erickson ""zerick33""",1
+3112,Lawrance M. Bernabo,1
+3113,Rajiv Krishnaswamy,1
+3114,"""akira238""",1
+3115,KeepItSimple,1
+3116,Justo S.,1
+3117,Jonathan D. Decarlo,1
+3118,"M. Othman ""mahdia""",1
+3119,Mark Miller,1
+3120,"Vikram Prajapati ""mudmen""",1
+3121,"O. Salazar ""Orlando Javanet""",1
+3122,Technical Reader,1
+3123,"Dennis Lawler ""matroidman""",1
+3124,calvinnme,1
+3125,Thomas Almy,1
+3126,Ken Williams,1
+3127,"Roger A. Rubio ""The Snapman""",1
+3128,CG9685,1
+3129,"Eric J. Lind ""ericthelind""",1
+3130,Vihung Marathe,1
+3131,Eric Jain,1
+3132,"Jennifer M. Smith, Esq.",1
+3133,"E. Donaldson ""femccdon""",1
+3134,vanessa White,1
+3135,Daphney Auguste,1
+3136,"K. Corn ""reviewer""",1
+3137,Michael P. Gage,1
+3138,E. Vagnini,1
+3139,"Larry Ng ""win_ng""",1
+3140,"justwahli ""brigade""",1
+3141,S. James Phillips,1
+3142,P-M,1
+3143,TeacherLady,1
+3144,"Mike Stanley ""MKS""",1
+3145,"Brian & Randy ""Two Brothers""",1
+3146,P. Gunelson,1
+3147,Kristen Heller,1
+3148,A. Willett,1
+3149,"Mary Egan ""Crazybookreadingmamma""",1
+3150,M. Hinzo,1
+3151,"D. P. Willey ""MCITP/CCNE/CompTIA IT Security+""",1
+3152,N. Creeley,1
+3153,G. A. Cruz,1
+3154,"B. Bausch ""Carpool Mom""",1
+3155,"DogChaser ""MP""",1
+3156,Don Vagnini,1
+3157,Donna W.,1
+3158,J. A. Haverstick,1
+3159,Dick Marti,1
+3160,Amber,1
+3161,GIULIO VITALE,1
+3162,RFguy,1
+3163,"Antonio ""Linda""",1
+3164,Abhishek,1
+3165,"Mohammad Omer ""Umer""",1
+3166,"Mark J. Foster ""CTO""",1
+3167,Richard N,1
+3168,Mark Dickmann,1
+3169,R. A Benson,1
+3170,"Kenneth C. Crandall ""quantum mechanic""",1
+3171,Paul Huntley,1
+3172,DSP,1
+3173,Ismail Alkhouri,1
+3174,Nikolaj,1
+3175,Michael,1
+3176,"Rudolf Spoerer ""dowadiddi""",1
+3177,"DarkKnight ""cameadarkknight""",1
+3178,Miranda Kelly,1
+3179,Todd Hawley,1
+3180,Brent Sleeper,1
+3181,shiaophing,1
+3182,kerryfan,1
+3183,TigerStrongMc,1
+3184,"Shalom Freedman ""Shalom Freedman""",1
+3185,Thomas E. Davis,1
+3186,Richard E. Noble,1
+3187,Jennifer Ruzsa,1
+3188,gun dog LV,1
+3189,csanchez@youbet.com,1
+3190,"Jon ""johnnymapson88""",1
+3191,Scott Thomas,1
+3192,Roger Warner,1
+3193,Sherry L. Thomas,1
+3194,Marina Shukh,1
+3195,Kurt Stuckel,1
+3196,hemu-ha,1
+3197,Just Me,1
+3198,QuiteWelcome,1
+3199,Drew Boyd,1
+3200,Gaurav Anand,1
+3201,Caribou,1
+3202,"Wolverine ""GO BLUE""",1
+3203,GrazPop,1
+3204,NHFardog,1
+3205,"Xuefei Zhuo ""Juju88""",1
+3206,Bob,1
+3207,Reader From Aurora,1
+3208,Polymath-In-Training,1
+3209,B. Collingsworth,1
+3210,El Cutachero,1
+3211,Eddie Martinez,1
+3212,Christopher,1
+3213,James A. Proser,1
+3214,jason,1
+3215,Tom Schoonover,1
+3216,"S. Schwartz ""romonko""",1
+3217,Susan Burton,1
+3218,"Lee ""Lee M""",1
+3219,Carl Sachs,1
+3220,henning rasmussen,1
+3221,Nilanjan Ray,1
+3222,"john m price, md",1
+3223,"Devl's Advocate ""RSHA""",1
+3224,Dimitrios,1
+3225,Karun Mukherji,1
+3226,"Dave Schranck ""Dave""",1
+3227,"M. Kochte ""Indy""",1
+3228,History buff,1
+3229,Toni,1
+3230,mommy writer,1
+3231,"Jared C. Mcwherter ""sleepx2""",1
+3232,"""ggazlay""",1
+3233,Reader628,1
+3234,Julie,1
+3235,Stewart,1
+3236,Laura and Megan,1
+3237,"Marc E. Vander Vliet ""Not a belgian""",1
+3238,"K. Felton ""zephyr""",1
+3239,Joseph Guillaume,1
+3240,Charlie Atan,1
+3241,Chandler Merrell,1
+3242,Metostopholes,1
+3243,toomanygames@hotmail.com,1
+3244,Tyler DeLisle,1
+3245,AyaSophia1@aol.com,1
+3246,"""marieke""",1
+3247,Mr. William J. Mccluskey,1
+3248,"""vampiricangel55""",1
+3249,"David ""david""",1
+3250,m,1
+3251,Tiffany A Caldwell,1
+3252,D. Reynolds,1
+3253,Curtis B. Frye,1
+3254,K. Zanfardino,1
+3255,"N. Hearst ""RunnerFreak""",1
+3256,Matt Garza,1
+3257,"Ariel G. Scafuri ""ascafuri""",1
+3258,A. C. Taylor,1
+3259,Spider Monkey,1
+3260,Jose L. Saenz,1
+3261,"Noelle Cuomo ""Noelle C""",1
+3262,"Paul Kato ""Paul Kato""",1
+3263,Stuart W. Kay,1
+3264,C. Fitzgerald,1
+3265,J. McLaughlin,1
+3266,Randy Given,1
+3267,"PaulB ""pbanik""",1
+3268,"Ben Rothke ""Information security professional""",1
+3269,pjc@herald-sun.com,1
+3270,MariaA37,1
+3271,Isa Sanchez,1
+3272,Steven H. Propp,1
+3273,David Nickell,1
+3274,Kevin Stagg,1
+3275,"C. Nubel ""cnubel""",1
+3276,"Mona Osman ""zolwica""",1
+3277,"Laurie ""mnwoman49""",1
+3278,Michael J. Mazza,1
+3279,J from NY,1
+3280,"Fiddler ""Jean""",1
+3281,Marilyn Gilbert Komechak,1
+3282,Margaret Steinacker,1
+3283,"drsfiddle ""DRS""",1
+3284,Maurice,1
+3285,"Suzette Hale ""suzy sez""",1
+3286,Diane J. Weber,1
+3287,V. Kovelamudi,1
+3288,P.N.Kannan &lt;aravindh@vsnl.com&gt;,1
+3289,"P. MEDRANO ""PabloLikePicasso""",1
+3290,"G. Messersmith ""calliopemuse""",1
+3291,sweet beluga,1
+3292,Dee,1
+3293,Sewbusy,1
+3294,Marie,1
+3295,"T. Sammons ""crazy cat lady""",1
+3296,Marilyn A. McCarthy,1
+3297,Sarah Bradberry,1
+3298,"amrdmr ""amrdmr""",1
+3299,"A. Lupia ""amlbee""",1
+3300,Quickbeam,1
+3301,B. Perdue,1
+3302,Anita D. Blackaby,1
+3303,"Susan ""Pelican Knits""",1
+3304,D. Blake,1
+3305,"J. R. O. Neal ""Islidur""",1
+3306,"Ann Reid ""daylily""",1
+3307,tomandlori1333,1
+3308,D. Holmstrom,1
+3309,"Pam Abbott ""Grammy Pammy""",1
+3310,Alicia,1
+3311,Miss P,1
+3312,"H. Borchardt ""mom on the move""",1
+3313,Q. Roddy,1
+3314,T. Russo,1
+3315,"Dan Bogaty ""Mr. Congeniality""",1
+3316,Sharon Coles,1
+3317,Jack,1
+3318,arline goddu,1
+3319,D. Enck,1
+3320,"George E. Metzger ""gem2""",1
+3321,camgam,1
+3322,Dee Mosteller,1
+3323,steshe865,1
+3324,Underdog,1
+3325,"Sterling Service ""Sterling Service""",1
+3326,D.W.B.,1
+3327,Bredman,1
+3328,"Theseus ""theseus""",1
+3329,Robin,1
+3330,Susan M. Kester,1
+3331,"Denise Dunbar ""Grandma Dunbar""",1
+3332,Bobbi,1
+3333,Cherokee Rose,1
+3334,Just One More Book Collector,1
+3335,"Bruce Crocker ""agnostictrickster""",1
+3336,George Ellis,1
+3337,J. Marks,1
+3338,"A. Toler ""JustDawleyGirl""",1
+3339,R. Menendez,1
+3340,"""amyfein""",1
+3341,"""susankarp""",1
+3342,Percy Dovetonsils,1
+3343,lilylaw,1
+3344,"Jason Gonella ""philosopher""",1
+3345,"E. Neuberger ""Emily""",1
+3346,Jason Larsen,1
+3347,"KowenH ""hannahsmaple""",1
+3348,M. Guinn,1
+3349,"James J. Trotta ""Jim""",1
+3350,zomega@hotmail.com,1
+3351,"Wan Manan Wan Ali ""Ir. Wan Manan""",1
+3352,"Georg Matre ""GM""",1
+3353,Gabriel Dias,1
+3354,Marine and civil engineer,1
+3355,Mike Smith,1
+3356,Virgil Brown,1
+3357,Nate,1
+3358,"ninthavatar ""ninthavatar""",1
+3359,"L. WILLIS ""heathenannie""",1
+3360,James J. Omeara,1
+3361,"Alan Venable ""Author/creator of 'Dr. Peanut'...",1
+3362,T. bailey,1
+3363,"Earl R. Sutton ""earlsutton""",1
+3364,"""zgus""",1
+3365,"informed reader ""reader01""",1
+3366,andthehorseirodeinontoo?,1
+3367,"Lizzy Lopez ""pulaskisister""",1
+3368,"silver elves ""silver elves""",1
+3369,karlojazz,1
+3370,F. Ralph Shirak,1
+3371,"Richard E. Roberts ""Dick Roberts &#34;bugler&...",1
+3372,Howard Schneider,1
+3373,"J. Benjamin ""JB""",1
+3374,Victoria K Hrencecin,1
+3375,Katie Smith at uctlkjs@ucl.ac.uk,1
+3376,Jay Dickson,1
+3377,andrea leeder,1
+3378,Justin F. Gaynor,1
+3379,"J. Edgar Mihelic ""Failed Mime""",1
+3380,literary adventurer,1
+3381,Jillian Gillece,1
+3382,Shara Klevan,1
+3383,Russel E. Higgins,1
+3384,Nick DeAngelo,1
+3385,Joel Brouwer,1
+3386,J. Freedman,1
+3387,"Gregory A. Laurence ""gre_chan""",1
+3388,"""dbsweeney""",1
+3389,"Charles G. Fry ""cgfry""",1
+3390,Al Alven,1
+3391,Lauren Reilly,1
+3392,kim m benedict,1
+3393,William M. Hessberg,1
+3394,Bonnie,1
+3395,Linda A Culver,1
+3396,"D. Bachelor ""Daoud""",1
+3397,Dina,1
+3398,"Cynthia A. White ""Cyndi White""",1
+3399,Richard Richardson,1
+3400,"A. DICKOVER ""pandamonium""",1
+3401,Ed Ruddick,1
+3402,"FrKurt Messick ""FrKurt Messick""",1
+3403,"Chris J. Hudson ""Chris Hudson""",1
+3404,Sophia Institute Press Employee,1
+3405,"""markhow""",1
+3406,"""zznitc""",1
+3407,Gail K,1
+3408,dramalover,1
+3409,Kathie,1
+3410,ulysses4,1
+3411,J. Brewer,1
+3412,Mel,1
+3413,Chris Gregor,1
+3414,Caryn Santone,1
+3415,Judy Hogan,1
+3416,"Anne Therese, OSU",1
+3417,"Michael E. Keough ""spiritof66usa""",1
+3418,Sinead DeBurca,1
+3419,KitKat,1
+3420,N.C. Fan,1
+3421,out of Mayo,1
+3422,Bernard Farrell,1
+3423,Loves to Travel,1
+3424,Paula G. Smith,1
+3425,Rebecca S. Bryan,1
+3426,JeffS,1
+3427,"Kermit Woodall ""Kermit Woodall""",1
+3428,Carl Eric Codere (codc01@bigfoot.com),1
+3429,"Doug Swiggett ""Doug""",1
+3430,John Mucci,1
+3431,"Robert Duitz ""eawizard""",1
+3432,"Sunshine ""LR""",1
+3433,Dana CHapman,1
+3434,Rosi Bohabot,1
+3435,kattepusen,1
+3436,Cecelia E Connally,1
+3437,Kenneth Blum,1
+3438,"""randytheviking""",1
+3439,Richard Physician,1
+3440,Eau Rouge,1
+3441,"Bobby Jasak ""Pulitzer Reader""",1
+3442,Scott Sauchuk,1
+3443,Garett Schmitt,1
+3444,paisleymonsoon,1
+3445,Stephanie,1
+3446,"Sean Nolan ""I love a good story""",1
+3447,R. W. Rasband,1
+3448,J. Cox,1
+3449,Gerald Farber,1
+3450,Sargon,1
+3451,"Lucy Tonic ""Lucy Tonic""",1
+3452,Richard Pittman,1
+3453,"Indian Prairie Public Library ""ippl.info""",1
+3454,whj,1
+3455,"W. K. Miller ""kenmiller32""",1
+3456,"Gabriel Fernandez ""Book Addict""",1
+3457,"Chess Heart ""paxbear""",1
+3458,harleygirl,1
+3459,Ann Elk,1
+3460,sue wilcox,1
+3461,KayCee,1
+3462,"B. E. Taylor ""btaylor322""",1
+3463,"L. Carol ""carolcecilia, D.V.""",1
+3464,"Love to Read ""Love to Read""",1
+3465,"Elizabeth Gallardo ""almost bird""",1
+3466,Scot Mcknight,1
+3467,Alan Bloom,1
+3468,"Galileo Galilei ""Galileo""",1
+3469,John H. Hwung,1
+3470,"Danaphile ""music lover""",1
+3471,J. head,1
+3472,John V. Karavitis,1
+3473,sucker for dog books,1
+3474,Donald C. Wunsch II,1
+3475,"Kevin Currie-Knight ""Education Grad Student""",1
+3476,Bradley P. Hayton,1
+3477,Dr. Lee D. Carlson,1
+3478,"Cecilia Craig ""Ceal""",1
+3479,J. C. C. Castro,1
+3480,Cornerstone,1
+3481,An internet searcher,1
+3482,Joshua Reuben,1
+3483,Thio,1
+3484,"Edward G. Nilges ""Author, 'Build Your Own .Ne...",1
+3485,Juergen Schmidhuber,1
+3486,John Scholes,1
+3487,Erika Mitchell,1
+3488,"Rolf Dobelli ""getAbstract""",1
+3489,W Boudville,1
+3490,P. Salus,1
+3491,the_book_collector,1
+3492,Matthew Canfield,1
+3493,Sam Adams,1
+3494,Redmond Geek,1
+3495,Mr TOM W. SHEPHERD,1
+3496,Mike,1
+3497,Eric Swanson,1
+3498,TisforTodd,1
+3499,Bookworm,1
+3500,S. Friedman,1
+3501,Tammy Staten,1
+3502,SS,1
+3503,Stephanie Smith,1
+3504,P_A_S,1
+3505,"L. Barkanic ""Mama2Olivia""",1
+3506,Jennifer Morrow,1
+3507,smileysteph2000,1
+3508,Tammy L. B. Stone,1
+3509,"Leslie J. Reder ""Jabberwocky""",1
+3510,"Mark Twain ""Snyder is da bomb""",1
+3511,Connie Brannon,1
+3512,M. Hilary Gardner,1
+3513,"Allaya Fleischer ""Allaya""",1
+3514,Pamela Browning,1
+3515,Seeker,1
+3516,Alex Facundo,1
+3517,Moriah Spring Heath,1
+3518,david,1
+3519,"Boz Hubris ""thecultofbob""",1
+3520,Dan Williams,1
+3521,diana barnes-brown,1
+3522,Shmizzle,1
+3523,amiracle,1
+3524,Gillianly,1
+3525,Jonathan A. Colvin,1
+3526,Nick,1
+3527,"Jordan Hofer ""Jordan P. Hofer""",1
+3528,Callie Connolly,1
+3529,"Jonathan S. Mark ""marjo_wycam""",1
+3530,"Mark A. Rayner ""Best regarrrrrrds!""",1
+3531,WheeltheLock@worldnet.att.net,1
+3532,Scott Iverson,1
+3533,paul frederick west,1
+3534,"Matt Hill ""PARATAXIS and THE CLOUD RECKONER""",1
+3535,"kelly ""kelly""",1
+3536,James T Humphrey II,1
+3537,Hollis Burridge,1
+3538,Michael Romanik,1
+3539,Bomojaz,1
+3540,manabu saeki,1
+3541,saxophobe,1
+3542,"Brian Schiff ""jaywilton""",1
+3543,jazznut,1
+3544,Ricard Giner (cootie@cootiesjazz.com),1
+3545,A Customer,1
+3546,"Brad Shorr ""Brad Shorr""",1
+3547,"John M. Ford ""johnDC""",1
+3548,RopeMan,1
+3549,M. Hadzhitodorov,1
+3550,MK,1
+3551,pmdjn,1
+3552,T. Duffy,1
+3553,3 polkadots,1
+3554,rhegat@earthlink.net,1
+3555,"Cec ""www.glassandlight.blogspot.com""",1
+3556,Chris Lee,1
+3557,"Ian Drummond ""Ian Drummond""",1
+3558,Phillip Crenshaw,1
+3559,ABHAYVIRKUD,1
+3560,Lynn Harnett,1
+3561,"S. Harris ""bifaerie79""",1
+3562,Laura,1
+3563,"Michael Emmett Brady ""mandmbrady""",1
+3564,"Opera News ""Opera News""",1
+3565,"Elizabeth Martin ""Elizabeth Martin""",1
+3566,Ken Howard,1
+3567,"Holmesie ""Opera Fan""",1
+3568,Kenneth D Huff,1
+3569,Chou Yu Hsing,1
+3570,Mike Bowman,1
+3571,"jason_m ""jason_m""",1
+3572,Zhivago,1
+3573,tkdnick,1
+3574,"Assoc For Natural Psych ""world of nature""",1
+3575,Happy Family,1
+3576,David Barnes,1
+3577,Julie Miller,1
+3578,"C. M. Debastiani ""Christine D""",1
+3579,Kelli,1
+3580,"Rachel Watkins ""Rachel Watkins""",1
+3581,The Walrus,1
+3582,tracy l boucher,1
+3583,"J. Gilhooly ""Jane of all trades""",1
+3584,"R. Garcia ""Beeyotch""",1
+3585,Picky Mom,1
+3586,S. Gillingham,1
+3587,Helen R.,1
+3588,Lori,1
+3589,Charlotte Katz,1
+3590,indiagirl,1
+3591,Meg Hansen,1
+3592,AlwaysShopOnline,1
+3593,"MyParenTime.com ""myparentimesfamily""",1
+3594,"ice queen who ""reads & forgets""",1
+3595,"Anonymous ""anonymous_poster""",1
+3596,"David Voss ""David Voss""",1
+3597,"W. Hance ""bhance""",1
+3598,James E. Breedlove,1
+3599,"Richard A. Singer Jr. ""Author of Eastern Wisd...",1
+3600,Gracy,1
+3601,"Melissa Cordova ""Melissa C.""",1
+3602,"Umex Int'l Co., Inc.",1
+3603,Carolyn D. Franz,1
+3604,"Frankwswacker ""Frank Warren Swacker""",1
+3605,"Dr. W. G. Covington, Jr.",1
+3606,Jaye Beldo,1
+3607,"J.S.M. ""socializer""",1
+3608,Adam Pierson,1
+3609,Dotson Diddlefield,1
+3610,Eugenia Macer-Story,1
+3611,"Nicholas Herbert ""Edge Physicist""",1
+3612,"""_pd_""",1
+3613,"Celia Redmore ""Celia Redmore""",1
+3614,"Brad Allen ""Middle Fork Giants""",1
+3615,michele,1
+3616,Tiffany L,1
+3617,Jill,1
+3618,DEREK DAVIS,1
+3619,"James E. Egolf ""James E. Egolf, MA""",1
+3620,miquixote,1
+3621,Phil Myers,1
+3622,C. F Higgins,1
+3623,N. Pearson,1
+3624,James D. Chapman,1
+3625,Brad,1
+3626,D. Harrison,1
+3627,J. Arroyo-Roman,1
+3628,"D. Craig ""BookedOut""",1
+3629,"Sioux-z-anne ""Sioux-z-anne""",1
+3630,"Dr. Gary B. Brumback ""Dr, Gary B. Brumback""",1
+3631,John G. O'leary,1
+3632,Thomas Pyzdek,1
+3633,Pete C. Hathaway,1
+3634,"Fillise ""sfillippeli""",1
+3635,Ann Azuma,1
+3636,CHIKADEE,1
+3637,"S. Cheek ""Can't shop w/o amazon""",1
+3638,"Linda Sebek ""Mama to four and a teacher""",1
+3639,Charla Shamhart,1
+3640,Thomas J. Burns,1
+3641,Martin Parra,1
+3642,"bobolincoln ""bobolincoln""",1
+3643,"F. Ramos ""Exhaustive Thinker / Researcher""",1
+3644,Jevons & Hollerith Books,1
+3645,Joseph L. White,1
+3646,"HI ""OK""",1
+3647,Holly Fuhrmann,1
+3648,GenreReadr,1
+3649,"Mia Zachary ""Sensual Romance with a Touch of ...",1
+3650,"""lindseybrookes""",1
+3651,Melissa James,1
+3652,"""rowenamc""",1
+3653,Sandra Petit,1
+3654,harry gold,1
+3655,HulaHead,1
+3656,CKE,1
+3657,M. Brink,1
+3658,"Christopher S. Williams ""Chris Williams""",1
+3659,Gator D,1
+3660,Ann Morris,1
+3661,K. Torrence,1
+3662,"Cheryl A. Kitchen ""cheryl""",1
+3663,Emma,1
+3664,Nadege,1
+3665,d.ryan,1
+3666,Chase,1
+3667,Paul Thomas Drzymkowski,1
+3668,"N W ""averagegal""",1
+3669,Sophie Carellas,1
+3670,john,1
+3671,Joshua Wickline,1
+3672,Melanie Z.,1
+3673,Carl A Olson,1
+3674,Mr. Egregious,1
+3675,Brian Carmona,1
+3676,R.S,1
+3677,John Sander,1
+3678,Daniel S Ziegler,1
+3679,Andrew Desmond,1
+3680,Justin T. Martin,1
+3681,Rheazblaze,1
+3682,"Alvin C. Romer ""The Jackal""",1
+3683,"Readers Paradise ""Book Club""",1
+3684,The RAWSISTAZ Reviewers,1
+3685,John Watlington,1
+3686,Lee Wellington,1
+3687,Pamela Glendinning,1
+3688,"Andreas J. Kroll ""ajkroll""",1
+3689,mikee,1
+3690,"Dog Lover ""Dog Lover""",1
+3691,Glenna Sasser,1
+3692,Matt Mills,1
+3693,"Silvetta Ann Kekow ""Silvettann""",1
+3694,trin,1
+3695,lizzy,1
+3696,Sharon Smith,1
+3697,Jenn Clark,1
+3698,Lynette Borre,1
+3699,i just bought the game so im not sure if its ...,1
+3700,"Stephen O. Murray ""Stephen O. Murray""",1
+3701,Phillip Kay,1
+3702,"frumiousb ""frumiousb""",1
+3703,J. Golden,1
+3704,reviewer,1
+3705,Rebecca M. Johnson,1
+3706,"Esfandiar Aghaei ""Philo_Man""",1
+3707,"Joe Anthony ""Joe Anthony""",1
+3708,"M. J. Newhouse ""Philoctetes""",1
+3709,L. Poplawski,1
+3710,S. Wheeler,1
+3711,"CDS ""C""",1
+3712,"Stalwart Kreinblaster ""SK2008""",1
+3713,"Yelena Melikian ""picky fingers""",1
+3714,Elderbear,1
+3715,Jennifer Barnes,1
+3716,"""jechlin""",1
+3717,My Uncle Stu,1
+3718,Muhammad Asad Khan,1
+3719,J. Rogers,1
+3720,Dr Lynda Calder,1
+3721,"apoem ""apoem""",1
+3722,GrassChi,1
+3723,Michael Beckerman,1
+3724,"Michael J. Hawk ""Artist, Father""",1
+3725,Kyla Niva,1
+3726,"Mary J. Dyck ""mjdyck""",1
+3727,E. P. Hall,1
+3728,"Sanderson ""avid reader""",1
+3729,C. R. Love,1
+3730,Stefan Domokos,1
+3731,Hummzah,1
+3732,"Stuart Gustafson ""Stuart Gustafson, Author (w...",1
+3733,Andrew Kolb,1
+3734,"Victor L. Nazaire ""book learning passion""",1
+3735,erwin,1
+3736,mabels1958,1
+3737,R. Storey,1
+3738,P. Ratterree,1
+3739,Viki,1
+3740,"Stephen R. Smith ""steve62702""",1
+3741,Kitsuno,1
+3742,Bennett Russell,1
+3743,"Melanie M. Davis ""groupierama""",1
+3744,Mary E. Hake,1
+3745,Carol Anne,1
+3746,Charles Ashbacher,1
+3747,"A. Polk ""Savvy Sleuth""",1
+3748,"K. Heggestad ""Volunteer math tutor""",1
+3749,Nathan Birt,1
+3750,J. Sherwood,1
+3751,"E. H Knights ""Edward H. Knight""",1
+3752,"Margaret Roche ""Grandma Marge""",1
+3753,Gary Clark,1
+3754,Stephen Balbach,1
+3755,Vital Spark,1
+3756,George D. Smith,1
+3757,Liz,1
+3758,Eva Betner,1
+3759,"meiringen ""meiringen""",1
+3760,hharington@aol.com,1
+3761,bhutani@lsil.com,1
+3762,"P. Nicholas Keppler ""rorscach12""",1
+3763,"R. Chaffey ""beckahi""",1
+3764,Garry D. Talbot,1
+3765,Abe Medoff,1
+3766,"C. M Mills ""Michael Mills""",1
+3767,"Amanda VerPloeg ""Mandolin""",1
+3768,Susan Phillips,1
+3769,keetmom,1
+3770,"writerreader ""LWS""",1
+3771,Preston Fleming (Author of Forty Days at Kamas),1
+3772,P,1
+3773,"TED L ""CITIZEN""",1
+3774,Raymond Mathiesen,1
+3775,"woodrow locksley ""tdlockwood""",1
+3776,Anthony Sutton,1
+3777,Greyson T. Bassett,1
+3778,Tex Conte,1
+3779,Straws,1
+3780,H. R. Miller,1
+3781,Bill D.,1
+3782,J. Cook,1
+3783,Carol A. Pittaro-Jamieson,1
+3784,maureen,1
+3785,Larry Drennan,1
+3786,"Robert E. Walton, Jr. ""recondragon""",1
+3787,Evandro Souza,1
+3788,Rennie Petersen,1
+3789,"""leomontg""",1
+3790,Rottenberg's rotten book review,1
+3791,Forbeswarren@btinternet.com,1
+3792,Allan,1
+3793,S. DiBenedetto,1
+3794,Ken O Gilkerson,1
+3795,Randoride,1
+3796,Pebbles01,1
+3797,Rhet B. Astle,1
+3798,"Charles L. Granger ""Chaz""",1
+3799,Janet,1
+3800,"Michael Wedd ""Mike""",1
+3801,"Lee H. Heberlein ""lhh2000az""",1
+3802,Sarah L Miller,1
+3803,Huy Vo,1
+3804,"Shann Yu ""Go Rice Owls!!!""",1
+3805,"Microbiologist, RN, and perpetual student. ""~BB""",1
+3806,"Justin Davis ""AJ""",1
+3807,"Vilbs ""vilbs""",1
+3808,Fan of Newton,1
+3809,"R. Segerstrom ""Rotorhead""",1
+3810,"Rudolph Tan ""ezhuam""",1
+3811,roco,1
+3812,jesslynn,1
+3813,"K. Selva ""Books are more accurate than spoken...",1
+3814,David Jackemeyer,1
+3815,"Klaatubarata ""klaatubarata""",1
+3816,SPM,1
+3817,Nina A. Schwartz,1
+3818,Whitewood,1
+3819,J. Hurdle,1
+3820,Tim,1
+3821,"twixt between ""lichen approbarristicated""",1
+3822,J. Episcopo,1
+3823,David Deley,1
+3824,Posie T.,1
+3825,TheIrrationalMan,1
+3826,VIKRAM INDRAJIT CHOPRA,1
+3827,Mr JTL Cary,1
+3828,"Jose E. P. Mendes ""EddieV8""",1
+3829,Tim Challies,1
+3830,Cliff Allcorn,1
+3831,"James L. Gray ""grayghost""",1
+3832,"Steven P. Gatdula ""SteveG""",1
+3833,"Jim B ""A servant of His""",1
+3834,"M. Aubrey ""Hellenistic Linguist""",1
+3835,Robert Thurman,1
+3836,"John R. Stanley ""Jack Stanley""",1
+3837,sam,1
+3838,M. Johnson,1
+3839,James D Hester,1
+3840,Jeffrey Penn May,1
+3841,bill,1
+3842,Wesley L. Janssen,1
+3843,Christopher G. Ludwig,1
+3844,Paulo Magalhaes,1
+3845,tom@ims1.com,1
+3846,"marlecelee ""Marlece L White""",1
+3847,"C. Anderson ""Vintage Brands""",1
+3848,tbombadil,1
+3849,Taiji 218,1
+3850,Doug A.,1
+3851,pclima@ufba.br,1
+3852,Mikhail Lewis,1
+3853,M. E. Kluck,1
+3854,Richard Todd (rwtodd@aol.com),1
+3855,Craig Matteson,1
+3856,David Simms,1
+3857,Terry Cooper,1
+3858,An Avid Reader,1
+3859,"J. S. Klos ""Readaholic""",1
+3860,"Aliza Hausman ""Sleepless in the City of Angels""",1
+3861,Nhien Tran,1
+3862,"K. Marlow ""Kat""",1
+3863,Me read,1
+3864,R. C.,1
+3865,"Lauren ""miss. novel""",1
+3866,"Jamiela Naidoo ""Jnaidoo""",1
+3867,Kristen D. Kull,1
+3868,"Joan ""baltojo""",1
+3869,E. Devine,1
+3870,"Tara J. Prince ""TJP""",1
+3871,"Sires ""I like mysteries (particularly British...",1
+3872,"B. R. Graham ""so many books so little time""",1
+3873,E. Damato,1
+3874,"L. J. Russell ""fangirl""",1
+3875,"manthra ""aramanthra""",1
+3876,Mrs. A. Basse,1
+3877,Avid Reader,1
+3878,Calvin T. Cobb,1
+3879,Ken,1
+3880,"Raymond D. Houlihan ""new dad""",1
+3881,Different rocks,1
+3882,JackedN'Tanned,1
+3883,"Brenda G. Zak ""Journey""",1
+3884,Anon-e-mouse,1
+3885,robert r holloway,1
+3886,JEANINE MOSESIAN,1
+3887,Hawkeye,1
+3888,Sandi,1
+3889,Douglas A. Greenberg,1
+3890,Brittany Blankenship,1
+3891,Tung Yin,1
+3892,JimAusTx@aol.com,1
+3893,rmzhlubb@erols.com,1
+3894,"Leah Jesse ""Giggling Archaeologist""",1
+3895,michael a. draper,1
+3896,Anthony Frank,1
+3897,NYM,1
+3898,"Tom Barnes ""Author 'Doc Holliday's Road to To...",1
+3899,"Terry A. Benedict-Devine ""Terry""",1
+3900,"R. Hutchinson ""autonomeus""",1
+3901,B. Melino,1
+3902,"""goldcoastreviews""",1
+3903,Karen Meador,1
+3904,"""witt4""",1
+3905,AvidReader21,1
+3906,searcher of a good book to get lost in for a time,1
+3907,Anthony J. Borgo,1
+3908,Michelle Lea Shealy,1
+3909,"TAVON ""TAVON""",1
+3910,"P. S. Gifford- Horror author ""to read example...",1
+3911,"Amey S. Tippett ""icacat""",1
+3912,Peter Pender,1
+3913,toronto,1
+3914,Patrick Mc Coy,1
+3915,"RodneyPaul ""rpm""",1
+3916,"wiredweird ""wiredweird""",1
+3917,Thomas Neil Kiser,1
+3918,Grumple Dumple,1
+3919,"William J. Higginson ""wordfield""",1
+3920,"Hortensia Anderson ""Hortensia Anderson""",1
+3921,"Serge Tome ""Serge Tome""",1
+3922,Dave Russo,1
+3923,"Michael Goglia ""bleak""",1
+3924,B. Ackroyd,1
+3925,"R. W. Evans ""chronos41""",1
+3926,"M. Rose-Jones ""The Violet Rose""",1
+3927,Tanya Zimmerli,1
+3928,Rodger Shepherd,1
+3929,"Brian ""Tell us about yourself!""",1
+3930,Cheryl Smith,1
+3931,Karen Pinsker,1
+3932,JT,1
+3933,E. D. Rios,1
+3934,"""mruplift""",1
+3935,Rebecca Lynn Wright,1
+3936,"K. Rowe ""mainer in exile""",1
+3937,"Lizzie Bennet ""Lizzie B""",1
+3938,MikeR,1
+3939,"Daisy Darcy ""The Book Eater""",1
+3940,"Making Art ""Making Art""",1
+3941,Manola Sommerfeld,1
+3942,"Ronald Scheer ""rockysquirrel""",1
+3943,"Daniel R. Wilson ""Just Another Reader""",1
+3944,The Concise Critic:,1
+3945,"gandalfcmk ""gandalfcmk""",1
+3946,Yu Kaname,1
+3947,"Don Reed ""Don""",1
+3948,Rosalind Cartwright,1
+3949,Simon G. Barrett,1
+3950,Stephen A. Haines,1
+3951,Lucy,1
+3952,"Larry Mark ""editor of MyJewishBooks.com""",1
+3953,"Jennifer A. Wickes ""Food Writer""",1
+3954,Shredbetty,1
+3955,"Francie Neumeier ""SanDiegoCeCe""",1
+3956,"H. Upchurch ""Lover of cupcakes""",1
+3957,WHOru,1
+3958,P. Nelson,1
+3959,C. J. Girolamo,1
+3960,D. S. Howes,1
+3961,Smoothie Lover,1
+3962,JAWJ,1
+3963,Maria Lourdes Tecson,1
+3964,"Docia Rose ""Docia Rose""",1
+3965,R. D. Calhoun,1
+3966,Jewish Mother,1
+3967,"Cookie Contessa ""cookie queen""",1
+3968,"Tulsa Cheese Lady ""Judy""",1
+3969,Rebecca Almazan,1
+3970,amandasan,1
+3971,Devin Rambo,1
+3972,Jerry Mac,1
+3973,Catherine Donohue,1
+3974,"Steven Bailey ""KilSB""",1
+3975,"P. A. Britt ""Key Largo""",1
+3976,"Trevor Kettlewell ""trevsbookreviews""",1
+3977,Dr. Daniel B. Swartz,1
+3978,rodboomboom,1
+3979,Marci Lowman,1
+3980,John P Bernat,1
+3981,M. K. Mcglaughlin,1
+3982,"E. A. Lovitt ""starmoth""",1
+3983,"""starlight-rose""",1
+3984,Michele L. Worley,1
+3985,"JustinWrites ""book-y""",1
+3986,Juan Carlos Uribe,1
+3987,Adam Dye,1
+3988,"V.T. Too ""veeteetoo""",1
+3989,Katie,1
+3990,Mr. Cairene,1
+3991,"Jamie ""Jamie""",1
+3992,HoneyBee,1
+3993,Read2Review,1
+3994,"Suzie Shopper ""Concerned consumer""",1
+3995,suew,1
+3996,pbrennen,1
+3997,Ian Gordon Malcomson,1
+3998,Masumi,1
+3999,Paul A. Mastin,1
+4000,Elvis The Cockatiel's human,1
+4001,"patsana ""patsana""",1
+4002,"Nathan Andrews ""Follow your Bliss.""",1
+4003,zorkie@webtv.net,1
+4004,Erika Evans (eevans@VOA.GOV),1
+4005,The Brodsky Family,1
+4006,"""cclooker""",1
+4007,"""marc25542""",1
+4008,Moran F. McMahon,1
+4009,Nadine Slavinski,1
+4010,R. Woody,1
+4011,B. Willis,1
+4012,"D. Miller ""dave""",1
+4013,"Jason Leuschen ""jdl902""",1
+4014,B. Perunovic,1
+4015,Herbert Gintis,1
+4016,Nozama,1
+4017,Prof Manfred Steger,1
+4018,"J. Goodman ""jgoodmanj""",1
+4019,"Joy M. Wright ""senior center director""",1
+4020,anaura,1
+4021,Lynn Tanner,1
+4022,"Jessica ""j""",1
+4023,"Mark ""markyy3""",1
+4024,Terance R. Johnson,1
+4025,Wes Injerd,1
+4026,"Joseph V. Formica ""wine educator""",1
+4027,"Sandra Dake Langley ""Sandy Langley""",1
+4028,Sally J. Bell,1
+4029,"G. Diana Ramsey ""Chocolate Rose""",1
+4030,Tootsie,1
+4031,Judy,1
+4032,three celtic horse,1
+4033,kathy jo sweet-dulyea,1
+4034,Barb,1
+4035,Mokiepoet,1
+4036,Tamara McFarlane,1
+4037,R. Stevens,1
+4038,L. Gehrig,1
+4039,The Arty Crafter,1
+4040,ArtWay,1
+4041,"Becky sharp ""Becky""",1
+4042,Cute mom,1
+4043,"K. E. Farmer ""&#34;lofty lady&#34;""",1
+4044,Flash,1
+4045,R. Burns,1
+4046,"R. S. Baldenegro ""kitybuttons""",1
+4047,Thomas Ptacek,1
+4048,Ruslan Moskalenko,1
+4049,david@photoplace.net,1
+4050,Stephen Sharkey,1
+4051,nixon@null.net,1
+4052,Uri Raz,1
+4053,Jeremy,1
+4054,"Mae F. ""Mae""",1
+4055,two boys' dad,1
+4056,Harper Curtis,1
+4057,A. Williams,1
+4058,M. Heiss,1
+4059,"P. D. ""Paula""",1
+4060,C. Moffat,1
+4061,"NannyMin ""NannyMin""",1
+4062,C. Rouse,1
+4063,Margaret Muirhead,1
+4064,B. van Duzer,1
+4065,love2read,1
+4066,Piper,1
+4067,L. Davenport,1
+4068,"Christina ""meant2b4boys""",1
+4069,"E. R. Bird ""Ramseelbird""",1
+4070,Theodore Bush,1
+4071,Roy E. Whitman,1
+4072,"M. Moen ""Marge""",1
+4073,"""palefire8""",1
+4074,"N. Walker ""StorieTime""",1
+4075,"Book Lover ""Linda""",1
+4076,L. Steadman,1
+4077,Brenda,1
+4078,Glenda's jewelry Box,1
+4079,"Myrna Johnson ""motorhome queen""",1
+4080,"glass1748 ""lovetoys""",1
+4081,Kevin Tipple,1
+4082,cicisbo,1
+4083,Pat,1
+4084,DarthV.Schw@excite.com,1
+4085,Fabrizio Formica,1
+4086,USMC Sniper,1
+4087,K Scheffler,1
+4088,Luke Killion,1
+4089,W. Brandt,1
+4090,"Christopher R. Magee ""fenryswulf""",1
+4091,Matthew P. Arsenault,1
+4092,"Joseph Antonelli ""NUMBERONE""",1
+4093,Jack Lanseur,1
+4094,Robert Wellen,1
+4095,L. J. Roberts,1
+4096,adam,1
+4097,Steven Lewis,1
+4098,"Richard Everhart ""book lover""",1
+4099,"Michael L. Slavin ""HardBopper""",1
+4100,"Ginahmk ""Ginahmk""",1
+4101,Michael K. Smith,1
+4102,Bookreporter.com,1
+4103,Patrick McCormack,1
+4104,George Beinhorn,1
+4105,"Don M Howard ""Don M. Howard""",1
+4106,John Woods,1
+4107,zorba,1
+4108,Jeff,1
+4109,james fortune,1
+4110,Thriller Lover,1
+4111,"T. Wadding ""Costume Geek""",1
+4112,Sam,1
+4113,nanamoose,1
+4114,Marsha Smith,1
+4115,"Lucy Snyder ""Lucy1277""",1
+4116,gilbert elliott,1
+4117,tina difeliciantonio,1
+4118,R. Josephs,1
+4119,JACK,1
+4120,Michel V. Diago,1
+4121,"M. Anita Clayton ""Bunny""",1
+4122,Tlhapi P. Nkhereanye,1
+4123,Marjorie Buell,1
+4124,Alan Richards,1
+4125,"Jeffrey Van Buren ""jiffis""",1
+4126,"ilmk ""ilmk""",1
+4127,J. Chippindale,1
+4128,"Judith A. Weller ""jw1917""",1
+4129,"Linda Johnson ""eclectic reader""",1
+4130,Brian Melendez,1
+4131,Donna Hudson,1
+4132,"Janet Boyer ""Snowland Deck Creatrix""",1
+4133,Katherine Wilson,1
+4134,Marie Mcdonald,1
+4135,"Bruce E ""Cousin""",1
+4136,Ranger Pat,1
+4137,"Kathleen Karsko ""47 states""",1
+4138,SHIRLY LUBLIAN,1
+4139,HANI DAVIDI,1
+4140,EDUARD HOLLIN,1
+4141,"D. Rosenstein ""Daniel Rockstone""",1
+4142,"Jeffrey L. Waddell ""mr. fix it""",1
+4143,RICHARD A LITTLE,1
+4144,"John S. Pieri ""Lay history buff""",1
+4145,Peter Andreasen,1
+4146,"John Slon ""johnslon""",1
+4147,"W. Gustafson ""No-one in particular""",1
+4148,J.B. Bence,1
+4149,rareoopdvds,1
+4150,Richard Burns,1
+4151,"Nelson S. Beltran ""NelsonZOOM Beltran""",1
+4152,"Oavde ""oavde""",1
+4153,Noah Gibbs,1
+4154,Scot Reed,1
+4155,Over-Analysis,1
+4156,"Robert D. Watson ""www.green-machine.info""",1
+4157,"Mr. Twenty Twenty ""Mr Twenty Twenty""",1
+4158,Brandon Mann,1
+4159,"Nancy Drew ""Previously a small town girl""",1
+4160,D. Blankenship,1
+4161,"Mac Laird ""Mac Laird""",1
+4162,"E. Victoria Bauer ""E.V. Bauer""",1
+4163,Judi,1
+4164,danzkuh,1
+4165,CaliKat,1
+4166,Cliff Raymond,1
+4167,Alicia Raquel,1
+4168,Jasmine Benzvi,1
+4169,William Garrison Jr.,1
+4170,"Teresa A. McTigue ""terrymct""",1
+4171,"R. Rose ""NC Soils Guy""",1
+4172,V. Schwartz,1
+4173,ankcorn@earthlink.net,1
+4174,Felix Sonderkammer,1
+4175,Vibhash Sureka,1
+4176,Casp7,1
+4177,"David D. Metcalf ""David Metcalf""",1
+4178,Reader,1
+4179,A. MIRZA,1
+4180,Michael Miller,1
+4181,B. Spencer,1
+4182,Stephen Soldner,1
+4183,"Walter C. Skrzypek ""Magua""",1
+4184,"Teresa C. Trudeau ""terry trudeau""",1
+4185,charlie cowling,1
+4186,Barbara Pratt,1
+4187,Avis Hutchinson,1
+4188,Doug Rice,1
+4189,"J. F. Rosen ""Educated Consumer""",1
+4190,Espanol,1
+4191,Lisa Gansky,1
+4192,Neil W. Fisk,1
+4193,Andy Lothar,1
+4194,"James A. Kvochick ""electro tinkerer""",1
+4195,"Jeremy Tarbush ""WJT""",1
+4196,"Kevin F. Lincoln ""Ripped-Off""",1
+4197,"stampic ""stampic""",1
+4198,Nita C. Dossin,1
+4199,"MikeSC ""MikeSC""",1
+4200,"Essa Rios ""Default Fan""",1
+4201,"Miguel Angel Nuno Ramos ""Manramos""",1
+4202,Bryan Hough,1
+4203,book lover,1
+4204,MATT,1
+4205,Mark Koerner,1
+4206,FullFathomFive,1
+4207,Alex C.,1
+4208,Hiram R. Webster,1
+4209,"Harald Isachsen ""Harold""",1
+4210,"D. Wallace ""Four4mommy""",1
+4211,WeeBeaks,1
+4212,Michael Pederson,1
+4213,Connie Priebe,1
+4214,Alison A. Farmer,1
+4215,Miguel Rodriguez,1
+4216,Kim M.,1
+4217,"firewallbill ""firewallbill""",1
+4218,John L. Thompson,1
+4219,"A. Shawl ""ana's bonanas""",1
+4220,"Sean Herriott ""Sean""",1
+4221,PLR,1
+4222,SirShylock,1
+4223,Kapsas,1
+4224,"S. Cox ""Sweet Sue Ohio""",1
+4225,"Michele S. Sipes ""mitchie14""",1
+4226,"eagles fan ""jr""",1
+4227,"P. Pasda ""artwings""",1
+4228,"Sherry O'Connell ""onemomlady""",1
+4229,Scotland,1
+4230,Flyboy152,1
+4231,para,1
+4232,"K. Ekenstam ""Kitchen Witch""",1
+4233,KidsReads,1
+4234,"kid reader ""Ben""",1
+4235,"Literator ""jcurley1""",1
+4236,"TeensReadToo ""Eat. Drink. Read. Be Merrier.""",1
+4237,Dr RD,1
+4238,"Milo Rambaldi ""&#60;o&#62;""",1
+4239,Gray Street Woman,1
+4240,mc,1
+4241,M. Worthing,1
+4242,"aiacozza ""A Iacozza""",1
+4243,Rachel F.,1
+4244,J. brown,1
+4245,knaliva,1
+4246,Steve W,1
+4247,"Robert S. Thornton ""Robert S. Thornton""",1
+4248,M. O'Connell,1
+4249,DFG,1
+4250,Robert S. Corrington,1
+4251,"Clarke Waldron ""inventor/writer""",1
+4252,Anacreon,1
+4253,Jaya Z. Powell,1
+4254,"A.D. ""x7x1x2x""",1
+4255,Sarah Kemppainen,1
+4256,Patty Kaye,1
+4257,Sandra Mettler,1
+4258,K Roberts,1
+4259,Engelby Reader,1
+4260,"Molly Grue ""Renaissance Woman""",1
+4261,steph,1
+4262,"paula_k_98 ""paula_k_98""",1
+4263,Pam from Texas,1
+4264,Alexia,1
+4265,"Marc Ruby&#8482; ""The Noh Hare&#8482;""",1
+4266,Juanita J. Nesbitt,1
+4267,"Ed Matuskey ""game player""",1
+4268,"Rachel ""Pinky""",1
+4269,"Daniel Jolley ""darkgenius""",1
+4270,"book-a-holic ""Fiona""",1
+4271,"""icedoll""",1
+4272,"Angela Knight ""Angela Knight""",1
+4273,Detra Fitch,1
+4274,"Susan J. Reinhardt ""littlesuey""",1
+4275,Janice,1
+4276,retroredux,1
+4277,"Erik Weikum ""EAW""",1
+4278,Michael Valdivielso,1
+4279,"Jenna Leigh ""Jenn""",1
+4280,bookbirdie,1
+4281,"W. Larson ""N.M.S""",1
+4282,David A. Baer,1
+4283,Paul Allaer,1
+4284,"camomiletea ""camomiletea""",1
+4285,Helene P. Von Schreiber,1
+4286,Fruit Loop,1
+4287,Aaron's mom,1
+4288,anonymous,1
+4289,"Keri M. Weber ""keri""",1
+4290,"Cindy Albrecht ""Watergirl""",1
+4291,"Joanne Bronson ""new momma""",1
+4292,Disgusted Parent,1
+4293,Dan Cohen,1
+4294,Gail Shelton (magys@hillsboro.net),1
+4295,Krissy,1
+4296,"""avonlea""",1
+4297,carybown@netport.com,1
+4298,"Deb ""Deb""",1
+4299,Knapp,1
+4300,Roger Thompson,1
+4301,Kate,1
+4302,Ohio Matka,1
+4303,Gloria Thomason,1
+4304,"D. Shirley ""Humbly and Gratefully Catholic""",1
+4305,"Dulcinea del Toboso ""emarey""",1
+4306,Parish Minister,1
+4307,"W. Brent Sturm, O.S.L. (cnc01076@mail.wvnet.edu)",1
+4308,D. W. MacKenzie,1
+4309,Hans Haneberg,1
+4310,"James F. Mueller ""Lachmanniac""",1
+4311,"Nadia Montague ""coffeeandcigarettes""",1
+4312,"Scott man ""Stanislaw""",1
+4313,Julia I. Chapman,1
+4314,lei,1
+4315,Fessel,1
+4316,"""angel_luver_66""",1
+4317,Edward Sunder,1
+4318,"""aeoline""",1
+4319,"""blissengine""",1
+4320,"saharagold ""saharagold""",1
+4321,"professorofenglish ""professorofenglish""",1
+4322,Kelly,1
+4323,Christine_Tsang@Bendnet.com,1
+4324,"""saffron13""",1
+4325,"Privacy, Please",1
+4326,An 11-year old toy enthusiast,1
+4327,"""saj888""",1
+4328,"S. Hecht ""daddio""",1
+4329,"Jenna Powell ""ardentlyearnest""",1
+4330,"M. Reynard ""kairosdreaming""",1
+4331,"LibKat ""book goddess""",1
+4332,Frank Opinion,1
+4333,tm55,1
+4334,"Renee ""windrider""",1
+4335,"Christian Book Previews ""Christian Book Previews""",1
+4336,C. Mullenhour,1
+4337,"Tanya Dennis ""www.TanyaDennisBooks.com""",1
+4338,Susan Costa,1
+4339,Steve Laughlin,1
+4340,Gerald L. Gentry,1
+4341,"K. Preble ""svivor""",1
+4342,"Mark J. Rosen ""hatetoshop""",1
+4343,M. Helm,1
+4344,cortezhill,1
+4345,Lorio42,1
+4346,"P. J. Jackson ""Oklahoma""",1
+4347,"Stephanie A. Cash ""angry book buyer""",1
+4348,William M. Bowen,1
+4349,H. JOHN,1
+4350,Mark Storry (storry@stolaf.edu),1
+4351,Cougar Woman,1
+4352,Devon Coggins,1
+4353,"Esam Al-Shareffi ""casual but critical reader""",1
+4354,"Michael Griswold ""Michael Griswold""",1
+4355,AuroraSkye,1
+4356,"Just gettin by ""JGB""",1
+4357,"madmadamim ""madmadamim""",1
+4358,Adam Martin,1
+4359,"Dean ""college kid""",1
+4360,Jason T. Eberl,1
+4361,"Peter P. Fuchs ""&#34;The Meta-Reviewer&#34;""",1
+4362,EE,1
+4363,Wong Chi Kin,1
+4364,Kristy Rasmussen,1
+4365,Dale Brewer,1
+4366,Megan Ross,1
+4367,"Hyla Waldron ""greenearthjourneydotcom""",1
+4368,MlleYeuxBleus,1
+4369,Melissa L. Sharp,1
+4370,zehnder@snet.net,1
+4371,William D. Steen,1
+4372,vw,1
+4373,"""brazensun""",1
+4374,"Mrs. Susan A. Yoderzak ""sak""",1
+4375,"aeromusica ""aeromusica""",1
+4376,Vic Larson,1
+4377,shashee,1
+4378,Roberto R Gressel,1
+4379,"B. Keilani ""Journeyman""",1
+4380,Alicia Wilson,1
+4381,Guangy,1
+4382,Shanda Needham,1
+4383,Kate L,1
+4384,Louise,1
+4385,Ed Flaspoehler,1
+4386,"Sabine ""Sabin""",1
+4387,My Two Cents,1
+4388,J. Larson,1
+4389,"P. W. Gabriel ""Grandmother""",1
+4390,"Terry Oulboub ""knowledge lover""",1
+4391,Miguel,1
+4392,krissylee,1
+4393,Mache,1
+4394,Jennifer Ray,1
+4395,"baltimore0502 ""Hon!""",1
+4396,"Christine Arsenault ""Christine""",1
+4397,Pamela,1
+4398,Book and Dog Lover,1
+4399,Janalee Ruschhaupt,1
+4400,M. Nix,1
+4401,Lwhite530,1
+4402,"The Escape Artist ""G""",1
+4403,"Natalie S ""ns65""",1
+4404,J. MacLean,1
+4405,Reviewer from NC,1
+4406,Canadian Girl,1
+4407,"Baivab Mitra ""Save a tree, one at a time""",1
+4408,William Dirks,1
+4409,ksiezycowy,1
+4410,"Kapir ""SparkandMercury""",1
+4411,leewoof,1
+4412,"Aphterthought ""Serious Consumer""",1
+4413,"K. Bagley ""crazed reader""",1
+4414,O. Melnick,1
+4415,"Erich Heidenreich ""Caspar""",1
+4416,B. Teel,1
+4417,"David R. Cross ""Purple Sage""",1
+4418,C. James,1
+4419,judym70@hotmail.com,1
+4420,Tiffany Smith,1
+4421,Esther B. Gates,1
+4422,"Peter Donelan ""Peter""",1
+4423,Philyss Kandinsky,1
+4424,janice k. langner,1
+4425,Naor Wallach,1
+4426,tr_musashi@hotmail.com,1
+4427,"Rebecca D. Ray ""animalhaus46r""",1
+4428,Robert St. James,1
+4429,Smeddley,1
+4430,"R. Bruhn ""rlbruhn""",1
+4431,K. McGonigle,1
+4432,Mick McAllister,1
+4433,Gregor von Kallahann,1
+4434,Judith W. Colombo,1
+4435,"K. L Sadler ""Dr. Karen L. Sadler""",1
+4436,"Billy J. Hobbs ""Bill Hobbs""",1
+4437,"Donald Mitchell ""Jesus Loves You!""",1
+4438,"Miz Ellen ""all the letters of my real name""",1
+4439,"M. C. T. Henry Jr. ""henryct""",1
+4440,"Orville B. Jenkins ""Research Guy""",1
+4441,Gandalf,1
+4442,Mari,1
+4443,brent kennedy,1
+4444,"Jeff Potter ""outyourbackdoor""",1
+4445,"R. Varde ""gandalf""",1
+4446,"Barbara Shinton ""barbara""",1
+4447,"lobo ""brujo""",1
+4448,Leeladarsing,1
+4449,"J. Martinez ""mojomoon.net""",1
+4450,Mystique,1
+4451,The Great Nagneto,1
+4452,Chester Beckham,1
+4453,13 Year old witch,1
+4454,Arby,1
+4455,me,1
+4456,"Ciara Cutrona ""Happy Bride""",1
+4457,Amy Gardner,1
+4458,"Estee A. Zeigler ""eaz""",1
+4459,sasha,1
+4460,"Nadine Sansone ""NADINE SANSONE""",1
+4461,"Frater V ""The Truth is Absolutely Not Absolut...",1
+4462,"""sobekqebet""",1
+4463,"G Anjelica ""SHOES SHOES! Goddess""",1
+4464,"""blksunv""",1
+4465,Bonnie Dunham,1
+4466,"James J. Sowers ""dj_spincycle""",1
+4467,Jason A. Salas,1
+4468,D & A,1
+4469,J. A. Crimi,1
+4470,Richard Parsons,1
+4471,Edward,1
+4472,"E. R. W. Parker ""E.R.W.Parker""",1
+4473,Michael Fedell,1
+4474,"Rande D. Schulze ""Dwarvish Overcompensation""",1
+4475,John N. Waterhouse Jr.,1
+4476,Ralph Hornung,1
+4477,William Ymesei,1
+4478,"H. K. Juelch ""struggling reader""",1
+4479,Miguel L. Black,1
+4480,LOGOSYS,1
+4481,WA3ERQ,1
+4482,Keith Shilhavy,1
+4483,H. Graham,1
+4484,H. F. Barker,1
+4485,freedom reader,1
+4486,Antoine,1
+4487,S. Perle,1
+4488,"Christina Andrade ""Advanced Practice Nurse""",1
+4489,DJ,1
+4490,William Podmore,1
+4491,Down Under,1
+4492,Dr. S,1
+4493,Melissa Kaye,1
+4494,Tia,1
+4495,Rehtakul,1
+4496,catcullen,1
+4497,"Katherine Kirk ""Marriage & Family Therapist""",1
+4498,Patty Helman,1
+4499,Emily Trimble,1
+4500,Jane Hawes,1
+4501,Catherine Rathke,1
+4502,"C. A. Gelsinger ""Nolly""",1
+4503,noiseynana,1
+4504,Jensine Wing,1
+4505,Pamela Demarrais,1
+4506,Crafty Lola,1
+4507,Carol D,1
+4508,"Jennifer M. Macleod ""yiddishe supermama""",1
+4509,D. Silberman,1
+4510,CA Cook,1
+4511,"pandiyan ""pandi""",1
+4512,A Reader,1
+4513,Denise Fogarty,1
+4514,Syd Spector,1
+4515,"KOSEL MAN ""KOSEL MAN""",1
+4516,Carnie Ruiz,1
+4517,Erick J. Regalado,1
+4518,Walter,1
+4519,horror fan,1
+4520,"A. Hansen ""AH Booklover""",1
+4521,"Jon Bergen ""ergenu2""",1
+4522,"Michael Cornett ""Madman""",1
+4523,"Philip C. Perron ""Philip""",1
+4524,Penn Carter,1
+4525,"Jon Howard Zeipen ""Zeip""",1
+4526,Robert Sagirs,1
+4527,D. B. Raught,1
+4528,Eimear Coffey,1
+4529,booklover,1
+4530,"John Baranyai ""Book Nerd And Ex High School G...",1
+4531,DanD,1
+4532,Jose Jones,1
+4533,paul,1
+4534,"missy99 ""horrorlover""",1
+4535,Benjamin Boulden,1
+4536,Helen Simpson,1
+4537,Joshua Koppel,1
+4538,William C. Suhler,1
+4539,Greg Meyer,1
+4540,Ellen,1
+4541,Marty Sharpe,1
+4542,Sherry Zander,1
+4543,"Katy Confidential ""Katy Confidential""",1
+4544,"Harvey A. Lewis ""Harvey""",1
+4545,"Todd Williams ""taw8y""",1
+4546,"""heathcliff91""",1
+4547,"Stanislav D. Maydan ""Stan Maydan""",1
+4548,Kevin P.,1
+4549,Mark Pritchard,1
+4550,susan.gillie@gte.net,1
+4551,Robert C. Baruch,1
+4552,Bill Ramey,1
+4553,Ricardo Medina Covarrubias,1
+4554,"""dearmad""",1
+4555,js9078@hotmail.com,1
+4556,Psohn1@aol.com,1
+4557,Pam Silvers,1
+4558,Springluce,1
+4559,Marilyn Fragiacomo,1
+4560,Joyce Tull,1
+4561,"Ink ""Inkfeather - The truth is the truth all ...",1
+4562,Leigh Diamond,1
+4563,"Susan RoAne ""The Mingling Maven""",1
+4564,"""vmeans_03""",1
+4565,"Laura Ann Craven ""SoBe Craven""",1
+4566,Maria P.,1
+4567,"cym ""CHEAPER BOOKS""",1
+4568,Maxim Masiutin,1
+4569,Lori A. Miller,1
+4570,Shara Fisher,1
+4571,saskatoonguy,1
+4572,Lehigh History Student,1
+4573,M. J. Moss,1
+4574,S. Johnston,1
+4575,Vanessa,1
+4576,Doggie Diva,1
+4577,Katie B.,1
+4578,anon,1
+4579,Albert B.,1
+4580,Rachel,1
+4581,book,1
+4582,J. Barker,1
+4583,JH,1
+4584,"Jeanne Sayer ""God Seeker""",1
+4585,"Betsy Rose ""BravoWR""",1
+4586,"Debbie ""grandmadeb2cats""",1
+4587,Shannon Wolo,1
+4588,"""canndiceg""",1
+4589,Tammy Vickroy,1
+4590,Dsazzy1,1
+4591,"Janna Murphy ""Princess""",1
+4592,Julie Daniel,1
+4593,Angela Warren,1
+4594,"Mary K. Williams ""Living for more!""",1
+4595,Joy,1
+4596,"Pieter Uys ""Toypom""",1
+4597,"Bartok Kinski ""A casual stroll through the lu...",1
+4598,hippor8,1
+4599,Judah,1
+4600,P.V. Southerland,1
+4601,Rick Goodner,1
+4602,"The Aeolian Kid ""the-aeolian-kid""",1
+4603,KIM,1
+4604,"Rob Dashboard ""Rob""",1
+4605,Metalhead,1
+4606,"Chris Hammond ""investch""",1
+4607,Richard Thomas,1
+4608,William S. Harnsberger,1
+4609,"S. Organ ""Filly Film Fan""",1
+4610,Malvin,1
+4611,"""sparkyshan""",1
+4612,"jsdunk ""jsdunk""",1
+4613,David A. Bede,1
+4614,"Jim W. Obrien ""Jim O'Brien""",1
+4615,Gayle Wiegand,1
+4616,"BlackJack21 ""BlackJack21""",1
+4617,"S. K. Leggate ""Sunni""",1
+4618,Romance Reader,1
+4619,"Pamela Ackerson ""author""",1
+4620,zuzz,1
+4621,Aramex,1
+4622,East Coast,1
+4623,E.M. Singer,1
+4624,russell nusbickel,1
+4625,"R. A. Wells ""Canaryalice""",1
+4626,Silver,1
+4627,"Charles A. Evans ""Allen Evans""",1
+4628,"charles ""chal""",1
+4629,"Laura Gilbert ""LauraX""",1
+4630,"Claudio ""Clau""",1
+4631,"Jigyasu ""curious""",1
+4632,Harriet,1
+4633,Thom Raushcer,1
+4634,"Ravichandran M. Kaushika ""Ravi.""",1
+4635,Lisa D. Funk,1
+4636,Newton,1
+4637,will,1
+4638,F. C. Mooijaart,1
+4639,Monkey,1
+4640,"Patrick D. Goonan ""see profile for URL""",1
+4641,Ayca Gurelman,1
+4642,Skydancer,1
+4643,Bridgette,1
+4644,"Nik ""Nik C.""",1
+4645,Tantra Bensko,1
+4646,Tormod Kinnes,1
+4647,Maria D Baldwin,1
+4648,Thomas E. Denham,1
+4649,"Roger A. Knopf ""makes sawdust in spare time""",1
+4650,John Peter O'connor,1
+4651,Karthik Natarajan,1
+4652,volski@9netave.com,1
+4653,julio@greenwich.com,1
+4654,"Carl L. Gonsalves ""Laurence Gonsalves""",1
+4655,J. Underwood,1
+4656,Tony,1
+4657,Vincent,1
+4658,"Mae A. Apgovannon ""dragonmoo""",1
+4659,"YankeeChick ""Yankee""",1
+4660,Kim Burdick,1
+4661,M. Junkins,1
+4662,William I. Griffith,1
+4663,"M. Quinn ""marybab84""",1
+4664,Marylyn Rands,1
+4665,Salome,1
+4666,Nancy Roberts,1
+4667,"mamareadssomuch ""mamareadssomuch""",1
+4668,"""donnie@dreamscape.com""",1
+4669,allegro@proaxis.com,1
+4670,"""unonumero1""",1
+4671,Douglas Harper,1
+4672,Zack,1
+4673,Mary,1
+4674,shaylyn,1
+4675,Aimee L,1
+4676,LauraN,1
+4677,Kevin Killian,1
+4678,Steven Reynolds,1
+4679,"Jake Mayzure ""Mayz""",1
+4680,J. Quinton,1
+4681,"CS ""Colorado Cook""",1
+4682,Blue Grass,1
+4683,Kenneisha Thompson,1
+4684,Loveshade,1
+4685,"Gary F. Taylor ""GFT""",1
+4686,Brianna Ruffin,1
+4687,seamus enright,1
+4688,Rutger,1
+4689,"""vfadair98""",1
+4690,Q,1
+4691,KingGeorge24,1
+4692,"Sandra Christian ""last_cav1971""",1
+4693,"""caryninlaca""",1
+4694,"J. Russell ""motorpsiclist""",1
+4695,Carmeleen Varley,1
+4696,Mrs. Marvin Warth,1
+4697,"""cutter@onebox.com""",1
+4698,Paula Hess,1
+4699,Chrijeff,1
+4700,Louise Marquis,1
+4701,"Leanna M. Mosley ""LeAnna""",1
+4702,"Brendan D. King ""Brendan D. King""",1
+4703,"D. Carty ""LizardsNook dot com""",1
+4704,"Pam Brinkmeyer ""Dale at 65""",1
+4705,D. Zakar,1
+4706,"Rosemary Season ""Rosie""",1
+4707,"Richard Grant ""rgrant@alum.mit.edu""",1
+4708,"tzefirah ""tzefirah""",1
+4709,J. Miller,1
+4710,Judith Brocklehurst,1
+4711,grozny,1
+4712,"Laura Weakley ""spiritual1rav""",1
+4713,"Katie C. Bollenbach ""KatieBLutheran""",1
+4714,Smilin Sam,1
+4715,Deborah Cahill,1
+4716,"""neverenoughtyme""",1
+4717,"JG ""Jagmom""",1
+4718,Gleyn,1
+4719,"""glitterinjewel""",1
+4720,"""elyseb""",1
+4721,MW,1
+4722,Elizabeth Cochrane,1
+4723,"""shaie""",1
+4724,"Lizzie ""carebrite""",1
+4725,Tola,1
+4726,"Sandi ""Shopaholic""",1
+4727,Tanika J. Manning,1
+4728,Amanda Garvis,1
+4729,Danielle,1
+4730,sherbertrose,1
+4731,Meg,1
+4732,Tracy Vest,1
+4733,"Beth Cholette ""doctor_beth""",1
+4734,Lindsay Willis,1
+4735,"Michele P. Fallon ""qny623""",1
+4736,Julia Flyte,1
+4737,"Educator for 22 Years ""science teacher""",1
+4738,Connie1998,1
+4739,lovetoteach,1
+4740,S. Pelcher,1
+4741,Lawyeraau,1
+4742,Mochamantis,1
+4743,Ravalli County Museum,1
+4744,Ruth,1
+4745,aiwf,1
+4746,Cecelia Harrison,1
+4747,"Paul Bergner ""Editor, Medical Herbalism journal""",1
+4748,Melodye Murphy,1
+4749,Benkei,1
+4750,"John N. Kallas, Ph.D.",1
+4751,"Lance M. Foster ""Solvitur ambulando""",1
+4752,P. Sheeler,1
+4753,"Tony Mccammon ""T. Mac Botanists""",1
+4754,Eric Boucher,1
+4755,Jesse Taylor,1
+4756,Randy J. Mercurio,1
+4757,"Nancy Rozo ""animallover""",1
+4758,Linda L. Fox,1
+4759,Ida Drewrey,1
+4760,amazonian,1
+4761,"Melissa Healy ""Mhealy""",1
+4762,S. Krespan,1
+4763,Daisy Jensen,1
+4764,David Hindley,1
+4765,Dennis,1
+4766,Anya Borden,1
+4767,Maudie M.,1
+4768,J. Rickard,1
+4769,SnowWhite86,1
+4770,Andrea Schultz,1
+4771,A. Harvey,1
+4772,Gail J. Zitz,1
+4773,Barry W. Santana,1
+4774,Daniel Lalonde,1
+4775,"pilot 1988 ""instructor 1996""",1
+4776,"Elijah Chingosho ""Dr Elijah Chingosho""",1
+4777,Jimmy Yu,1
+4778,Peter Allen,1
+4779,Matt Burke,1
+4780,George P. Shadroui,1
+4781,"John Driscoll ""driscontent""",1
+4782,Peregrine Critic,1
+4783,Sylvia A. James,1
+4784,Steven J. Strommer,1
+4785,"""hmsconsulting""",1
+4786,William A. Andrews,1
+4787,Robert David STEELE Vivas,1
+4788,Smucks,1
+4789,E. McC.,1
+4790,Brian D. Rubendall,1
+4791,Mark Harju,1
+4792,Lynda E Leeder,1
+4793,J. L. Williams,1
+4794,A. Block,1
+4795,"Kimberly R. Johnson ""siberiankim""",1
+4796,Mary Braband,1
+4797,"JA Fletcher ""Jenni Fletcher""",1
+4798,Mary Palmer,1
+4799,Anonymous,1
+4800,Reader2Rider,1
+4801,carolann Hayes,1
+4802,"Neil A. Schafer ""Bear for Life""",1
+4803,"Author ""johnnybrooklyn""",1
+4804,jeff errington,1
+4805,"Anne Salazar ""inveterate reader""",1
+4806,Adrienne L. Gurman,1
+4807,Katherine Neis,1
+4808,"Judith Tatelbaum ""Judy T""",1
+4809,J. Pytka,1
+4810,"CR ""Foxxxy Librarian""",1
+4811,"weser ""weser""",1
+4812,Paula Carino,1
+4813,Dale Moreau,1
+4814,lonebeaut,1
+4815,James J. Lundy Jr.,1
+4816,Eric Krupin,1
+4817,11111,1
+4818,"John Austin ""austinjr@bigpond.net.au""",1
+4819,N. Houde,1
+4820,S. Adams,1
+4821,glkii@juno.com,1
+4822,"Glenn Heard, Age 12 (VERTZAR@aol.com)",1
+4823,mouse15@webtv.net,1
+4824,"L. E. Hughes ""meow""",1
+4825,K.A.Goldberg,1
+4826,Alfred Johnson,1
+4827,"Renesi Jor ""Reviewer from CA""",1
+4828,Andrew Kim,1
+4829,Catherine Hood,1
+4830,"Breathometer Pty Ltd ""Des Malcolm - reader""",1
+4831,doc peterson,1
+4832,"Parola138 ""We bite""",1
+4833,Gary Powell,1
+4834,"""kingsransom""",1
+4835,Jacqui Mueller,1
+4836,Emma Rose,1
+4837,hollow man,1
+4838,"K. Thalheimer ""Beach Reader""",1
+4839,Hermione Caplan,1
+4840,Kay Davis,1
+4841,RK Schmidt,1
+4842,Rose Marie Anuszewski,1
+4843,martk@sunlink.net,1
+4844,"brooke ""brooke""",1
+4845,A reader,1
+4846,Sandy W.,1
+4847,"Delores E. Hendricks ""deedidit""",1
+4848,M. B. Tuttle,1
+4849,"Colleen Carlyle ""artist598""",1
+4850,C. Park,1
+4851,"Jane Jago ""Jago""",1
+4852,Alex,1
+4853,Fairleigh Brooks,1
+4854,The Comtesse DeSpair,1
+4855,Jennifer Lucas,1
+4856,"Kristal Baker ""kristal""",1
+4857,Black Raven,1
+4858,Krisztian Gyongyi,1
+4859,"Miran Ali ""I don't like anonymous reviewers""",1
+4860,And You May Find Yourself,1
+4861,B Zirino,1
+4862,Randy Wall Ruth Wall,1
+4863,"Magalini Sabina ""sabina""",1
+4864,Wanderer,1
+4865,Luke D Jasenosky,1
+4866,"Aaron Lipka ""A reader""",1
+4867,Magdalena,1
+4868,H. Cunningham,1
+4869,Marianne,1
+4870,Harold H. Magee,1
+4871,Andres C. Salama,1
+4872,keith fenwick,1
+4873,Emmett J. Pybus,1
+4874,Aaron R. F. Cooper,1
+4875,"John the Reader ""John""",1
+4876,"Mark ""eclectic dilettante""",1
+4877,loren,1
+4878,Daniel H. Heaton,1
+4879,J. V. Francescato,1
+4880,"Paul V. Wood ""pvawood""",1
+4881,T. Berger,1
+4882,Nina Holland,1
+4883,"E. B. MULLIGAN ""Bronwyn""",1
+4884,"Miniappleman ""Art""",1
+4885,U. E. Olazabal,1
+4886,"ISFlixMoonya ""IS""",1
+4887,"""kjbookworm""",1
+4888,"Green Marker Girl ""Bernadette""",1
+4889,"""torianna""",1
+4890,"""ambragg""",1
+4891,Logan J Edgerly,1
+4892,Erika Sorocco,1
+4893,"""royaldiaryfan2000""",1
+4894,Veronica P. Garrett,1
+4895,"Allen Doolittle ""j&k's dad""",1
+4896,sofino,1
+4897,LMBullock@Worldnet.att.net,1
+4898,Maeson,1
+4899,Kendal B. Hunter,1
+4900,rallymonkey,1
+4901,Ls92,1
+4902,James F. Wynne,1
+4903,"Oliviac16 ""Olivia W.""",1
+4904,soulalonegirl,1
+4905,Jaxnative,1
+4906,sundazing,1
+4907,Kieran Fox,1
+4908,David K,1
+4909,tgb,1
+4910,A. D. Lum,1
+4911,"J. Woodhouse ""cloudwalker""",1
+4912,"Dave Kleiman ""DaveKleiman.com""",1
+4913,Gabriele Giuseppini,1
+4914,Mike Lawton,1
+4915,Rudy Coppens,1
+4916,Joaquin Menchaca,1
+4917,"Chad Tilbury ""ForensicMethods . com""",1
+4918,Jay P. Vansanten,1
+4919,C. Jans,1
+4920,"Michael J. Bell ""Application Engineer""",1
+4921,David G,1
+4922,Blitzburgh,1
+4923,calikis,1
+4924,John Morton,1
+4925,Boris Barroso,1
+4926,Matthew Gadd,1
+4927,John B Lyons,1
+4928,Ana,1
+4929,W. Todd Dominey,1
+4930,J. Pease,1
+4931,"R. Wiederecht ""Rick""",1
+4932,Tiago Janz,1
+4933,Arthur Setka,1
+4934,Mr. Q.,1
+4935,H. Stasonis,1
+4936,D. Mark Munro,1
+4937,Susan Casper,1
+4938,Nicole C,1
+4939,audrey,1
+4940,"T. Mulligan ""Doctor Tom""",1
+4941,Kandace,1
+4942,"A. R. Veldhuis ""Alisson R. Veldhuis""",1
+4943,Luis Mndez,1
+4944,customer,1
+4945,Cathy Hart,1
+4946,medicus,1
+4947,"C. Kelley ""book queen""",1
+4948,Duke Spookem,1
+4949,"""lyn4romance""",1
+4950,"L. Theroux ""lindaetea""",1
+4951,Malia,1
+4952,"msbooklady ""msbooklady""",1
+4953,"Sandy ""macsandy""",1
+4954,Christina Mcnair,1
+4955,"Crystal ""www.MusicContracts101.com""",1
+4956,"Voracious Reader, Avid Listener ""VRAL""",1
+4957,"JB ""Devoted Amazonian since 1996""",1
+4958,F. Wells,1
+4959,"Boop ""caramelchocolate""",1
+4960,Belinda Roberson,1
+4961,D. Roth,1
+4962,"""bkproducts""",1
+4963,P. Fleming,1
+4964,derrick Bogan,1
+4965,"la from Enfield ""La""",1
+4966,Marsena Cook,1
+4967,georgiagirl,1
+4968,Andy,1
+4969,vivian,1
+4970,A. Hayes,1
+4971,"Tylerpink ""Tyler""",1
+4972,litacake,1
+4973,"I. Pope ""EZ Reader""",1
+4974,Mary Butler,1
+4975,"Sunny Daze ""Penny""",1
+4976,Anthony Kasandwe,1
+4977,"Tarris Tausig ""tarris""",1
+4978,Frances Singleton,1
+4979,"TERESITA ""TERE""",1
+4980,Stephanie Amburn,1
+4981,Linda Pecone,1
+4982,Maureen Schoch,1
+4983,Heba M.AlSawan,1
+4984,"D. Gardner ""Mac Fan""",1
+4985,boris donescu,1
+4986,debbie,1
+4987,Sandy,1
+4988,"H. A. Tuck, JR.",1
+4989,Mary L Griffin,1
+4990,rawhide,1
+4991,mpeckham,1
+4992,"B. Singer ""S&W Winger""",1
+4993,Michelle,1
+4994,Orianne Reich,1
+4995,D. Jones,1
+4996,Tale-wagger,1
+4997,JC,1
+4998,pupucat,1
+4999,DeadlinesKill,1
+5000,Christine MacDonald,1
+5001,P. Emery,1
+5002,C. M. Carter,1
+5003,Susann Schwachenwalde,1
+5004,"Chandib ""Serendeepity""",1
+5005,"[Insert Name Here] ""VerdiGuy""",1
+5006,Tansu Demir,1
+5007,"Pit O'Maley ""Moon Man""",1
+5008,Fiat Lux,1
+5009,guacamole,1
+5010,"Cooper's Antiques ""Cooper's Antiques""",1
+5011,DarnHeather,1
+5012,Patricia Ann Tourangeau,1
+5013,Tess Lynn,1
+5014,"Manny Hernandez ""@askmanny""",1
+5015,Luis Boisvert,1
+5016,ice-queen,1
+5017,Rebecca Herman,1
+5018,Clarissa,1
+5019,"""mfshermantank""",1
+5020,Nikki,1
+5021,Hannah Irish,1
+5022,"""shayamorph""",1
+5023,"""kandladin""",1
+5024,"""jediashley1""",1
+5025,Nathan,1
+5026,Marmee Wannabe,1
+5027,"Ronald Boggs ""mathscience41""",1
+5028,"Jodi M. Lewis ""Mom2MNtwins""",1
+5029,Lulu Chains,1
+5030,ACHILLEOS PANAYIOTIS,1
+5031,jrmspnc,1
+5032,Priscilla Stafford,1
+5033,"Monsieur Mouton ""M. Montgomery""",1
+5034,"K. Seserman ""kimses""",1
+5035,"N. Bilmes ""bookaholic""",1
+5036,"mrmario ""mrmario""",1
+5037,"Anna M. Ligtenberg ""AnnaLovesBooks""",1
+5038,KWL,1
+5039,Pilsner,1
+5040,lynn,1
+5041,Joseph W. Hlebica,1
+5042,"William Lynam ""danapilgrim""",1
+5043,R. LaMee,1
+5044,Jesse B Ellyson,1
+5045,Laurie D Sales,1
+5046,Todd,1
+5047,"Amy Peterson Case ""utstruken""",1
+5048,The Turtle,1
+5049,"Ruben L. Livesay ""Leroy""",1
+5050,"backstage reader ""jnb33""",1
+5051,San Berdoo,1
+5052,"D. Brown ""Dave""",1
+5053,"LP Johnson ""brother in the struggle""",1
+5054,"Nancy Whyte ""choreographer and ballet teacher""",1
+5055,ASB,1
+5056,Serstillen,1
+5057,TomW,1
+5058,"Peter Durward Harris ""Pete the music fan""",1
+5059,tramwayjohn,1
+5060,D. M. Petersen,1
+5061,Melissa Sack,1
+5062,Vijay Madhavapeddi,1
+5063,Cowboy Andy,1
+5064,Alexander Gaguine,1
+5065,Marcy Darnovsky,1
+5066,"C. Eng ""CE""",1
+5067,"Thomas ""Tommy""",1
+5068,"MichaelG ""MichaelG""",1
+5069,"Roxy ""Roxy""",1
+5070,William Beene,1
+5071,Risa,1
+5072,Keetchaz,1
+5073,Michael Connolly,1
+5074,Iria Anorve,1
+5075,RobotLeg,1
+5076,Joyomite,1
+5077,Hieu D. Ho,1
+5078,"B. Ames ""Bariot""",1
+5079,CarrollUGal,1
+5080,nadal,1
+5081,Thomas D. Worthen,1
+5082,Rocco Dormarunno,1
+5083,Joseph O'Neill,1
+5084,"Neri ""Neri""",1
+5085,Garden maven,1
+5086,"classical guitarist ""TB""",1
+5087,John,1
+5088,"G. Johnson ""snow""",1
+5089,Lyra Shadow,1
+5090,NY Reader,1
+5091,"Rachel Newsham ""Savory""",1
+5092,C. Solomon,1
+5093,"Mike London ""MAC""",1
+5094,pinchquick,1
+5095,"""lwandapang""",1
+5096,JET,1
+5097,"DC Holm ""booktime""",1
+5098,Joshua Gugel,1
+5099,Philip J. Catania,1
+5100,Champ,1
+5101,Baby Sister,1
+5102,"George C. Brown, Jr.",1
+5103,Anthony Adler,1
+5104,J. Duncan Berry,1
+5105,MS,1
+5106,"E. DeMattia ""Unenlightened1""",1
+5107,L. Anderson-Pomeroy,1
+5108,"doug1022 ""doug1022""",1
+5109,H. J. Rossi,1
+5110,David Zimmerman,1
+5111,Martin A. Healey,1
+5112,Aaron Gutsell,1
+5113,ProudConservative,1
+5114,"Kade Chisholm ""-Sharpen the edges.""",1
+5115,"Miriam ""Miriam""",1
+5116,Michael Booker,1
+5117,Kevin Lynds,1
+5118,"C. Hutton ""book maven""",1
+5119,Octoworm,1
+5120,"Michael D. Rose ""Ambassador for Christ""",1
+5121,"Peter Kobs ""Peter Kobs""",1
+5122,"John Matlock ""Gunny""",1
+5123,"Mafalda ""Mafalda""",1
+5124,Jon Eric Davidson,1
+5125,Michael Le Houllier,1
+5126,BP,1
+5127,"Chuck DeVore ""Chuck DeVore""",1
+5128,"MC Brown ""MC, MCslp""",1
+5129,davidbrowning@yahoo.com,1
+5130,"Richard Taber ""Sara""",1
+5131,"Jane James ""homeschoolmum""",1
+5132,fishy,1
+5133,"Dottie Randazzo ""Reader of Everything""",1
+5134,Mom,1
+5135,Joshik,1
+5136,"Quickhappy ""quickhappy""",1
+5137,Cday,1
+5138,Forrest Wilson,1
+5139,ray weissenstein,1
+5140,Brinda Chiddix,1
+5141,Colin Inglefield,1
+5142,ks,1
+5143,A. Lindsay,1
+5144,"theoldwolf ""&#62;&#62; Flick tail""",1
+5145,TJV,1
+5146,Emily B,1
+5147,"Plume45 ""kitka12345""",1
+5148,Sir Bowen,1
+5149,M.E.,1
+5150,Henry Berszinn,1
+5151,"Dr. Sig Van Raan ""Journeyman""",1
+5152,"Steven Solter ""Asiasteve""",1
+5153,BeeBishop,1
+5154,John Green,1
+5155,Leon L. Lancaster,1
+5156,John Crawford,1
+5157,"Patricia B. Kuta ""PLBK""",1
+5158,Cheri Crystal,1
+5159,NJ Cat,1
+5160,"Reid M. Wilson ""scifi memories""",1
+5161,daren,1
+5162,Michael Patrick Boyd,1
+5163,"Sam Winchester ""Sammy""",1
+5164,"InStockMedia.Net ""InStockMedia.Net""",1
+5165,"Michael OConnor ""Wordsmith""",1
+5166,"Mike Tarrani ""Jazz Drummer""",1
+5167,Ian Clark,1
+5168,Ray Carpenter,1
+5169,"DJG ""DJG""",1
+5170,Muriel Stutzbach,1
+5171,Old Resident,1
+5172,"Michael G. ""mikefromrochester""",1
+5173,Rebecca Sunnybrook,1
+5174,pbdiv,1
+5175,"James Ringland ""jimmat""",1
+5176,naenti,1
+5177,"C. Mathieu ""waldenpond88""",1
+5178,thunket,1
+5179,"""baileyif""",1
+5180,Scott Hill,1
+5181,"David De Sousa ""The Automation and Control Guy""",1
+5182,joecop,1
+5183,Daniel Burger,1
+5184,Mr. Tony R. Kuphaldt,1
+5185,microjoe,1
+5186,"""canoegal""",1
+5187,Kenneth Kraut,1
+5188,TOM T,1
+5189,jeff171,1
+5190,Holden Knight,1
+5191,Thoughful Consumer,1
+5192,Paul B.,1
+5193,Craig Clotfelter,1
+5194,Patricia L. Eager,1
+5195,"Jan Milo ""Jan Milo""",1
+5196,"David Occhinero ""Gaswell Investor""",1
+5197,"Curtis R. Munro ""Randy Munro""",1
+5198,"Mike May, P.E.",1
+5199,"C. Jack ""C. Jack""",1
+5200,Karen Barton,1
+5201,Kari J. Wolfe,1
+5202,NotPerfectBut,1
+5203,"Andrea Love ""nanajlove""",1
+5204,"Amateur curmudgeon ""kaleun76""",1
+5205,"M. W. Castelao ""Bookwolfe""",1
+5206,Veronica Welch,1
+5207,"Prism Light ""Prism""",1
+5208,Brittany Rose,1
+5209,"Nikki Sewell ""Nikki""",1
+5210,Helen,1
+5211,C. Johnson,1
+5212,Kool Fool,1
+5213,Jennifer Hamilton,1
+5214,girly glam fan,1
+5215,"Michele Beuerlein ""Michele Beuerlein""",1
+5216,Celia A. Sgroi,1
+5217,Roy E. Row,1
+5218,"C. Leebrick ""Independent Reader""",1
+5219,"book lover extrordinaire ""NH Thistledown""",1
+5220,Florentius,1
+5221,"MSH ""MSH""",1
+5222,"D. Conrad ""peaceful soul""",1
+5223,Conchita Almora,1
+5224,Rudy Fan,1
+5225,Pop Bop,1
+5226,Tea&BookLover,1
+5227,trenich@terraworld.net,1
+5228,"BillMah ""billmah""",1
+5229,"Khaled AalAli ""AalAli""",1
+5230,Emil (emil@pobox.com),1
+5231,Artur Padovan,1
+5232,Bu-Chan,1
+5233,"Elizabeth Sanchez ""elicosafi2005""",1
+5234,Cedar Button,1
+5235,victoria baardsen,1
+5236,J. Martens,1
+5237,SteveZ,1
+5238,KaMau-Mau,1
+5239,zep,1
+5240,"Scotch Indian ""Scotch Indian""",1
+5241,Sharon,1
+5242,B. Keith Mattox,1
+5243,"N. S. MUSSER ""ImNorm""",1
+5244,"""mafrontz""",1
+5245,jennifer Van Slyke,1
+5246,April A. Zalat,1
+5247,"J. Carroll ""Jack""",1
+5248,Ohioan,1
+5249,Kim Stanton,1
+5250,Suzanne Forte,1
+5251,Jeanne Tassotto,1
+5252,"Janice M. Friesen ""malahini""",1
+5253,Donna M. Towne,1
+5254,Angela L. Morton,1
+5255,"Jessa Fee ""Some of my best friends are books,...",1
+5256,maria1971,1
+5257,slain,1
+5258,"Pedro O'Reilly ""Luv2Bike""",1
+5259,Gary,1
+5260,Brian Van Den Broeke (brianvdb@yahoo.com),1
+5261,Hairy Larry,1
+5262,M. A. Ramos,1
+5263,"Jeffrey ""jbbdmd""",1
+5264,Donnie,1
+5265,"E. Crabtree ""farmgirl""",1
+5266,Daniel A Duran,1
+5267,Clyde R. Henderson,1
+5268,Michael A. Newman,1
+5269,Ellen Isaacs,1
+5270,Steven B. Howery,1
+5271,R. L. MILLER,1
+5272,Willard S. Cushman,1
+5273,"dougrhon ""dougrhon""",1
+5274,Wallace Kantai,1
+5275,T.M. Reader,1
+5276,Mike C.,1
+5277,Jason L Pennington,1
+5278,"Lennie's Girl ""Sarah""",1
+5279,"Jon Warshawsky ""Sinatra Guru""",1
+5280,J. Michael Showalter,1
+5281,"Jay Henselen ""afficianado""",1
+5282,Joan Gilbransen,1
+5283,Ceri Jenkins,1
+5284,Vondonnie,1
+5285,"S. C. Rittenhouse ""skillsaw""",1
+5286,An Old Geographer,1
+5287,Patricia A. Sowers,1
+5288,Cleopatrai,1
+5289,darragh o'donoghue,1
+5290,Michael Wischmeyer,1
+5291,Thomas L. Cromwell,1
+5292,John Everard,1
+5293,"tvtv3 ""tvtv3""",1
+5294,Martin J. Lieberman,1
+5295,"Gary H. Cassel ""Flamingnet Teen Book Reviews""",1
+5296,Mrs. Lyla Fox,1
+5297,Teen Reads,1
+5298,Helaine Banner,1
+5299,M. Lee,1
+5300,"Laurel-Rain Snow &#34;Rain&#34; ""Rainy Days""",1
+5301,R. Eader,1
+5302,Rick Rodriguez,1
+5303,J. Shears,1
+5304,"Bjorn G. ""homard_lobster""",1
+5305,bryon,1
+5306,"Kyle Burris ""NCMT, AOS""",1
+5307,Tami A Goldstein,1
+5308,"Ann Rust ""lightbody""",1
+5309,Brian Mccalpin,1
+5310,"J. MANGIONE ""H2o color freak""",1
+5311,Lynda Roberts,1
+5312,beatriz acosta,1
+5313,"M. Barber ""Persnickety""",1
+5314,Robert Burridge Studio,1
+5315,"WC Painter of Florida ""WC Painter""",1
+5316,"Marilyn d. f. ""lyvly1""",1
+5317,"Alma Lavandeery ""Alma""",1
+5318,"Jon Rader Jarvis ""art instructor""",1
+5319,"Tommie Stewart ""artist in training""",1
+5320,Foxs,1
+5321,Paul Davis,1
+5322,ArtMuseLit,1
+5323,Di Murphy,1
+5324,Buddy V,1
+5325,B. Lynum,1
+5326,Parisa,1
+5327,Linda S. Anderson,1
+5328,Cindy,1
+5329,Rufus Velvet,1
+5330,"Jose P. Graciotti Neto ""simmy25""",1
+5331,"William H. Wardlaw ""Bill W.""",1
+5332,W. Staples,1
+5333,Michael N. Ryan,1
+5334,"Jenni Grubb ""Jenni""",1
+5335,"Krahe ""Krahe""",1
+5336,Teagan Blue,1
+5337,"L. M. MACLEAN ""If too many books were a crime...""",1
+5338,Karen E. Houghton,1
+5339,"Laura D. Bell ""Denny, book collector""",1
+5340,"Helen Wharton ""doll making editor at BellaOnl...",1
+5341,Mrs. A. Leon,1
+5342,"QueenOPearls ""QueenOPearls""",1
+5343,N. Rodez,1
+5344,lesliemarie,1
+5345,"Giselle Ramos ""LilMsG""",1
+5346,Deb White,1
+5347,"dollmaker ""mypatternstoreecratercom""",1
+5348,iowa reader,1
+5349,mh,1
+5350,lenco,1
+5351,Dora Jean,1
+5352,"David L. Martenson ""sandbagger""",1
+5353,David R. Bess,1
+5354,Jay M. Lutsky,1
+5355,"Alfonso ""A Reader""",1
+5356,L. McBride,1
+5357,"Abigail Fisher ""chimalis""",1
+5358,D. Gunter,1
+5359,smv135,1
+5360,"James D. Crabtree ""Doc Crabtree""",1
+5361,jacob green,1
+5362,Sandra Lacey,1
+5363,pongs,1
+5364,Matt Lieblong,1
+5365,Phillip J.,1
+5366,JPHurricane,1
+5367,"Shea Unti ""Inglewood Shores""",1
+5368,Joel M. Ungar,1
+5369,Seth J. Frantzman,1
+5370,Brandon L.,1
+5371,Lady Eden,1
+5372,Hillbillyprofessor,1
+5373,Starr,1
+5374,"sheryl gibson ""Sherri L. Gibson""",1
+5375,Parableman,1
+5376,K. R. Sperling,1
+5377,Margaret A. Herring,1
+5378,"abookbug ""abookbug""",1
+5379,"""timberlakeluva12""",1
+5380,David Gillespie,1
+5381,"R. Addy ""ramamck""",1
+5382,Terrific422,1
+5383,L O'connor,1
+5384,Rebecca Walck,1
+5385,Marissa Dineen,1
+5386,"""scnyc""",1
+5387,Robert K. Juul,1
+5388,"Michel Castro ""Retired on a budget""",1
+5389,Randal Cunningham,1
+5390,Colonel Moran,1
+5391,"DesertDoc ""jryan86""",1
+5392,Jeffrey W. Hunt,1
+5393,Andrew C. Miller,1
+5394,"george saussy iii ""Pete Saussy""",1
+5395,Jeffrey T. Munson,1
+5396,"Michael C. Tighe ""Bookbinger""",1
+5397,David Roy,1
+5398,BrianWCahill,1
+5399,kmlansden,1
+5400,MaxiMiner,1
+5401,Frazzled,1
+5402,"William P. Humphrey ""Phil""",1
+5403,Valdepenas,1
+5404,Richard R. Carlton,1
+5405,Wacky Mom,1
+5406,J. Kostreva,1
+5407,GEAnci,1
+5408,"Sonoprof ""Sonoprof""",1
+5409,tonymalek@aol.com,1
+5410,MissLys,1
+5411,"Sharon L. Goodman ""S. Lee Goodman""",1
+5412,Nigel Smith,1
+5413,Donald E. Skiff,1
+5414,"Julie Jordan Scott ""Writer, Life Coach - Owne...",1
+5415,Avery Christy,1
+5416,"Allie Kat ""sarahphin""",1
+5417,Eileen P. Gardner,1
+5418,"Rebecca of Amazon ""The Rebecca Review""",1
+5419,Laramie,1
+5420,"M. H. Bayliss ""book queen""",1
+5421,"Nathan D. Rice ""Nathan Rice""",1
+5422,JamieJoy Gatto,1
+5423,Allison Feliciano,1
+5424,"H. l Sellers ""Poetry Fan""",1
+5425,A Voice Teacher,1
+5426,D. Taylor,1
+5427,S. E. Moore,1
+5428,"Eric W. Zeller ""bob's your uncle""",1
+5429,David Diller,1
+5430,E. C. Gall,1
+5431,I. Spink,1
+5432,Joshua Junker,1
+5433,Christy Carter,1
+5434,"J. Miller ""Shopping Queen""",1
+5435,"Dawn A. Marcus, MD",1
+5436,V. K. Moist,1
+5437,Aaron P. Graff,1
+5438,K. Markle,1
+5439,Evan Crosby,1
+5440,Kristen Heise,1
+5441,"Christian T. Ray ""Dilbert""",1
+5442,B. Smythe,1
+5443,"Bea Shalla ""Abenteurerin""",1
+5444,Csaba Kiss,1
+5445,"Rebecca P. Davis ""Rebecca Davis""",1
+5446,Audrey Nickel (nickel@interpath.com),1
+5447,Melissa H,1
+5448,Shannon Morris,1
+5449,"Sass ""a book guy in""",1
+5450,Joe Bob Briggs (forwarded with permission),1
+5451,"S. ""mediaddict""",1
+5452,J. Collins,1
+5453,Steve Nakamoto - Author of Talk Like A Winner...,1
+5454,Dean Davis,1
+5455,"L. Burnett ""Reno Reader""",1
+5456,Daniel M. Kleiber,1
+5457,The JuRK,1
+5458,jeffery,1
+5459,"A. Marbach ""badgroove""",1
+5460,"bret,",1
+5461,James Thompson PA-C,1
+5462,"I. baral ""dodi""",1
+5463,jamicam,1
+5464,Jim Bruce,1
+5465,Sylvia Shanahan,1
+5466,"""chairmanwapd""",1
+5467,Maureen E. Teelin,1
+5468,E. Daly,1
+5469,Valois,1
+5470,Pam Sloate,1
+5471,"J. Gross ""J/Gross""",1
+5472,I. C. Lefferts,1
+5473,"F. B. Rymon ""BRfromPA""",1
+5474,"T. Hickman ""Author of &#34;The Strangers of K...",1
+5475,nina veteto,1
+5476,James T. Stoenner,1
+5477,Afton S. Olsen,1
+5478,"Tired of Defrag ""Tired of Defrag""",1
