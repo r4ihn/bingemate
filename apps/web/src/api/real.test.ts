@@ -786,17 +786,18 @@ describe('creatorApi submissions (real)', () => {
   });
 
   it.each(['put', 'delete'])(
-    'an image-only update skips PATCH and looks up its own title: %s',
+    'an image-only update skips PATCH, changes the image, then reads its own title: %s',
     async (action) => {
       const poster = new Blob(['new'], { type: 'image/png' });
+      if (action === 'put') fetchMock.mockReturnValueOnce(json({ posterUrl: '/new.png' }));
+      else fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+      // Read after the image change, so a title sent back to PENDING shows as PENDING.
       fetchMock.mockReturnValueOnce(
         json([
           { ...dto, id: 'other' },
-          { ...dto, id: 'a/b c', posterUrl: '/old.jpg' },
+          { ...dto, id: 'a/b c', status: TitleStatus.PENDING, posterUrl: '/old.jpg' },
         ]),
       );
-      if (action === 'put') fetchMock.mockReturnValueOnce(json({ posterUrl: '/new.png' }));
-      else fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
       const result = await creatorApi.update('a/b c', {
         name: undefined,
         synopsis: undefined,
@@ -804,24 +805,48 @@ describe('creatorApi submissions (real)', () => {
         ...(action === 'put' ? { poster } : { removePoster: true }),
       });
       expect(fetchMock).toHaveBeenCalledTimes(2);
-      expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/creator/titles');
-      expect(fetchMock.mock.calls[0]?.[1].method).toBeUndefined();
-      expect(lastCall().url).toBe('/api/titles/a%2Fb%20c/poster');
-      expect(lastCall().init.method).toBe(action === 'put' ? 'PUT' : 'DELETE');
+      expect(fetchMock.mock.calls[0]?.[0]).toBe('/api/titles/a%2Fb%20c/poster');
+      expect(fetchMock.mock.calls[0]?.[1].method).toBe(action === 'put' ? 'PUT' : 'DELETE');
       if (action === 'put') {
-        expect(lastCall().init.body).toBe(poster);
-        expect(lastCall().init.headers).toEqual({ 'Content-Type': 'image/png' });
+        expect(fetchMock.mock.calls[0]?.[1].body).toBe(poster);
+        expect(fetchMock.mock.calls[0]?.[1].headers).toEqual({ 'Content-Type': 'image/png' });
       }
+      expect(lastCall().url).toBe('/api/creator/titles');
+      expect(lastCall().init.method).toBeUndefined();
       expect(result.title.id).toBe('a/b c');
+      expect(result.title.status).toBe(TitleStatus.PENDING);
       expect(result.title.posterUrl).toBe(action === 'put' ? '/new.png' : undefined);
     },
   );
 
   it('an image-only update reports a missing own title', async () => {
-    fetchMock.mockReturnValueOnce(json([]));
+    fetchMock
+      .mockResolvedValueOnce(new Response(null, { status: 204 }))
+      .mockReturnValueOnce(json([]));
     await expect(creatorApi.update('missing', { removePoster: true })).rejects.toMatchObject({
       status: 404,
       message: 'Title not found',
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it('a failed image after a saved edit says the edit was saved', async () => {
+    fetchMock
+      .mockReturnValueOnce(json({ ...dto, name: 'Edited' }))
+      .mockReturnValueOnce(json({ error: 'Image too large' }, 413));
+    const poster = new Blob(['big'], { type: 'image/png' });
+    await expect(creatorApi.update('a/b c', { name: 'Edited', poster })).rejects.toMatchObject({
+      status: 413,
+      message: expect.stringContaining('Your changes were saved'),
+    });
+  });
+
+  it('a failed image-only update keeps the server message', async () => {
+    fetchMock.mockReturnValueOnce(json({ error: 'Image too large' }, 413));
+    const poster = new Blob(['big'], { type: 'image/png' });
+    await expect(creatorApi.update('a/b c', { poster })).rejects.toMatchObject({
+      status: 413,
+      message: 'Image too large',
     });
     expect(fetchMock).toHaveBeenCalledTimes(1);
   });
@@ -855,6 +880,19 @@ describe('adminApi title queue (real)', () => {
     updatedAt: '2026-11-02T00:00:00.000Z',
   };
 
+  it('pendingTitles reads every page so no pending title is left out', async () => {
+    const page1 = Array.from({ length: 50 }, (_, n) => ({ ...dto, id: `p${n}` }));
+    fetchMock
+      .mockReturnValueOnce(json({ data: page1, page: 1, pageSize: 50, total: 51 }))
+      .mockReturnValueOnce(json({ data: [{ ...dto, id: 'p50' }], page: 2, pageSize: 50, total: 51 }));
+    const titles = await adminApi.pendingTitles();
+    expect(titles).toHaveLength(51);
+    expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
+      '/api/admin/titles?status=PENDING&pageSize=50&page=1',
+      '/api/admin/titles?status=PENDING&pageSize=50&page=2',
+    ]);
+  });
+
   it('pendingTitles asks for PENDING with pageSize 50 and maps rows', async () => {
     fetchMock.mockReturnValueOnce(
       json({
@@ -883,7 +921,7 @@ describe('adminApi title queue (real)', () => {
         version: dto.updatedAt,
       },
     ]);
-    expect(lastCall().url).toBe('/api/admin/titles?status=PENDING&pageSize=50');
+    expect(lastCall().url).toBe('/api/admin/titles?status=PENDING&pageSize=50&page=1');
     expect(lastCall().init.method).toBeUndefined();
     expect(lastCall().init.credentials).toBe('include');
   });
