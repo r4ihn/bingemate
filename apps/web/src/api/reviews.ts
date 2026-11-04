@@ -5,7 +5,7 @@ import { RATING_MAX, RATING_MIN } from '../rating.js';
 import type { Reply, Review, ReviewInput } from '../types/review.js';
 import { ApiError, apiFetch } from './client.js';
 import { mapReply, mapReview } from './mappers.js';
-import { clone, delay, notWired, useMock } from './mockMode.js';
+import { clone, delay, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 5;
 
@@ -60,7 +60,12 @@ export const reviewsApi = {
 
   /** The signed-in user's review of this title, or null. Lets the form know before the user writes one. */
   async mine(titleId: string): Promise<Review | null> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const review = await apiFetch<ReviewDTO | null>(
+        `/titles/${encodeURIComponent(titleId)}/reviews/mine`,
+      );
+      return review === null ? null : mapReview(review);
+    }
     await delay();
     const review = db.reviews.find(
       (r) => r.titleId === titleId && r.author.id === getMockActor().id,
@@ -69,7 +74,13 @@ export const reviewsApi = {
   },
 
   async create(titleId: string, input: ReviewInput): Promise<Review> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const review = await apiFetch<ReviewDTO>(`/titles/${encodeURIComponent(titleId)}/reviews`, {
+        method: 'POST',
+        body: JSON.stringify({ rating: input.rating, body: input.body }),
+      });
+      return mapReview(review);
+    }
     await delay();
     assertCanWrite();
     if (!Number.isInteger(input.rating) || input.rating < RATING_MIN || input.rating > RATING_MAX) {
@@ -95,7 +106,13 @@ export const reviewsApi = {
 
   /** Owner only. Keeps the original date and moves the title's average by the change in rating. */
   async update(id: string, input: ReviewInput): Promise<Review> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      const review = await apiFetch<ReviewDTO>(`/reviews/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ rating: input.rating, body: input.body }),
+      });
+      return mapReview(review);
+    }
     await delay();
     assertCanWrite();
     if (!Number.isInteger(input.rating) || input.rating < RATING_MIN || input.rating > RATING_MAX) {
@@ -115,7 +132,9 @@ export const reviewsApi = {
   },
 
   async remove(id: string): Promise<void> {
-    if (!useMock) notWired('review endpoints (HS)');
+    if (!useMock) {
+      return apiFetch<void>(`/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
     await delay();
     const review = db.reviews.find((r) => r.id === id);
     if (review) applyToAggregates(review.titleId, review.rating, -1);
@@ -150,7 +169,13 @@ export const repliesApi = {
 
   /** Any signed-in user except an admin may reply to a review, including its author. */
   async create(reviewId: string, body: string): Promise<Reply> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      const reply = await apiFetch<ReplyDTO>(`/reviews/${encodeURIComponent(reviewId)}/replies`, {
+        method: 'POST',
+        body: JSON.stringify({ body }),
+      });
+      return mapReply(reply);
+    }
     await delay();
     assertCanWrite();
     if (!db.reviews.some((r) => r.id === reviewId)) throw new ApiError(404, 'Review not found');
@@ -167,7 +192,13 @@ export const repliesApi = {
 
   /** Writer only: an admin never edits, and nobody edits another user's reply. */
   async update(id: string, body: string): Promise<Reply> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      const reply = await apiFetch<ReplyDTO>(`/replies/${encodeURIComponent(id)}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ body }),
+      });
+      return mapReply(reply);
+    }
     await delay();
     assertCanWrite();
     const reply = db.replies.find((r) => r.id === id);
@@ -182,7 +213,9 @@ export const repliesApi = {
   },
 
   async remove(id: string): Promise<void> {
-    if (!useMock) notWired('reply endpoints (HS)');
+    if (!useMock) {
+      return apiFetch<void>(`/replies/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
     await delay();
     db.replies = db.replies.filter((r) => r.id !== id);
   },

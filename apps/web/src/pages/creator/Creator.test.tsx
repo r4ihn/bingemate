@@ -78,6 +78,14 @@ describe('CreatorDashboard', () => {
 });
 
 describe('SubmissionForm (new)', () => {
+  it('enables the media type control for a new submission', () => {
+    renderCreator('/creator/new');
+    expect(screen.getByRole('combobox', { name: 'Type' })).toBeEnabled();
+    expect(
+      screen.queryByText('The type cannot change after a title is created'),
+    ).not.toBeInTheDocument();
+  });
+
   it('a new submission is listed as PENDING', async () => {
     const u = renderCreator('/creator/new');
     await u.type(screen.getByLabelText('Title'), 'Brand New Title');
@@ -340,6 +348,31 @@ describe('SubmissionForm (poster image)', () => {
 });
 
 describe('SubmissionForm (edit)', () => {
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'disables the media type control with a hint when editing %s',
+    async (id) => {
+      renderCreator(`/creator/${id}/edit`);
+      const control = await screen.findByRole('combobox', { name: 'Type' });
+      expect(control).toBeDisabled();
+      expect(control).toHaveValue(title(id).mediaType);
+      expect(
+        screen.getByText('The type cannot change after a title is created'),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('omits mediaType from the update input', async () => {
+    const update = vi.spyOn(creatorApi, 'update');
+    const user = renderCreator('/creator/mock-25/edit');
+    const name = await screen.findByDisplayValue(title('mock-25').name);
+    await user.type(name, ' 2');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await screen.findByRole('row', { name: /Iron Garden 2/ });
+    expect(update).toHaveBeenCalledOnce();
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ name: 'Iron Garden 2' });
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('mediaType');
+  });
+
   it('editing an APPROVED title warns first and saves nothing until confirmed', async () => {
     const update = vi.spyOn(creatorApi, 'update');
     const t = title('mock-24');

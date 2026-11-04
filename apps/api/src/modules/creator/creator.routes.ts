@@ -4,11 +4,19 @@ import { authenticate } from '../../middleware/authenticate.js';
 import { authorize } from '../../middleware/authorize.js';
 import { userOf } from '../../utils/asyncRoute.js';
 import { asyncHandler } from '../../utils/asyncHandler.js';
+import { listOwnSubmissions } from '../titles/submissions.service.js';
 import { statsForCreator } from './creator.service.js';
 
 /** Mounted at /creator. Creators only. */
 export const creatorRouter: Router = Router();
 creatorRouter.use(authenticate, authorize(Role.CREATOR));
+
+creatorRouter.get(
+  '/titles',
+  asyncHandler(async (req, res) => {
+    res.json(await listOwnSubmissions(userOf(req)));
+  }),
+);
 
 creatorRouter.get(
   '/stats',

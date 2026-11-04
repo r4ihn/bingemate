@@ -39,6 +39,22 @@ npm run dev:web      # http://localhost:5173
 ```
 
 Demo accounts (password `Password123!`): `admin@bingemate.dev`, `creator@bingemate.dev`, `consumer@bingemate.dev`.
+After the dataset load (`data/etl/load-all.ts`) there is no `consumer@bingemate.dev`; any imported user works instead, for example `user4@seed.bingemate.local`.
+
+### Run the website on real data
+
+The website is always on http://localhost:5173 (the API is on :4000). **Mock data is the default in dev**, so a plain
+`npm run dev` shows fake titles and reviews. To use the real API:
+
+```bash
+npm run db:up                                   # PostgreSQL + MongoDB
+cd apps/api && npm run dev                      # API on :4000
+cd apps/web && VITE_USE_MOCKS=false npm run dev # website on :5173, real data
+```
+
+With mocks off, browsing, search, reviews, replies, My Lists and creator stats use the API. The creator title
+forms (create, edit, delete, image upload) and the admin pages still need their API endpoints and show
+"Real API not wired yet".
 
 ## Scripts
 

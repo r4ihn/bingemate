@@ -8,6 +8,7 @@ process.env.MONGO_URI ??= 'mongodb://localhost:27017/bingemate';
 process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 
 // No database in CI: Prisma is replaced and the tests check what the module asks of it.
+const calls: string[] = [];
 const prisma = {
   title: { findFirst: vi.fn() },
   listEntry: {
@@ -19,6 +20,7 @@ const prisma = {
     update: vi.fn(),
     deleteMany: vi.fn(),
   },
+  $queryRaw: vi.fn(),
   $transaction: vi.fn(),
 };
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
@@ -55,9 +57,11 @@ const firstArgs = (fn: typeof prisma.listEntry.findMany) => {
 };
 
 beforeEach(() => {
+  calls.length = 0;
   for (const group of [prisma.title, prisma.listEntry]) {
     for (const fn of Object.values(group)) fn.mockReset();
   }
+  prisma.$queryRaw.mockReset().mockImplementation(async () => calls.push('lock'));
   prisma.$transaction
     .mockReset()
     .mockImplementation(async (arg: unknown) =>
@@ -249,6 +253,37 @@ describe('POST /api/me/lists', () => {
       status: 'IN_PROGRESS',
     });
     expect(res.body).toMatchObject({ id: 'e1', titleId: 't1' });
+  });
+
+  it('locks the title first before creating an entry and still rejects a second add', async () => {
+    prisma.title.findFirst.mockImplementation(async () => {
+      calls.push('title');
+      return { id: 't1' };
+    });
+    prisma.listEntry.findUnique.mockImplementation(async () => {
+      calls.push('existing');
+      return prisma.listEntry.create.mock.calls.length > 0 ? { id: 'e1' } : null;
+    });
+    prisma.listEntry.create.mockImplementation(async () => {
+      calls.push('pg-insert');
+      return entry();
+    });
+
+    const res = await post({ titleId: 't1', status: 'PLAN_TO' });
+
+    expect(res.status).toBe(201);
+    expect(calls).toEqual(['lock', 'title', 'existing', 'pg-insert']);
+    const [sql, titleId] = prisma.$queryRaw.mock.calls[0] ?? [];
+    expect((sql as string[]).join('?')).toBe('SELECT "id" FROM "Title" WHERE "id" = ? FOR UPDATE');
+    expect(titleId).toBe('t1');
+
+    const second = await post({ titleId: 't1', status: 'PLAN_TO' });
+
+    expect(second.status).toBe(409);
+    expect(second.body.error).toBe('This title is already on your list');
+    expect(prisma.listEntry.create).toHaveBeenCalledTimes(1);
+    expect(prisma.$transaction).toHaveBeenCalledTimes(2);
+    expect(calls).toEqual(['lock', 'title', 'existing', 'pg-insert', 'lock', 'title', 'existing']);
   });
 
   it.each([

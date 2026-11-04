@@ -42,6 +42,25 @@ describe('AdminDashboard', () => {
 });
 
 describe('ApprovalQueue', () => {
+  it('reloads after approval and shows a title beyond the first response', async () => {
+    const pending = title('mock-25');
+    const next = title('mock-28');
+    const load = vi.spyOn(adminApi, 'pendingTitles')
+      .mockResolvedValueOnce([pending])
+      .mockResolvedValue([next]);
+    vi.spyOn(adminApi, 'setTitleStatus').mockResolvedValue();
+    const u = renderAdmin('/admin/queue');
+    const approve = await screen.findByRole('button', { name: `Approve ${pending.name}` });
+    expect(screen.queryByRole('cell', { name: next.name })).not.toBeInTheDocument();
+
+    await u.click(approve);
+
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('cell', { name: next.name })).toBeInTheDocument();
+    expect(screen.queryByRole('cell', { name: pending.name })).not.toBeInTheDocument();
+    expect(screen.queryByText('Queue is empty')).not.toBeInTheDocument();
+  });
+
   it('lists the pending titles only', async () => {
     renderAdmin('/admin/queue');
     const cell = (id: string) => ({ name: title(id).name });
@@ -66,7 +85,7 @@ describe('ApprovalQueue', () => {
     await u.type(await screen.findByLabelText(`Reason for ${name}`), 'Poster missing');
     await u.click(screen.getByRole('button', { name: `Reject ${name}` }));
     await vi.waitFor(() => expect(screen.queryByRole('cell', { name })).not.toBeInTheDocument());
-    expect(setStatus).toHaveBeenCalledWith('mock-25', TitleStatus.REJECTED, 'Poster missing');
+    expect(setStatus).toHaveBeenCalledWith('mock-25', TitleStatus.REJECTED, 'Poster missing', undefined);
     expect(title('mock-25').rejectionReason).toBe('Poster missing');
   });
 
@@ -75,7 +94,33 @@ describe('ApprovalQueue', () => {
     const u = renderAdmin('/admin/queue');
     await u.click(await screen.findByRole('button', { name: `Reject ${title('mock-25').name}` }));
     await vi.waitFor(() => expect(setStatus).toHaveBeenCalled());
-    expect(setStatus).toHaveBeenCalledWith('mock-25', TitleStatus.REJECTED, undefined);
+    expect(setStatus).toHaveBeenCalledWith('mock-25', TitleStatus.REJECTED, undefined, undefined);
+  });
+
+  it('passes the reviewed version when approving a title', async () => {
+    const version = '2026-11-02T00:00:00.000Z';
+    const pending = { ...title('mock-25'), version };
+    vi.spyOn(adminApi, 'pendingTitles').mockResolvedValue([pending]);
+    const setStatus = vi.spyOn(adminApi, 'setTitleStatus').mockResolvedValue();
+    const u = renderAdmin('/admin/queue');
+    await u.click(await screen.findByRole('button', { name: `Approve ${pending.name}` }));
+    expect(setStatus).toHaveBeenCalledWith(pending.id, TitleStatus.APPROVED, undefined, version);
+  });
+
+  it('a conflict shows the server message and reloads the changed title', async () => {
+    const message = 'This title changed after you opened it. Reload the queue and review it again.';
+    const pending = { ...title('mock-25'), version: '2026-11-02T00:00:00.000Z' };
+    const changed = { ...pending, name: 'Updated title', version: '2026-11-02T01:00:00.000Z' };
+    const load = vi.spyOn(adminApi, 'pendingTitles')
+      .mockResolvedValueOnce([pending])
+      .mockResolvedValue([changed]);
+    vi.spyOn(adminApi, 'setTitleStatus').mockRejectedValue(new ApiError(409, message));
+    const u = renderAdmin('/admin/queue');
+    await u.click(await screen.findByRole('button', { name: `Approve ${pending.name}` }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(message);
+    await vi.waitFor(() => expect(load).toHaveBeenCalledTimes(2));
+    expect(await screen.findByRole('cell', { name: changed.name })).toBeInTheDocument();
+    expect(screen.getByRole('alert')).toHaveTextContent(message);
   });
 
   it('an empty queue shows an empty state', async () => {

@@ -1,7 +1,7 @@
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { ReplyDTO, ReviewDTO, TitleDetailDTO, TitleSummary } from '@bingemate/shared';
 import { describe, expect, it } from 'vitest';
-import { detailToTitle, mapReply, mapReview, summaryToTitle } from './mappers.js';
+import { detailToTitle, mapReply, mapReview, mapSubmission, summaryToTitle } from './mappers.js';
 
 const summary: TitleSummary = {
   id: 't1',
@@ -164,5 +164,29 @@ describe('mapReply', () => {
     expect(reply).not.toHaveProperty('editedAt');
     expect(reply).not.toHaveProperty('parentId');
     expect(reply).not.toHaveProperty('isOfficial');
+  });
+});
+
+describe('mapSubmission', () => {
+  const updatedAt = '2026-11-02T00:00:00.000Z';
+  it('maps summary fields, description and rejection reason', () => {
+    const row = {
+      ...summary,
+      posterUrl: '/p.jpg',
+      createdById: 'c1',
+      description: 'Sand.',
+      updatedAt,
+      rejectionReason: 'Fix it',
+    };
+    expect(mapSubmission(row)).toEqual({
+      title: { ...summaryToTitle(row), synopsis: 'Sand.', version: updatedAt },
+      rejectionReason: 'Fix it',
+    });
+  });
+  it('maps a null description and reason to empty synopsis and undefined', () => {
+    expect(mapSubmission({ ...summary, description: null, rejectionReason: null, updatedAt })).toEqual({
+      title: { ...summary, synopsis: '', version: updatedAt },
+      rejectionReason: undefined,
+    });
   });
 });

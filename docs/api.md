@@ -8,3 +8,9 @@ Endpoint list + required role. Fill in as modules land (TASKS.md sections 3–7)
 | POST | /api/auth/login | public | sets httpOnly cookie |
 | GET | /api/auth/me | authenticated | restore session |
 | POST | /api/auth/logout | public | clears cookie, even an expired one; 204 |
+| POST | /api/titles | CREATOR | submit a title: `{ name, mediaType, description? }`; saved `PENDING`; 201 |
+| PATCH | /api/titles/:id | CREATOR (owner) | `{ name?, description? }`; an approved or rejected title goes back to `PENDING`; `mediaType` is refused |
+| DELETE | /api/titles/:id | CREATOR (owner) or ADMIN | a creator only while no other user has reviewed or listed it (else 409); also removes review bodies, replies and the image from MongoDB; 204 |
+| GET | /api/creator/titles | CREATOR | the creator's own titles, every status, with `rejectionReason` |
+| GET | /api/admin/titles | ADMIN | `?status=PENDING` (default), paginated, oldest first |
+| PATCH | /api/admin/titles/:id/status | ADMIN | `{ status: APPROVED \| REJECTED, rejectionReason?, updatedAt }`; `updatedAt` is the title's version (ISO datetime) taken from the list response; the optional reason is trimmed, at most 500 characters, and kept only for `REJECTED`; a stale `updatedAt` returns 409: "This title changed after you opened it. Reload the queue and review it again." |

@@ -1,9 +1,10 @@
 import { TitleStatus } from '@bingemate/shared';
-import type { Paginated, Role } from '@bingemate/shared';
+import type { Paginated, Role, SubmissionDTO } from '@bingemate/shared';
 import { db } from '../mocks/db.js';
 import type { AdminUser, ModerationReview } from '../types/admin.js';
 import type { TitleDetail } from '../types/title.js';
-import { ApiError } from './client.js';
+import { ApiError, apiFetch } from './client.js';
+import { mapSubmission } from './mappers.js';
 import { clone, delay, notWired, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 10;
@@ -31,13 +32,40 @@ export const adminApi = {
   },
 
   async pendingTitles(): Promise<TitleDetail[]> {
-    if (!useMock) notWired('GET /admin/titles?status=PENDING (RA)');
+    if (!useMock) {
+      // The API caps a page at 50; read every page so no pending title is left out of the queue.
+      const rows: SubmissionDTO[] = [];
+      for (let page = 1; ; page++) {
+        const res = await apiFetch<Paginated<SubmissionDTO>>(
+          `/admin/titles?status=PENDING&pageSize=50&page=${page}`,
+        );
+        rows.push(...res.data);
+        if (res.data.length === 0 || rows.length >= res.total) break;
+      }
+      return rows.map((dto) => mapSubmission(dto).title);
+    }
     await delay();
     return clone(db.titles.filter((t) => t.status === TitleStatus.PENDING));
   },
 
-  async setTitleStatus(id: string, status: TitleStatus, reason?: string): Promise<void> {
-    if (!useMock) notWired('PATCH /admin/titles/:id/status (RA)');
+  async setTitleStatus(
+    id: string,
+    status: TitleStatus,
+    reason?: string,
+    version?: string,
+  ): Promise<void> {
+    if (!useMock) {
+      if (version === undefined) throw new ApiError(400, 'Reload the queue and try again.');
+      await apiFetch<SubmissionDTO>(`/admin/titles/${encodeURIComponent(id)}/status`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          status,
+          updatedAt: version,
+          ...(reason !== undefined && { rejectionReason: reason }),
+        }),
+      });
+      return;
+    }
     await delay();
     const title = db.titles.find((t) => t.id === id);
     if (!title) throw new ApiError(404, 'Title not found');
