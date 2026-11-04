@@ -4,6 +4,7 @@ import type { Types } from 'mongoose';
 import { prisma } from '../db/prisma.js';
 import { ReviewBody } from '../mongo/models/reviewBody.model.js';
 import { Reply } from '../mongo/models/reply.model.js';
+import { TitlePoster } from '../mongo/models/titlePoster.model.js';
 
 const BATCH_SIZE = 1000;
 
@@ -17,9 +18,19 @@ async function missingReviewIds(ids: string[]): Promise<string[]> {
   return ids.filter((id) => !live.has(id));
 }
 
-/** Removes Mongo documents whose PostgreSQL review is gone, using bounded keyset pages. */
-export async function cleanupOrphans(): Promise<{ reviewBodies: number; replies: number }> {
-  const counts = { reviewBodies: 0, replies: 0 };
+async function missingTitleIds(ids: string[]): Promise<string[]> {
+  const titles = await prisma.title.findMany({ where: { id: { in: ids } }, select: { id: true } });
+  const live = new Set(titles.map((title) => title.id));
+  return ids.filter((id) => !live.has(id));
+}
+
+/** Removes Mongo documents whose PostgreSQL review or title is gone, using bounded keyset pages. */
+export async function cleanupOrphans(): Promise<{
+  reviewBodies: number;
+  replies: number;
+  posters: number;
+}> {
+  const counts = { reviewBodies: 0, replies: 0, posters: 0 };
   let lastBodyId: string | undefined;
   while (true) {
     const bodies = await ReviewBody.find(
@@ -56,7 +67,28 @@ export async function cleanupOrphans(): Promise<{ reviewBodies: number; replies:
     }
   }
 
-  console.info(`Orphans cleaned: ${counts.reviewBodies} review bodies, ${counts.replies} replies`);
+  // A title image is written only after its title exists, so a missing title means a leftover.
+  let lastPosterId: string | undefined;
+  while (true) {
+    const posters = await TitlePoster.find(
+      lastPosterId === undefined ? {} : { _id: { $gt: lastPosterId } },
+    )
+      .select({ _id: 1 })
+      .sort({ _id: 1 })
+      .limit(BATCH_SIZE)
+      .lean();
+    if (posters.length === 0) break;
+    lastPosterId = posters[posters.length - 1]!._id;
+    const missing = await missingTitleIds(posters.map((poster) => poster._id));
+    if (missing.length > 0) {
+      const result = await TitlePoster.deleteMany({ _id: { $in: missing } });
+      counts.posters += result.deletedCount;
+    }
+  }
+
+  console.info(
+    `Orphans cleaned: ${counts.reviewBodies} review bodies, ${counts.replies} replies, ${counts.posters} posters`,
+  );
   return counts;
 }
 
