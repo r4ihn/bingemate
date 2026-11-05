@@ -198,22 +198,20 @@ describe('POST /api/titles/:titleId/reviews', () => {
     expect(mongo.create).not.toHaveBeenCalled();
   });
 
-  it('saves the header and the new totals, then the body, in that order', async () => {
+  it('saves the header, then the body, in that order', async () => {
     reReadSucceeds();
 
     const res = await post({ rating: 5, body: '  Great.  ' });
 
     expect(res.status).toBe(201);
-    expect(calls).toEqual(['lock', 'pg-insert', 'recompute', 'mongo-insert']);
+    // The totals are updated by the review_rating_insert trigger, not by the service.
+    expect(calls).toEqual(['lock', 'pg-insert', 'mongo-insert']);
     expect(prisma.review.create.mock.calls[0]?.[0].data).toEqual({
       userId: 'u1',
       titleId: 't1',
       rating: 5,
     });
-    // totals are copied from the view, so they round exactly like it
-    const [sql, titleId] = prisma.$executeRaw.mock.calls[0] ?? [];
-    expect((sql as string[]).join('?')).toMatch(/FROM "title_rating_stats"/);
-    expect(titleId).toBe('t1');
+    expect(prisma.$executeRaw).not.toHaveBeenCalled();
     expect(mongo.create.mock.calls[0]?.[0]).toEqual({
       _id: 'r1',
       titleId: 't1',
@@ -258,8 +256,8 @@ describe('POST /api/titles/:titleId/reviews', () => {
     expect(res.status).toBe(502);
     expect(res.body.error).toMatch(/Nothing was changed/);
     expect(prisma.review.delete.mock.calls[0]?.[0]).toEqual({ where: { id: 'r1' } });
-    // totals are rebuilt again after the undo
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
+    // the undo is a plain delete under the title lock; the delete trigger fixes the totals
+    expect(calls).toEqual(['lock', 'pg-insert', 'lock']);
   });
 });
 
@@ -404,11 +402,11 @@ describe('PATCH /api/reviews/:id', () => {
     expect((await patch({ userId: 'u2', rating: 2 })).status).toBe(400);
   });
 
-  it('changes the rating and the totals together', async () => {
+  it('changes the rating under the title lock', async () => {
     const res = await patch({ rating: 2 });
 
     expect(res.status).toBe(200);
-    expect(calls).toEqual(['lock', 'pg-update', 'recompute']);
+    expect(calls).toEqual(['lock', 'pg-update']);
     expect(prisma.review.update.mock.calls[0]?.[0]).toEqual({
       where: { id: 'r1' },
       data: { rating: 2 },
@@ -453,7 +451,8 @@ describe('PATCH /api/reviews/:id', () => {
       where: { id: 'r1', rating: 2 },
       data: { rating: 4 },
     });
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
+    // our write and the undo each take the title lock
+    expect(calls.filter((c) => c === 'lock')).toHaveLength(2);
   });
 
   it('keeps an edit another tab saved in between, instead of undoing over it', async () => {
@@ -463,8 +462,8 @@ describe('PATCH /api/reviews/:id', () => {
     const res = await patch({ rating: 2, body: 'Edited.' });
 
     expect(res.status).toBe(502);
-    // totals rebuilt once for our own write, not again for an undo that did not happen
-    expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
+    expect(prisma.review.update.mock.calls[0]?.[0].data).toEqual({ rating: 2 });
+    expect(prisma.review.updateMany.mock.calls[0]?.[0].where).toEqual({ id: 'r1', rating: 2 });
   });
 
   it('treats a review with no body in MongoDB as a failed edit, not a silent success', async () => {
@@ -545,7 +544,7 @@ describe('DELETE /api/reviews/:id', () => {
     const res = await del();
 
     expect(res.status).toBe(204);
-    expect(calls).toEqual(['lock', 'pg-delete', 'recompute', 'mongo-body', 'mongo-replies']);
+    expect(calls).toEqual(['lock', 'pg-delete', 'mongo-body', 'mongo-replies']);
     expect(mongo.deleteOne.mock.calls[0]?.[0]).toEqual({ _id: 'r1' });
     expect(mongo.replyDeleteMany.mock.calls[0]?.[0]).toEqual({ reviewId: 'r1' });
   });
