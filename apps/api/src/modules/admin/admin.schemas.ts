@@ -8,5 +8,5 @@ export const pageQuerySchema = z.object({
 
 export const userIdParamSchema = z.object({ id: z.string().min(1).max(40) });
 
-/** Only ADMIN, CREATOR or CONSUMER; anything else is a 400. */
+/** Only ADMIN or MEMBER; anything else is a 400. */
 export const setRoleSchema = z.object({ role: z.nativeEnum(Role) }).strict();

@@ -5,13 +5,15 @@ import type { AdminUser, ModerationReview } from '../types/admin.js';
 import type { TitleDetail } from '../types/title.js';
 import { ApiError, apiFetch } from './client.js';
 import { mapSubmission } from './mappers.js';
-import { clone, delay, notWired, useMock } from './mockMode.js';
+import { clone, delay, useMock } from './mockMode.js';
 
 const PAGE_SIZE = 10;
 
 export const adminApi = {
   async users(page: number): Promise<Paginated<AdminUser>> {
-    if (!useMock) notWired('GET /admin/users (RA)');
+    if (!useMock) {
+      return apiFetch<Paginated<AdminUser>>(`/admin/users?page=${page}&pageSize=${PAGE_SIZE}`);
+    }
     await delay();
     const start = (page - 1) * PAGE_SIZE;
     return clone({
@@ -22,8 +24,14 @@ export const adminApi = {
     });
   },
 
+  /** The new role takes effect at the user's next login: their current session keeps the old one. */
   async setRole(id: string, role: Role): Promise<AdminUser> {
-    if (!useMock) notWired('PATCH /admin/users/:id/role (RA)');
+    if (!useMock) {
+      return apiFetch<AdminUser>(`/admin/users/${encodeURIComponent(id)}/role`, {
+        method: 'PATCH',
+        body: JSON.stringify({ role }),
+      });
+    }
     await delay();
     const user = db.users.find((u) => u.id === id);
     if (!user) throw new ApiError(404, 'User not found');
@@ -75,7 +83,11 @@ export const adminApi = {
 
   /** Newest first, with the title name so moderators can see what was reviewed. */
   async reviews(page: number): Promise<Paginated<ModerationReview>> {
-    if (!useMock) notWired('admin moderation (RA)');
+    if (!useMock) {
+      return apiFetch<Paginated<ModerationReview>>(
+        `/admin/reviews?page=${page}&pageSize=${PAGE_SIZE}`,
+      );
+    }
     await delay();
     const all = [...db.reviews].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
     const start = (page - 1) * PAGE_SIZE;
@@ -91,8 +103,11 @@ export const adminApi = {
     return clone({ data, page, pageSize: PAGE_SIZE, total: all.length });
   },
 
+  /** The same DELETE /reviews/:id a member uses on their own review; an admin may delete any. */
   async removeReview(id: string): Promise<void> {
-    if (!useMock) notWired('admin moderation (RA)');
+    if (!useMock) {
+      return apiFetch<void>(`/reviews/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    }
     await delay();
     db.reviews = db.reviews.filter((r) => r.id !== id);
     db.replies = db.replies.filter((r) => r.reviewId !== id);

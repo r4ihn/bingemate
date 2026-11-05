@@ -26,9 +26,9 @@ const { createApp } = await import('../../src/app.js');
 const { signToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
 
-type RoleName = 'CONSUMER' | 'CREATOR' | 'ADMIN';
+type RoleName = 'MEMBER' | 'ADMIN';
 const as = (id = 'a1', role: RoleName = 'ADMIN') => ({
-  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role })}`,
+  Cookie: `token=${signToken({ id, email: `${id}@example.com`, role, username: null })}`,
 });
 
 beforeEach(() => {
@@ -47,14 +47,12 @@ const routes = [
 
 describe('admin route access', () => {
   it.each(routes)('%s %s needs a signed-in user', async (method, path) => {
-    const res = await request(app)[method](path).send({ role: 'CREATOR' });
+    const res = await request(app)[method](path).send({ role: 'MEMBER' });
     expect(res.status).toBe(401);
   });
 
-  it.each(
-    routes.flatMap(([m, p]) => (['CONSUMER', 'CREATOR'] as const).map((r) => [m, p, r] as const)),
-  )('%s %s refuses a %s with 403', async (method, path, role) => {
-    const res = await request(app)[method](path).set(as('u1', role)).send({ role: 'CREATOR' });
+  it.each(routes)('%s %s refuses a MEMBER with 403', async (method, path) => {
+    const res = await request(app)[method](path).set(as('u1', 'MEMBER')).send({ role: 'MEMBER' });
     expect(res.status).toBe(403);
     expect(prisma.user.update).not.toHaveBeenCalled();
   });
@@ -62,7 +60,7 @@ describe('admin route access', () => {
 
 describe('GET /api/admin/users', () => {
   it('returns a page of { id, email, role }', async () => {
-    const users = [{ id: 'u1', email: 'u1@example.com', role: 'CONSUMER' }];
+    const users = [{ id: 'u1', email: 'u1@example.com', role: 'MEMBER' }];
     prisma.user.findMany.mockResolvedValue(users);
     prisma.user.count.mockResolvedValue(21);
 
@@ -88,17 +86,17 @@ describe('GET /api/admin/users', () => {
 describe('PATCH /api/admin/users/:id/role', () => {
   it('changes another user’s role and returns the updated user', async () => {
     prisma.user.findUnique.mockResolvedValue({ id: 'u2' });
-    prisma.user.update.mockResolvedValue({ id: 'u2', email: 'u2@example.com', role: 'CREATOR' });
+    prisma.user.update.mockResolvedValue({ id: 'u2', email: 'u2@example.com', role: 'MEMBER' });
 
     const res = await request(app)
       .patch('/api/admin/users/u2/role')
       .set(as())
-      .send({ role: 'CREATOR' });
+      .send({ role: 'MEMBER' });
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: 'u2', email: 'u2@example.com', role: 'CREATOR' });
+    expect(res.body).toEqual({ id: 'u2', email: 'u2@example.com', role: 'MEMBER' });
     expect(prisma.user.update).toHaveBeenCalledWith(
-      expect.objectContaining({ where: { id: 'u2' }, data: { role: 'CREATOR' } }),
+      expect.objectContaining({ where: { id: 'u2' }, data: { role: 'MEMBER' } }),
     );
   });
 
@@ -106,7 +104,7 @@ describe('PATCH /api/admin/users/:id/role', () => {
     const res = await request(app)
       .patch('/api/admin/users/a1/role')
       .set(as('a1'))
-      .send({ role: 'CONSUMER' });
+      .send({ role: 'MEMBER' });
 
     expect(res.status).toBe(400);
     expect(prisma.user.update).not.toHaveBeenCalled();
@@ -118,7 +116,7 @@ describe('PATCH /api/admin/users/:id/role', () => {
     const res = await request(app)
       .patch('/api/admin/users/nope/role')
       .set(as())
-      .send({ role: 'CREATOR' });
+      .send({ role: 'MEMBER' });
 
     expect(res.status).toBe(404);
     expect(prisma.user.update).not.toHaveBeenCalled();
@@ -141,7 +139,7 @@ describe('GET /api/admin/reviews', () => {
     userId: 'u1',
     rating: 4,
     createdAt: new Date('2026-10-01T10:00:00Z'),
-    user: { id: 'u1', username: 'maya_r', role: 'CONSUMER' },
+    user: { id: 'u1', username: 'maya_r', role: 'MEMBER' },
     title: { name: 'Dune' },
     ...over,
   });
@@ -149,7 +147,12 @@ describe('GET /api/admin/reviews', () => {
   it('joins title names and MongoDB bodies, newest first, across all titles', async () => {
     prisma.review.findMany.mockResolvedValue([
       row(),
-      row({ id: 'r2', titleId: 't9', user: { id: 'u7', username: null, role: 'CREATOR' }, title: { name: 'Hidden' } }),
+      row({
+        id: 'r2',
+        titleId: 't9',
+        user: { id: 'u7', username: null, role: 'MEMBER' },
+        title: { name: 'Hidden' },
+      }),
     ]);
     prisma.review.count.mockResolvedValue(2);
     mongoFind.mockResolvedValue([{ _id: 'r1', body: 'Great sand.' }]);
@@ -171,7 +174,12 @@ describe('GET /api/admin/reviews', () => {
           body: 'Great sand.',
           createdAt: '2026-10-01T10:00:00.000Z',
         },
-        expect.objectContaining({ id: 'r2', titleName: 'Hidden', author: { id: 'u7', name: 'user-u7' }, body: '' }),
+        expect.objectContaining({
+          id: 'r2',
+          titleName: 'Hidden',
+          author: { id: 'u7', name: 'user-u7' },
+          body: '',
+        }),
       ],
     });
     const query = prisma.review.findMany.mock.calls[0]?.[0];
