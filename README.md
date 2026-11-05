@@ -11,7 +11,32 @@ See `ARCHITECTURE.md` for the full layout and `TASKS.md` for the task breakdown.
 - Node.js 20+
 - Docker (for local PostgreSQL + MongoDB)
 
-## Setup
+## Quick start
+
+With Docker running, one command takes a fresh clone (or a checkout that's behind) to a running app:
+
+```bash
+npm run up
+```
+
+It installs dependencies when the lockfile changed, creates `apps/api/.env` (with a random `JWT_SECRET`) and
+`apps/web/.env` if they're missing, starts PostgreSQL and MongoDB and waits until they're healthy, applies pending
+migrations, loads the full dataset from `data/processed` (1,500 titles with posters, reviews, users) into an empty
+database and rebuilds trending, then starts the API and the website. Open **http://localhost:5173**. Every step is
+safe to repeat, so run it again after every `git pull`. It never replaces existing data by itself.
+
+| Option                          | Does                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------- |
+| `npm run up -- --reload-data`   | Wipe local PostgreSQL + MongoDB and load `data/processed` again            |
+| `npm run up -- --demo`          | Use the small demo seed (3 titles, no posters) instead of the dataset      |
+| `npm run up -- --no-dev`        | Prepare everything, don't start the servers                                |
+
+For real data instead of mocks, put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first.
+
+PostgreSQL is published on host port **5433**, not 5432, so it never clashes with a Postgres installed on your
+machine. Set `POSTGRES_PORT` to pick another port, and keep `DATABASE_URL` in `apps/api/.env` matching it.
+
+## Manual setup
 
 ```bash
 # 1. Install all workspace deps from the repo root
