@@ -6,6 +6,7 @@ import { MainLayout } from './layouts/MainLayout.js';
 import { Home } from './pages/Home.js';
 import { Browse } from './pages/Browse.js';
 import { TitleDetail } from './pages/TitleDetail.js';
+import { Person } from './pages/Person.js';
 import { Login } from './pages/Login.js';
 import { Register } from './pages/Register.js';
 import { MyLists } from './pages/MyLists.js';
@@ -29,6 +30,7 @@ export function App() {
             <Route index element={<Home />} />
             <Route path="browse" element={<Browse />} />
             <Route path="titles/:id" element={<TitleDetail />} />
+            <Route path="people/:id" element={<Person />} />
             <Route path="login" element={<Login />} />
             <Route path="register" element={<Register />} />
             <Route path="forbidden" element={<Forbidden />} />

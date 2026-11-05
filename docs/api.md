@@ -40,6 +40,16 @@ The reserved words `admin`, `administrator`, `moderator`, `bingemate`, `support`
 | PUT    | /api/titles/:titleId/poster  | MEMBER (owner) or ADMIN                                  | Raw JPEG, PNG or WebP, max 1 MB; returns `{ posterUrl }` using the version Mongo kept. When a creator uploads, an APPROVED title is set back to `PENDING` **before** the stored bytes are overwritten, so the old public URL never serves an unreviewed image; an admin upload leaves the status alone.                                           |
 | DELETE | /api/titles/:titleId/poster  | MEMBER (owner) or ADMIN                                  | 204. Clears the link first, then removes the bytes; a failure removing the bytes is logged and still answers 204. Removing an image does not change the status.                                                                                                                                                                                   |
 
+## People and degrees of separation (public)
+
+Only approved titles count everywhere below: a person credited only on hidden titles has no credits, and two people are never linked through a hidden title.
+
+- `GET /api/people?q=lee` returns up to 10 `{ id, name, titleCount }` whose name contains `q` (case-insensitive, 2 to 100 characters, LIKE wildcards are matched literally), most credited first. A shorter `q` returns 400.
+- `GET /api/people/:id` returns `{ id, name, credits }`. Each credit is `{ id, name, mediaType, releaseYear, posterUrl?, roles }`, one per title with every role the person had on it, newest first. 404 `Person not found`.
+- `GET /api/people/:id/connection/:otherId?maxDepth=6` returns the shortest chain of shared titles: `{ degrees, maxDepth, path }`. `path` starts with `:id` and ends with `:otherId`, and each step is `{ person: { id, name }, via }`, where `via` is the `{ id, name, mediaType }` shared with the previous person (null on the first step). A person is 0 degrees from themselves. When there is no chain within `maxDepth` (an integer from 1 to 6, default 6), the answer is 200 `{ degrees: null, maxDepth, path: null }`. 404 when either person does not exist; 400 for a bad `maxDepth`.
+
+The chain comes from a breadth-first search written as one recursive SQL query (`connectionQuery` in `apps/api/src/modules/people/people.service.ts`). Ties go to the lowest ids, so a pair always gives the same chain. `benchmarks/people-connection.ts` runs it under `EXPLAIN ANALYZE`.
+
 ## Review statistics (public)
 
 `GET /api/titles/:titleId/review-activity?months=120` returns review counts and average text length (Unicode code points, rounded to one decimal) per populated UTC month, ascending. `months` is an integer from 1 to 240, default 120. The cutoff is the first day of the UTC month `months` ago. Gaps are omitted. PostgreSQL must first confirm the title is APPROVED; missing or unapproved titles return 404 `{ "error": "Title not found" }`. An approved title without reviews returns 200 `{ "data": [] }`.
