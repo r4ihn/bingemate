@@ -22,7 +22,6 @@ import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const args = new Set(process.argv.slice(2));
-const pgPort = Number(process.env.POSTGRES_PORT ?? 5433);
 
 const c = (code) => (s) => (process.stdout.isTTY ? `\x1b[${code}m${s}\x1b[0m` : s);
 const bold = c('1');
@@ -78,6 +77,78 @@ function portInUse(port) {
   });
 }
 
+/** KEY=value pairs from an env file (quotes stripped); empty object if the file is missing. */
+function readEnv(file) {
+  if (!existsSync(file)) return {};
+  const out = {};
+  for (const line of readFileSync(file, 'utf8').split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*?)\s*$/);
+    if (m) out[m[1]] = m[2].replace(/^(['"])(.*)\1$/, '$2');
+  }
+  return out;
+}
+
+/** Sets KEY=value in an env file, replacing the existing line or appending one. */
+function setEnv(file, key, value) {
+  const text = existsSync(file) ? readFileSync(file, 'utf8') : '';
+  const line = `${key}=${value}`;
+  const re = new RegExp(`^${key}=.*$`, 'm');
+  const next = re.test(text)
+    ? text.replace(re, line)
+    : `${text}${text && !text.endsWith('\n') ? '\n' : ''}${line}\n`;
+  if (next !== text) writeFileSync(file, next);
+}
+
+/** Host port Docker published for a container port, or null if the container isn't running. */
+function publishedPort(container, containerPort) {
+  const res = spawnSync('docker', ['port', container, String(containerPort)], { encoding: 'utf8' });
+  const m = res.status === 0 ? res.stdout.match(/:(\d+)\s*$/m) : null;
+  return m ? Number(m[1]) : null;
+}
+
+/**
+ * Picks this machine's host port for a database container, so a Postgres or Mongo installed
+ * locally (or a friend's different setup) never collides with ours and nobody edits ports by hand:
+ *   1. POSTGRES_PORT / MONGO_PORT from the shell wins as-is (explicit choice).
+ *   2. Else the port saved in the root .env, if it's still free (or it's our own container).
+ *   3. Else the port our running container already uses.
+ *   4. Else the first free port from the default upward (5432, 5433, ...).
+ */
+async function choosePort({ key, container, containerPort, start }) {
+  if (process.env[key]) return Number(process.env[key]);
+  const ours = publishedPort(container, containerPort);
+  const saved = Number(readEnv(rootEnv)[key]) || null;
+  if (saved) {
+    if (saved === ours || !(await portInUse(saved))) return saved;
+    warn(`${key}=${saved} in .env is now taken by another program, so picking a free port.`);
+  } else if (ours) {
+    return ours;
+  }
+  for (let port = start; port < start + 100; port++) {
+    if (port === ours || !(await portInUse(port))) return port;
+  }
+  fail(`No free port found for ${key} between ${start} and ${start + 99}.`);
+}
+
+/**
+ * Points a URL in apps/api/.env at the chosen port. Only rewrites localhost / 127.0.0.1 URLs, so
+ * a remote database someone configured on purpose is left alone.
+ */
+function syncUrlPort(file, key, port) {
+  const text = readFileSync(file, 'utf8');
+  const re = new RegExp(
+    `^(${key}=["']?[a-z]+://(?:[^@/\\s]*@)?(?:localhost|127\\.0\\.0\\.1):)(\\d+)`,
+    'm',
+  );
+  const m = text.match(re);
+  if (!m) return warn(`${key} in apps/api/.env is not a localhost URL; leaving it as it is.`);
+  if (Number(m[2]) === port) return;
+  writeFileSync(file, text.replace(re, `$1${port}`));
+  info(`apps/api/.env: ${key} port ${m[2]} → ${port}`);
+}
+
+const rootEnv = join(root, '.env');
+
 // ── 1. Prerequisites ────────────────────────────────────────────────────────────────────────────
 step('Checking prerequisites');
 const nodeMajor = Number(process.versions.node.split('.')[0]);
@@ -118,27 +189,39 @@ if (!existsSync(marker) || statSync(lock).mtimeMs > statSync(marker).mtimeMs) {
   info('up to date (package-lock.json unchanged since the last install)');
 }
 
-// ── 3. Env files ────────────────────────────────────────────────────────────────────────────────
-step('Checking env files');
+// ── 3. Ports and env files ──────────────────────────────────────────────────────────────────────
+step('Choosing database ports and checking env files');
+const pgPort = await choosePort({
+  key: 'POSTGRES_PORT',
+  container: 'bingemate-postgres',
+  containerPort: 5432,
+  start: 5432,
+});
+const mongoPort = await choosePort({
+  key: 'MONGO_PORT',
+  container: 'bingemate-mongo',
+  containerPort: 27017,
+  start: 27017,
+});
+// docker compose reads the root .env by itself, so plain "npm run db:up" uses the same ports.
+setEnv(rootEnv, 'POSTGRES_PORT', pgPort);
+setEnv(rootEnv, 'MONGO_PORT', mongoPort);
+info(`PostgreSQL → localhost:${pgPort}, MongoDB → localhost:${mongoPort} (saved in .env)`);
+
 const apiEnv = join(root, 'apps/api/.env');
 if (!existsSync(apiEnv)) {
   const secret = randomBytes(48).toString('base64url');
-  const text = readFileSync(join(root, 'apps/api/.env.example'), 'utf8')
-    .replace(/^JWT_SECRET=.*$/m, `JWT_SECRET="${secret}"`)
-    .replace(/localhost:\d+\/bingemate\?/, `localhost:${pgPort}/bingemate?`);
+  const text = readFileSync(join(root, 'apps/api/.env.example'), 'utf8').replace(
+    /^JWT_SECRET=.*$/m,
+    `JWT_SECRET="${secret}"`,
+  );
   writeFileSync(apiEnv, text);
   info('created apps/api/.env from .env.example (with a fresh JWT_SECRET)');
 } else {
-  const url = readFileSync(apiEnv, 'utf8').match(/^DATABASE_URL=.*localhost:(\d+)/m);
-  if (url && Number(url[1]) !== pgPort) {
-    warn(
-      `apps/api/.env points DATABASE_URL at port ${url[1]}, but the Postgres container is on ${pgPort}.`,
-    );
-    warn(`Change it to localhost:${pgPort}, or run with POSTGRES_PORT=${url[1]}.`);
-  } else {
-    info('apps/api/.env exists');
-  }
+  info('apps/api/.env exists');
 }
+syncUrlPort(apiEnv, 'DATABASE_URL', pgPort);
+syncUrlPort(apiEnv, 'MONGO_URI', mongoPort);
 const webEnv = join(root, 'apps/web/.env');
 if (!existsSync(webEnv)) {
   copyFileSync(join(root, 'apps/web/.env.example'), webEnv);
@@ -148,7 +231,7 @@ if (!existsSync(webEnv)) {
 }
 
 // ── 4. Databases ────────────────────────────────────────────────────────────────────────────────
-step(`Starting PostgreSQL (localhost:${pgPort}) and MongoDB (localhost:27017)`);
+step(`Starting PostgreSQL (localhost:${pgPort}) and MongoDB (localhost:${mongoPort})`);
 run('docker', ['compose', 'up', '-d', '--wait'], {
   label: 'docker compose up',
 });

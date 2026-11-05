@@ -33,8 +33,12 @@ safe to repeat, so run it again after every `git pull`. It never replaces existi
 
 For real data instead of mocks, put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first.
 
-PostgreSQL is published on host port **5433**, not 5432, so it never clashes with a Postgres installed on your
-machine. Set `POSTGRES_PORT` to pick another port, and keep `DATABASE_URL` in `apps/api/.env` matching it.
+**Database ports are picked per machine.** `npm run up` uses 5432 for PostgreSQL and 27017 for MongoDB when they're
+free, and otherwise the next free port (5433, 5434, ...), for example when Postgres is also installed on your machine.
+It saves the choice as `POSTGRES_PORT` / `MONGO_PORT` in the root `.env` (gitignored, so it's yours alone) and
+rewrites the ports in `DATABASE_URL` and `MONGO_URI` in `apps/api/.env` to match. Docker Compose reads the root `.env`
+too, so `npm run db:up` uses the same ports. To force a port, run `POSTGRES_PORT=5440 npm run up` once (on PowerShell:
+`$env:POSTGRES_PORT=5440; npm run up`).
 
 ## Manual setup
 
