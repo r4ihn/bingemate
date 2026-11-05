@@ -71,7 +71,7 @@ function mapDetails(d: TitleDetailsDTO | null) {
   return {};
 }
 
-/** Genres and people are not shown by the UI yet, so they are dropped here. */
+/** Genres are not shown by the UI yet, so they are dropped here. */
 export function detailToTitle(d: TitleDetailDTO): TitleDetail {
   return {
     ...summaryToTitle(d),
@@ -80,6 +80,8 @@ export function detailToTitle(d: TitleDetailDTO): TitleDetail {
     synopsis: d.description ?? '',
     ...(d.releaseYear != null && { year: d.releaseYear }),
     ...mapDetails(d.details),
+    // Older API builds sent no people; treat that as an empty cast.
+    people: (d.people ?? []).map((p) => ({ id: p.id, name: p.name, role: p.role })),
   };
 }
 

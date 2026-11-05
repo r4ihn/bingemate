@@ -1,4 +1,4 @@
-import { ListStatus, MediaType } from '@bingemate/shared';
+import { ListStatus, MediaType, PersonRole } from '@bingemate/shared';
 
 export const MEDIA_LABEL: Record<MediaType, string> = {
   [MediaType.MOVIE]: 'Movie',
@@ -33,3 +33,12 @@ export const LIST_STATUSES: { status: ListStatus; label: string }[] = [
   { status: ListStatus.IN_PROGRESS, label: 'In progress' },
   { status: ListStatus.PLAN_TO, label: 'Plan to' },
 ];
+
+/** How a person's credit reads on the title and person pages. */
+export const ROLE_LABEL: Record<PersonRole, string> = {
+  [PersonRole.ACTOR]: 'Actor',
+  [PersonRole.AUTHOR]: 'Author',
+  [PersonRole.DIRECTOR]: 'Director',
+  [PersonRole.SHOWRUNNER]: 'Showrunner',
+  [PersonRole.WRITER]: 'Writer',
+};

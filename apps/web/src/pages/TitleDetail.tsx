@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 import { titlesApi } from '../api/titles.js';
 import { ApiError } from '../api/client.js';
 import { StateMessage } from '../components/StateMessage.js';
+import { TitleCredits } from '../components/TitleCredits.js';
 import { TitleOverview } from '../components/TitleOverview.js';
 import { ReviewForm } from '../components/review/ReviewForm.js';
 import { ReviewList } from '../components/review/ReviewList.js';
@@ -59,6 +60,7 @@ export function TitleDetail() {
           #{title.rankInType} in {MEDIA_LABEL_PLURAL[title.mediaType]} · top {title.topPercent}%
         </p>
       )}
+      <TitleCredits people={title.people ?? []} />
       <section
         id="reviews"
         className="mx-auto max-w-[1100px] border-t border-line px-6 py-8 sm:px-8 sm:py-12"

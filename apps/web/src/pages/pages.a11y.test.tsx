@@ -16,6 +16,7 @@ import { Home } from './Home.js';
 import { Login } from './Login.js';
 import { MyLists } from './MyLists.js';
 import { NotFound } from './NotFound.js';
+import { Person } from './Person.js';
 import { Register } from './Register.js';
 import { TitleDetail } from './TitleDetail.js';
 
@@ -23,6 +24,7 @@ const pages: [string, string, string, ReactElement, Role?][] = [
   ['Home', '/', '/', <Home />],
   ['Browse', '/browse', '/browse', <Browse />],
   ['TitleDetail', '/titles/:id', '/titles/mock-1', <TitleDetail />],
+  ['Person', '/people/:id', '/people/person-1', <Person />],
   ['Login', '/login', '/login', <Login />],
   ['Register', '/register', '/register', <Register />],
   ['MyLists', '/me/lists', '/me/lists', <MyLists />, Role.MEMBER],
