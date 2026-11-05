@@ -189,11 +189,31 @@ it in `Title.posterUrl`. The links are hotlinked, and only https is kept.
 - TV shows: `tv_series_data_cleaned.csv` (name + start year), then the saved lookups.
 - Books: `books_data_cleaned.csv` (name + publication year), then the saved lookups.
 
-`fetch-posters.ts` asks TVmaze and Open Library about the TV shows and books the files miss, and
-saves the answers to `data/raw/lookup_posters.csv`. It needs the network, so it is not part of
-`clean-all`. Run `clean-all`, then `fetch-posters`, then `clean-all` again. It can be stopped and
-resumed. TVmaze matches need the same year; Open Library matches are on title only, so some covers
-can be another edition.
+`fetch-posters.ts` looks up the posters the files miss and saves the answers to
+`data/raw/lookup_posters.csv`:
+
+- TMDB, for every movie and TV show whose poster is missing or whose link is dead (the image host
+  answers 404 or 410; most of the dataset's old IMDb links on Amazon now do). A TMDB answer replaces
+  the link from the files. A TV special or TV film is looked up as a movie as well, and a name is also
+  tried without a country tag (`The Traitors [UK]`) or a trailing "The Movie". The name must match, and
+  so must the year or one either side; a title with no year only counts when TMDB has exactly one
+  title of that name. This part needs `TMDB_API_KEY` in `apps/api/.env` (a v3 key or a v4 token) and is
+  skipped without it.
+- TVmaze (same year) and Open Library (title only, so some covers can be another edition), for TV
+  shows and books that still have none.
+
+It needs the network, so it is not part of `clean-all`. Run `clean-all`, then
+`npx tsx --env-file=apps/api/.env data/etl/fetch-posters.ts`, then `clean-all` again. It can be stopped
+and resumed; `--retry-misses` asks TMDB again about the titles it had no answer for.
+
+To put new posters into a database that is already loaded without
+`load-all --reset` (which replaces every user, review and list entry), run
+`npx tsx data/etl/update-media.ts` (a dry run), then add `--apply`, then rebuild the trending cards. It
+only touches imported titles, never an uploaded poster, and shows a movie again that was hidden only
+for having no poster.
+
+On 2026-11-05: 498 of 500 movies, 495 of 500 TV shows and 427 of 500 books have a poster. TMDB replaced
+46 dead movie links and 17 dead TV links and filled 57 movies and 36 TV shows that had none.
 
 A movie with no poster loads as `REJECTED`, which hides it, and is listed in
 `processed/logs/clean-posters.rejects.csv`. TV shows and books are never hidden. Every source is

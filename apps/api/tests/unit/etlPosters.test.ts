@@ -7,12 +7,23 @@ type Show = {
   show: { name: string; premiered: string | null; image: { original: string } | null };
 };
 type Doc = { title: string; cover_i?: number; first_publish_year?: number };
+type Movie = {
+  title: string;
+  original_title?: string;
+  release_date?: string;
+  poster_path: string | null;
+};
 const {
   bookCoverFromSearch,
   googleCoverUrl,
   hasMoviePoster,
   imdbPosterUrl,
   titleVisibility,
+  movieSearchName,
+  normalise,
+  tvSearchName,
+  tmdbAuth,
+  tmdbPosterFromSearch,
   tvPosterFromSearch,
 } = (await import(/* @vite-ignore */ file)) as {
   titleVisibility: (
@@ -25,6 +36,11 @@ const {
   googleCoverUrl: (url: string) => string;
   tvPosterFromSearch: (results: Show[], name: string, year: number | null) => string | null;
   bookCoverFromSearch: (docs: Doc[], name: string, year: number | null) => string | null;
+  tmdbPosterFromSearch: (results: Movie[], name: string, year: number | null) => string | null;
+  tmdbAuth: (key: string) => { query: string; headers: Record<string, string> };
+  movieSearchName: (name: string) => string;
+  tvSearchName: (name: string) => string;
+  normalise: (name: string) => string;
 };
 
 const shown = { status: 'APPROVED', rejectionReason: null };
@@ -166,5 +182,77 @@ describe('bookCoverFromSearch', () => {
 
   it('skips a result with no cover', () => {
     expect(bookCoverFromSearch([{ title: 'Heat' }], 'Heat', 2002)).toBeNull();
+  });
+});
+
+describe('tmdbPosterFromSearch', () => {
+  const movie = (title: string, release_date: string, poster_path: string | null = '/p.jpg') => ({
+    title,
+    release_date,
+    poster_path,
+  });
+  const url = (path: string) => `https://image.tmdb.org/t/p/w500${path}`;
+
+  it('takes the same title from the same year', () => {
+    const results = [movie('1492: Conquest of Paradise', '1992-10-09', '/1492.jpg')];
+    expect(tmdbPosterFromSearch(results, '1492: Conquest of Paradise', 1992)).toBe(
+      url('/1492.jpg'),
+    );
+  });
+
+  it('prefers the exact year over a remake or a neighbouring year', () => {
+    const results = [
+      movie('Fresh', '2022-03-03', '/remake.jpg'),
+      movie('Fresh', '1993-09-01', '/near.jpg'),
+      movie('Fresh', '1994-04-08', '/ours.jpg'),
+    ];
+    expect(tmdbPosterFromSearch(results, 'Fresh', 1994)).toBe(url('/ours.jpg'));
+    expect(tmdbPosterFromSearch(results.slice(0, 2), 'Fresh', 1994)).toBe(url('/near.jpg'));
+  });
+
+  it('refuses another year, another title, or a result with no poster', () => {
+    expect(tmdbPosterFromSearch([movie('Split', '2010-01-01')], 'Split', 2016)).toBeNull();
+    expect(tmdbPosterFromSearch([movie('Split Second', '2016-01-01')], 'Split', 2016)).toBeNull();
+    expect(tmdbPosterFromSearch([movie('Split', '2016-09-26', null)], 'Split', 2016)).toBeNull();
+  });
+
+  it('matches the original title, ignoring case, accents and a leading article', () => {
+    const results = [
+      {
+        title: 'The City of Lost Children',
+        original_title: 'La Cité des enfants perdus',
+        release_date: '1995-05-17',
+        poster_path: '/c.jpg',
+      },
+    ];
+    expect(tmdbPosterFromSearch(results, 'City of Lost Children', 1995)).toBe(url('/c.jpg'));
+  });
+});
+
+describe('tmdbAuth', () => {
+  it('sends a v3 key as api_key and a v4 token as a Bearer header', () => {
+    expect(tmdbAuth('abc123')).toEqual({ query: '&api_key=abc123', headers: {} });
+    expect(tmdbAuth('eyJhbGciOi.x.y')).toEqual({
+      query: '',
+      headers: { Authorization: 'Bearer eyJhbGciOi.x.y' },
+    });
+  });
+});
+
+describe('search names', () => {
+  it('drops a year or a country tag from a TV name', () => {
+    expect(tvSearchName('All The Way (2016)')).toBe('All The Way');
+    expect(tvSearchName('Episodes (US)')).toBe('Episodes');
+    expect(tvSearchName('The Traitors [UK]')).toBe('The Traitors');
+    expect(tvSearchName('M*A*S*H')).toBe('M*A*S*H');
+  });
+
+  it('drops a trailing "The Movie" from a movie name', () => {
+    expect(movieSearchName('Left Behind: The Movie')).toBe('Left Behind');
+    expect(movieSearchName('The Movie Critic')).toBe('The Movie Critic');
+  });
+
+  it('reads & as and', () => {
+    expect(normalise('Rick & Morty')).toBe(normalise('Rick and Morty'));
   });
 });

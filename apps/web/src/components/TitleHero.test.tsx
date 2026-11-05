@@ -26,3 +26,37 @@ describe('TitleHero with sparse real data', () => {
     expect(screen.getByText('—')).toBeInTheDocument();
   });
 });
+
+describe('TitleHero poster', () => {
+  const base = {
+    id: 't1',
+    name: '1492: Conquest of Paradise',
+    mediaType: MediaType.MOVIE,
+    status: TitleStatus.APPROVED,
+    avgRating: 4,
+    reviewCount: 3,
+    synopsis: '',
+    rankInType: null,
+    topPercent: null,
+  } satisfies TitleDetail;
+  const renderHero = (title: TitleDetail) =>
+    render(
+      <MemoryRouter>
+        <TitleHero title={title} breadcrumb={['Main']} />
+      </MemoryRouter>,
+    );
+
+  it('shows the poster, with a blurred copy behind it, when the title has one', () => {
+    renderHero({ ...base, posterUrl: 'https://image.tmdb.org/t/p/w500/x.jpg' });
+    expect(
+      screen.getByRole('img', { name: 'Poster for 1492: Conquest of Paradise' }),
+    ).toHaveAttribute('src', 'https://image.tmdb.org/t/p/w500/x.jpg');
+    expect(screen.getByTestId('hero-backdrop').style.backgroundImage).toContain('/x.jpg');
+  });
+
+  it('keeps the gradient and no image when there is no poster', () => {
+    renderHero(base);
+    expect(screen.queryByRole('img')).toBeNull();
+    expect(screen.queryByTestId('hero-backdrop')).toBeNull();
+  });
+});
