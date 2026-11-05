@@ -11,7 +11,36 @@ See `ARCHITECTURE.md` for the full layout and `TASKS.md` for the task breakdown.
 - Node.js 20+
 - Docker (for local PostgreSQL + MongoDB)
 
-## Setup
+## Quick start
+
+With Docker running, one command takes a fresh clone (or a checkout that's behind) to a running app:
+
+```bash
+npm run up
+```
+
+It installs dependencies when the lockfile changed, creates `apps/api/.env` (with a random `JWT_SECRET`) and
+`apps/web/.env` if they're missing, starts PostgreSQL and MongoDB and waits until they're healthy, applies pending
+migrations, loads the full dataset from `data/processed` (1,500 titles with posters, reviews, users) into an empty
+database and rebuilds trending, then starts the API and the website. Open **http://localhost:5173**. Every step is
+safe to repeat, so run it again after every `git pull`. It never replaces existing data by itself.
+
+| Option                          | Does                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------- |
+| `npm run up -- --reload-data`   | Wipe local PostgreSQL + MongoDB and load `data/processed` again            |
+| `npm run up -- --demo`          | Use the small demo seed (3 titles, no posters) instead of the dataset      |
+| `npm run up -- --no-dev`        | Prepare everything, don't start the servers                                |
+
+For real data instead of mocks, put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first.
+
+**Database ports are picked per machine.** `npm run up` uses 5432 for PostgreSQL and 27017 for MongoDB when they're
+free, and otherwise the next free port (5433, 5434, ...), for example when Postgres is also installed on your machine.
+It saves the choice as `POSTGRES_PORT` / `MONGO_PORT` in the root `.env` (gitignored, so it's yours alone) and
+rewrites the ports in `DATABASE_URL` and `MONGO_URI` in `apps/api/.env` to match. Docker Compose reads the root `.env`
+too, so `npm run db:up` uses the same ports. To force a port, run `POSTGRES_PORT=5440 npm run up` once (on PowerShell:
+`$env:POSTGRES_PORT=5440; npm run up`).
+
+## Manual setup
 
 ```bash
 # 1. Install all workspace deps from the repo root

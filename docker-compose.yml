@@ -1,5 +1,7 @@
 # Local dev databases. Bound to 127.0.0.1 only — never exposed on the network.
-# Usage: docker compose up -d   (then prisma migrate + seed)
+# Usage: npm run up   (or docker compose up -d, then prisma migrate + seed)
+# Host ports come from POSTGRES_PORT / MONGO_PORT in the root .env (gitignored), which
+# `npm run up` fills with free ports per machine. Unset, they default to 5432 / 27017.
 services:
   postgres:
     image: postgres:16-alpine
@@ -10,7 +12,7 @@ services:
       POSTGRES_PASSWORD: bingemate
       POSTGRES_DB: bingemate
     ports:
-      - '127.0.0.1:5432:5432'
+      - '127.0.0.1:${POSTGRES_PORT:-5432}:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +26,7 @@ services:
     container_name: bingemate-mongo
     restart: unless-stopped
     ports:
-      - '127.0.0.1:27017:27017'
+      - '127.0.0.1:${MONGO_PORT:-27017}:27017'
     volumes:
       - mongodata:/data/db
     healthcheck:
