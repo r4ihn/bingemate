@@ -37,6 +37,7 @@ const row = (over: Record<string, unknown> = {}) => ({
   avgRating: 4.5,
   reviewCount: 3,
   posterUrl: null,
+  trailerKey: null,
   createdById: null,
   ...over,
 });
@@ -51,7 +52,7 @@ beforeEach(() => {
 describe('GET /api/titles', () => {
   it('returns a page with the total, and maps rows to summaries', async () => {
     findMany.mockResolvedValue([
-      row({ posterUrl: 'http://x/p.jpg', createdById: 'u-1' }),
+      row({ posterUrl: 'http://x/p.jpg', trailerKey: 'dQw4w9WgXcQ', createdById: 'u-1' }),
       row({ id: 't2' }),
     ]);
     count.mockResolvedValue(41);
@@ -63,9 +64,11 @@ describe('GET /api/titles', () => {
     expect(res.body.data[0]).toMatchObject({
       id: 't1',
       posterUrl: 'http://x/p.jpg',
+      trailerKey: 'dQw4w9WgXcQ',
       createdById: 'u-1',
     });
     expect(res.body.data[1]).not.toHaveProperty('posterUrl');
+    expect(res.body.data[1]).not.toHaveProperty('trailerKey');
     expect(firstArgs(findMany)).toMatchObject({ skip: 2, take: 2 });
   });
 

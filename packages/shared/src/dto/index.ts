@@ -28,6 +28,8 @@ export interface TitleSummary {
   avgRating: number;
   reviewCount: number;
   posterUrl?: string;
+  /** YouTube video id of the title's trailer, when TMDB has one. Embed as youtube-nocookie.com/embed/<id>. */
+  trailerKey?: string;
   /** Owner of a creator-submitted title; null for imported ones. Lets the UI show creator-only actions. */
   createdById?: string | null;
 }

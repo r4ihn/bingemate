@@ -7,9 +7,10 @@ import { StepLog } from './lib/log.js';
 import { NO_POSTER_REASON } from './lib/posters.js';
 
 /**
- * Copies data/processed/title_posters.csv into Title.posterUrl on an already loaded database, so new
- * or replaced posters (from fetch-posters.ts) show up without `load-all --reset`, which would replace
- * every user, review and list entry. Only imported titles are touched (the ones in id-map.json), and a poster uploaded
+ * Copies data/processed/title_posters.csv and title_trailers.csv into Title.posterUrl and
+ * Title.trailerKey on an already loaded database, so new posters and trailers (from fetch-posters.ts
+ * and fetch-trailers.ts) show up without `load-all --reset`, which would replace every user, review
+ * and list entry. Only imported titles are touched (the ones in id-map.json), and a poster uploaded
  * through the app (a root-relative /api/... link) is never replaced.
  *
  * A movie hidden by the load because it had no poster (REJECTED, "Imported movie without a poster")
@@ -42,36 +43,44 @@ export async function main(): Promise<void> {
       return map;
     };
     const posters = byDbId('title_posters.csv', 'poster_url');
+    const trailers = byDbId('title_trailers.csv', 'youtube_key');
     log.count('imported titles with a poster', posters.size);
+    log.count('imported titles with a trailer', trailers.size);
 
     const current = await prisma.title.findMany({
       where: { id: { in: Object.values(ids) } },
       select: {
         id: true,
         posterUrl: true,
+        trailerKey: true,
         status: true,
         rejectionReason: true,
       },
     });
     const changes = current.flatMap((t) => {
       const poster = posters.get(t.id);
+      const trailer = trailers.get(t.id) ?? null;
       const newPoster =
         poster !== undefined && !t.posterUrl?.startsWith('/') && poster !== t.posterUrl;
-      if (!newPoster) return [];
+      const newTrailer = trailer !== t.trailerKey;
+      if (!newPoster && !newTrailer) return [];
       const unhide = newPoster && t.status === 'REJECTED' && t.rejectionReason === NO_POSTER_REASON;
       return [
         {
           id: t.id,
           data: {
             ...(newPoster && { posterUrl: poster }),
+            ...(newTrailer && { trailerKey: trailer }),
             ...(unhide && { status: 'APPROVED' as const, rejectionReason: null }),
           },
           newPoster,
+          newTrailer,
           unhide,
         },
       ];
     });
     log.count('poster links to change', changes.filter((c) => c.newPoster).length);
+    log.count('trailers to change', changes.filter((c) => c.newTrailer).length);
     log.count(
       'hidden movies to show again (they have a poster now)',
       changes.filter((c) => c.unhide).length,

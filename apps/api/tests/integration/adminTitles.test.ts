@@ -46,6 +46,7 @@ const select = {
   avgRating: true,
   reviewCount: true,
   posterUrl: true,
+  trailerKey: true,
   createdById: true,
   description: true,
   rejectionReason: true,

@@ -65,6 +65,8 @@ model Title {
   releaseYear     Int?
   description     String?     @db.Text
   posterUrl       String?
+  /// YouTube video id of the trailer (from TMDB). CHECK in migration 20261105130000_title_trailer.
+  trailerKey      String?
   avgRating       Float       @default(0)
   reviewCount     Int         @default(0)
 

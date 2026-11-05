@@ -1,7 +1,7 @@
 import { setTimeout as wait } from 'node:timers/promises';
 import { tmdbAuth, type TmdbResult } from './posters.js';
 
-/** Network helpers shared by fetch-posters.ts. The key is never logged. */
+/** Network helpers shared by fetch-posters.ts and fetch-trailers.ts. The key is never logged. */
 
 const BUSY_DELAY_MS = 15_000;
 export const TMDB_DELAY_MS = 250; // well under TMDB's limit of about 50 calls a second
@@ -70,4 +70,25 @@ export async function tmdbSearch(
         }
       : r,
   );
+}
+
+export type TmdbVideo = {
+  site: string;
+  type: string;
+  key: string;
+  official?: boolean;
+  iso_639_1?: string;
+};
+
+/** The videos TMDB lists for a movie or show, or undefined when TMDB could not be reached. */
+export async function tmdbVideos(
+  kind: 'movie' | 'tv',
+  id: number,
+  auth: TmdbAuth,
+): Promise<TmdbVideo[] | undefined> {
+  const reply = await fetchJson<{ results: TmdbVideo[] }>(
+    `https://api.themoviedb.org/3/${kind}/${id}/videos?language=en-US${auth.query}`,
+    auth.headers,
+  );
+  return reply === null ? undefined : reply.results;
 }
