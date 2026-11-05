@@ -1,7 +1,7 @@
 import { ListStatus, MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { AdminUser } from '../types/admin.js';
 import type { ListItem } from '../types/list.js';
-import type { Author, Reply, Review, ReviewFields } from '../types/review.js';
+import type { Author, Reply, Review } from '../types/review.js';
 import type { TitleDetail } from '../types/title.js';
 import { mockTitles } from './titles.js';
 
@@ -16,7 +16,7 @@ export interface Db {
   reviews: Review[];
   replies: Reply[];
   lists: ListItem[];
-  users: AdminUser[];
+  users: (AdminUser & { username: string | null })[];
 }
 
 export const MOCK_USER = 'mock-user';
@@ -27,7 +27,7 @@ export interface MockActor {
   role: Role;
 }
 
-const DEMO_ACTOR: MockActor = { id: MOCK_USER, name: 'You', role: Role.CONSUMER };
+const DEMO_ACTOR: MockActor = { id: MOCK_USER, name: 'You', role: Role.MEMBER };
 let actor: MockActor = DEMO_ACTOR;
 
 /** Who the mock writes are attributed to: the signed-in user, or the demo user when nobody is. */
@@ -80,20 +80,17 @@ const RUNTIME: Record<MediaType, string> = {
 };
 
 const AUTHORS: Author[] = [
-  { id: 'u-maya', name: 'maya_r', role: Role.CONSUMER },
-  { id: 'u-studio', name: 'studio_north', role: Role.CREATOR },
-  { id: 'u-dev', name: 'dev_k', role: Role.CONSUMER },
+  { id: 'u-maya', name: 'maya_r', role: Role.MEMBER },
+  { id: 'u-studio', name: 'studio_north', role: Role.MEMBER },
+  { id: 'u-dev', name: 'dev_k', role: Role.MEMBER },
 ];
-
-function fieldsFor(mediaType: MediaType, n: number): ReviewFields {
-  if (mediaType === MediaType.BOOK) return { chapters: 10 + n };
-  if (mediaType === MediaType.TV_SHOW) return { season: 1 + (n % 3), episodes: 6 + n };
-  return { runtimeMinutes: 90 + n * 5 };
-}
 
 function seedTitles(): StoredTitle[] {
   const base: StoredTitle[] = mockTitles.map((t) => ({
     ...t,
+    genres: ['Drama', 'Thriller'],
+    rankInType: null,
+    topPercent: null,
     synopsis: SYNOPSIS,
     countries: ['Usa', 'Canada'],
     studio: 'North Star Pictures',
@@ -104,12 +101,15 @@ function seedTitles(): StoredTitle[] {
     return {
       id: `mock-${i + 8}`,
       name,
+      genres: mediaType === MediaType.BOOK ? ['Fiction'] : ['Drama'],
       year: 2005 + i,
       hue: (i * 47) % 360,
       mediaType,
       status: TitleStatus.APPROVED,
       avgRating: 3 + ((i * 7) % 35) / 20,
       reviewCount: 10 + i * 13,
+      rankInType: null,
+      topPercent: null,
       synopsis: SYNOPSIS,
       countries: ['Canada'],
       studio: 'Lantern Studio',
@@ -123,7 +123,9 @@ function seedTitles(): StoredTitle[] {
   };
   // The mock creator owns four titles in different states; one more pending title belongs to someone else
   // u-studio wrote the mock reply 'Thank you for watching!', so it gets the Creator badge there
-  patch('mock-1', { createdBy: 'u-studio' });
+  patch('mock-1', { createdBy: 'u-studio', rankInType: 3, topPercent: 1 });
+  patch('mock-2', { rankInType: 1, topPercent: 1 });
+  patch('mock-9', { rankInType: 12, topPercent: 25 });
   patch('mock-24', { createdBy: MOCK_USER });
   patch('mock-25', { createdBy: MOCK_USER, status: TitleStatus.PENDING });
   patch('mock-26', {
@@ -136,17 +138,15 @@ function seedTitles(): StoredTitle[] {
   return all;
 }
 
-function seedReviews(titles: StoredTitle[]): Review[] {
+function seedReviews(): Review[] {
   const counts: Record<string, number> = { 'mock-1': 7, 'mock-2': 3, 'mock-3': 1, 'mock-24': 2 };
   return Object.entries(counts).flatMap(([titleId, n]) => {
-    const mediaType = titles.find((t) => t.id === titleId)?.mediaType ?? MediaType.MOVIE;
     return Array.from({ length: n }, (_, i): Review => ({
       id: `r-${titleId}-${i}`,
       titleId,
       author: AUTHORS[i % AUTHORS.length] as Author,
       rating: 3 + (i % 3),
       body: `Placeholder review ${i + 1}. Pacing, performances and ending all get a mention here.`,
-      fields: fieldsFor(mediaType, i),
       createdAt: new Date(Date.UTC(2026, 9, 17 - i)).toISOString(),
     }));
   });
@@ -178,11 +178,12 @@ function seedLists(titles: StoredTitle[]): ListItem[] {
   }));
 }
 
-function seedUsers(): AdminUser[] {
+function seedUsers(): Db['users'] {
   return Array.from({ length: 25 }, (_, i) => ({
     id: `user-${i + 1}`,
     email: `user${i + 1}@mock.dev`,
-    role: i === 0 ? Role.ADMIN : i === 1 ? Role.CREATOR : Role.CONSUMER,
+    username: `member${i + 1}`,
+    role: i === 0 ? Role.ADMIN : Role.MEMBER,
   }));
 }
 
@@ -190,7 +191,7 @@ function seed(): Db {
   const titles = seedTitles();
   return {
     titles,
-    reviews: seedReviews(titles),
+    reviews: seedReviews(),
     replies: seedReplies(),
     lists: seedLists(titles),
     users: seedUsers(),

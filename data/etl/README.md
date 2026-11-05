@@ -1,7 +1,9 @@
 # ETL (TASKS.md section 2, JW + HS)
 
-Cleaning scripts for the dev dataset. Raw inputs go in `../raw/`, cleaned outputs and logs in
-`../processed/` (both gitignored).
+Cleaning scripts for the dev dataset. Raw inputs in `../raw/` and cleaned CSV/JSONL datasets in
+`../processed/` are committed to Git. Logs and the load-specific `id-map.json` stay gitignored.
+Group members can load the committed cleaned dataset directly; cleaning is only needed when
+updating the inputs or cleaning rules.
 
 ```
 npx tsx data/etl/clean-all.ts      # run every step in order, then verify.ts
@@ -13,10 +15,12 @@ To load the cleaned data (Docker running, `apps/api/.env` copied from `.env.exam
 ```
 docker compose up -d
 npm run prisma:migrate                           # tables, CHECK constraint, views
-npx tsx data/etl/clean-all.ts                    # data/raw -> data/processed
-npx tsx data/etl/load-all.ts                     # both stores in order; add --reset to wipe and reload
+npx tsx data/etl/load-all.ts --reset             # both stores in order; --reset is needed on a new database (see below)
 npx tsx data/etl/verify-load.ts                  # counts, ids, constraint, aggregates, views
 ```
+
+Ids change on every load, so rebuild the trending cards afterwards, from the repo root:
+`npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts`.
 
 Ids are random per run and the Mongo bodies are keyed by the PostgreSQL review ids, so always load (and
 `--reset`) both stores together with `load-all.ts`. Running `load-postgres.ts --reset` alone orphans the Mongo bodies until
@@ -27,24 +31,27 @@ Both loaders refuse a database that is not on this machine (`DATABASE_URL`/`MONG
 localhost) unless you pass `--allow-remote`.
 
 Skip `npm run seed`: the dataset already contains `admin@bingemate.dev` and `creator@bingemate.dev`
-(password `Password123!`, same as the seed), and the loaders refuse a non-empty database without `--reset`.
+(password `Password123!`, same as the seed). **Use `--reset` the first time.** On a newly created database,
+`npm run prisma:migrate` (`prisma migrate dev`) runs the demo seed by itself, so the database is not empty and
+the loaders refuse it without `--reset`; the reset replaces the seeded demo accounts and sample titles with the dataset.
 
 No dependencies were added: a small CSV reader/writer lives in `lib/csv.ts`. Each step is
 idempotent and reads only `../raw/` (except `clean-lists`, which reads the reviews that survived).
 
 ## What each script does
 
-| Script             | Reads                               | Writes (`../processed/`)                                            |
-| ------------------ | ----------------------------------- | ------------------------------------------------------------------- |
-| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`   | `movies.csv`                                                        |
-| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`      | `tv_shows.csv`                                                      |
-| `clean-books.ts`   | `titles.csv`, `book_details.csv`    | `books.csv`                                                         |
-| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`    | `genres.csv`, `title_genres.csv`                                    |
-| `clean-people.ts`  | `people.csv`, `title_people.csv`    | `people.csv`, `title_people.csv`                                    |
-| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only) | `users.csv`                                                         |
-| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json` | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
-| `clean-lists.ts`   | `user_lists.csv`                    | `user_lists.csv`                                                    |
-| `verify.ts`        | everything in `../processed/`       | nothing; exits non-zero on a failed check                           |
+| Script             | Reads                                                                | Writes (`../processed/`)                                            |
+| ------------------ | -------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `clean-movies.ts`  | `titles.csv`, `movie_details.csv`                                    | `movies.csv`                                                        |
+| `clean-posters.ts` | poster sources (optional), `movies.csv`, `tv_shows.csv`, `books.csv` | `title_posters.csv` (`title_id`, `poster_url`)                      |
+| `clean-tvshows.ts` | `titles.csv`, `tv_details.csv`                                       | `tv_shows.csv`                                                      |
+| `clean-books.ts`   | `titles.csv`, `book_details.csv`                                     | `books.csv`                                                         |
+| `clean-genres.ts`  | `genres.csv`, `title_genres.csv`                                     | `genres.csv`, `title_genres.csv`                                    |
+| `clean-people.ts`  | `people.csv`, `title_people.csv`                                     | `people.csv`, `title_people.csv`                                    |
+| `clean-users.ts`   | `users.csv`, `roles.csv` (ids only)                                  | `users.csv`                                                         |
+| `clean-reviews.ts` | `reviews.csv`, `reviews_mongo.json`                                  | `reviews.csv` (Postgres header), `review_bodies.jsonl` (Mongo body) |
+| `clean-lists.ts`   | `user_lists.csv`                                                     | `user_lists.csv`                                                    |
+| `verify.ts`        | everything in `../processed/`                                        | nothing; exits non-zero on a failed check                           |
 
 Dataset ids (`title_id`, `person_id`, ...) are kept as they are. Mapping them to database ids is the
 loader's job.
@@ -83,8 +90,9 @@ loader's job.
 
 **Users**
 
-- `role_id` 1/2/3 -> `CONSUMER`/`CREATOR`/`ADMIN`. Usernames cleaned. Repeated usernames are kept: they
-  are reviewers' display names, not logins (10 repeats).
+- `role_id` 1/2/3 -> `MEMBER`/`MEMBER`/`ADMIN` (5,477 members, 1 admin). Usernames cleaned.
+- Usernames are unique ignoring case: keep the first in input order and append ` (2)`, ` (3)`, ...
+  to later collisions, probing suffixes until each name is unique, including occupied suffixed names.
 
 **Reviews (split across the two stores, TASKS.md section 0 option B)**
 
@@ -105,8 +113,7 @@ loader's job.
   3+ blank lines capped at one, NEL/line-separator characters turned into spaces. Line breaks are kept,
   so render with `white-space: pre-line`. 3,845 texts changed.
 - Body drops `score`, `username`, `title_name` (rating lives in Postgres; the others are joins). Kept:
-  `media_type`, `text`, `details` (movie `review_year`; TV `review_type`, `publication_name`; book
-  `summary`, `amazon_id`, `helpfulness`) and an empty `comments` array.
+  `media_type`, `text` and an empty `comments` array. Imported review extras are discarded (2026-11-03).
 
 **User lists**
 
@@ -124,20 +131,25 @@ loader's job.
 | reviews (Postgres) / review_bodies (Mongo) | 13,490 / 13,490 |
 | user_lists                                 | 13,490          |
 
-`verify.ts`: 27 checks, 0 failed (unique keys, foreign keys, enum values, rating 1 to 5, one review
+`verify.ts` now checks case-insensitive username uniqueness and the two allowed user roles as well.
+Previous run: 27 checks, 0 failed (unique keys, foreign keys, enum values, rating 1 to 5, one review
 per user per title, Postgres and Mongo ids identical, no orphans). The outputs were also compared
 against the raw files with separate code: rating mapping 0 mismatches, no dropped duplicate newer
 than its survivor, title ids identical, no text left untrimmed.
 
 ## Loading
 
+For the 947 undated reviews already loaded locally with the old `1900-01-01` placeholder, use `backfill-undated-dates.ts` to give them the same deterministic made-up 2022–2025 dates as a fresh load, without reloading either store. From the repo root, preview with `npx tsx --env-file=apps/api/.env data/etl/backfill-undated-dates.ts`, then write with `npx tsx --env-file=apps/api/.env data/etl/backfill-undated-dates.ts --apply`. It requires the existing `data/processed/reviews.csv` and `id-map.json`, refuses remote databases, and only updates matching placeholder dates, so reruns are safe; apply verifies that no targeted placeholders remain and both stores agree.
+
+Remove orphan Mongo review bodies and replies whose PostgreSQL review is gone (from the repo root): `npx tsx --env-file=apps/api/.env apps/api/src/jobs/cleanupOrphans.ts`.
+
 - Ids: the loaders generate UUIDs (`crypto.randomUUID`, no dependency) and keep the dataset-id map in
   `id-map.json`, which the Mongo loader needs.
 - Everyone gets the dev password `Password123!` (one bcrypt hash, cost 12). Dataset users have placeholder emails.
 - Imported titles are `APPROVED` with `createdById` NULL. Undated reviews get a made-up `createdAt` between 2022 and 2025.
 - `Title.avgRating` / `reviewCount` are filled from the `title_rating_stats` view at the end of the load.
-- Mongo body: `body` = cleaned text, `mediaType` = discriminator, `details` = the media-specific extras
-  (a new `Mixed` field on `ReviewBody`), `createdAt` = the Postgres review date. Comments stay in their own collection.
+- Mongo body: `body` = cleaned text, `mediaType` = a copy of the title's type,
+  `createdAt` = the Postgres review date. Imported review extras are not written. Comments stay in their own collection.
 - Last load (3 seconds for Postgres): 5,478 users, 1,500 titles, 178 genres, 3,060 title_genres, 12,758 people,
   15,798 title_people, 13,490 reviews, 13,490 list entries, 13,490 Mongo bodies. `verify-load.ts`: 17 checks, 0 failed.
 
@@ -162,8 +174,34 @@ Every run writes to `../processed/logs/`:
 1. ~~`WRITER` role~~ added to the schema. ~~`Title.description`~~, ~~`User.username`~~ added.
 2. **Emails and passwords**: dataset users have placeholder emails and share the dev password. (RA)
 3. **Detail columns** (runtime, tagline, ratings, publisher, price, ...) are not stored. Put them in Mongo or drop them. (JW, HS)
-4. **Mongo discriminator fields**: `runtimeMinutes`, `chaptersRead`, `season`, `episodes` on `ReviewBody` are not in the data; the imported extras live in `details`. (HS)
+4. **Review form fields**: dropped (WH, 2026-11-02). A review is only a star rating and text, so the old `runtimeMinutes`, `chaptersRead`, `season`, `episodes` fields and the per-type discriminators are gone; imported review extras were also removed from the ETL and model on 2026-11-03. (HS)
 5. **Genre filter**: all genres are in the data; decide the view/query that limits the browse filter to common ones. (SJ)
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star
    were my calls; confirm with the team.
 7. Aggregates are computed by the loader through the view; keep that in sync when reviews are written through the API. (HS)
+
+## Posters
+
+`clean-posters.ts` writes `title_posters.csv` (`title_id`, `poster_url`), and `load-postgres.ts` puts
+it in `Title.posterUrl`. The links are hotlinked, and only https is kept.
+
+- Movies: `MovieGenre_cleaned.csv` and `movielens_movies.csv`, matched on normalised name + release year.
+- TV shows: `tv_series_data_cleaned.csv` (name + start year), then the saved lookups.
+- Books: `books_data_cleaned.csv` (name + publication year), then the saved lookups.
+
+`fetch-posters.ts` asks TVmaze and Open Library about the TV shows and books the files miss, and
+saves the answers to `data/raw/lookup_posters.csv`. It needs the network, so it is not part of
+`clean-all`. Run `clean-all`, then `fetch-posters`, then `clean-all` again. It can be stopped and
+resumed. TVmaze matches need the same year; Open Library matches are on title only, so some covers
+can be another edition.
+
+A movie with no poster loads as `REJECTED`, which hides it, and is listed in
+`processed/logs/clean-posters.rejects.csv`. TV shows and books are never hidden. Every source is
+optional: with none in `data/raw/`, the step warns, writes an empty `title_posters.csv`, nothing is
+hidden, and every title keeps the gradient.
+
+## Media details
+
+`load-postgres.ts` fills `MovieDetails`, `TvDetails` and `BookDetails` from the detail columns in
+`movies.csv`, `tv_shows.csv` and `books.csv` (mapping in `lib/details.ts`). A title with no detail
+values gets no row. Book `price` is cleaned but not loaded: only 23% of books have one.

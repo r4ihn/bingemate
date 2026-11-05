@@ -16,12 +16,14 @@ Dribbble blocked automated fetching, so this comes from a 15.6 s screen recordin
 Colours and sizes are **estimates** read from compressed video, not exact values.
 
 ## A1. Screens shown
+
 1. **Title hero** (Dune: Part Two): full-bleed poster art, title, synopsis, rating, tags, play button.
 2. **Person / filmography strip** (Denis Villeneuve): row of tall posters over a giant ghost surname.
 
 Nothing else is shown: no forms, lists, tables, comments, admin or mobile layouts.
 
 ## A2. Global look
+
 - Dark only. Background near-black, text white, secondary text grey.
 - One accent colour: yellow, used on the logo chip and the rating pill.
 - Neo-grotesque sans-serif (looks like Helvetica Now / Neue Haas), tight letter-spacing on large text.
@@ -29,18 +31,21 @@ Nothing else is shown: no forms, lists, tables, comments, admin or mobile layout
 - Rounded pill shapes for tags and badges.
 
 ## A3. Breadcrumb
+
 - Centred at the top of the screen.
 - Pattern: `Main > Films > Denis Villeneuve > Dune: Part Two`.
 - Parent crumbs muted grey, current crumb white, chevron separators, about 14 px.
 - On the filmography screen it stops at the person: `Main > Films > Denis Villeneuve`.
 
 ## A4. Navigation (in the reference it is at the BOTTOM, centred)
+
 - Floating dock, not full width. Dark grey translucent bar, rounded corners.
 - Left to right: yellow logo chip (IMDb), then text items `Menu` (with a grid-dots icon), `Actors`, `Description`, `Title`, `Title`, then three square icon buttons: `Save` (bookmark), `Search` (magnifier), `Sign in` (person).
 - Icon buttons have a tiny caption under the icon.
 - Text items about 13 px, white at reduced opacity.
 
 ## A5. Title hero
+
 - **Title:** very large white text, top-left, two lines (`Dune:` / `Part Two`), about 110 px, line-height about 1.
 - **Synopsis:** right-top, about 15 px, about 380 px wide, white, with a studio credit at the end.
 - **Rating:** yellow filled pill under the synopsis: `IMDb` wordmark in bold plus the score (`9.6`).
@@ -49,6 +54,7 @@ Nothing else is shown: no forms, lists, tables, comments, admin or mobile layout
 - **Pills:** 1 px white outline, transparent fill, fully rounded, about 14 px text.
 
 ## A6. Filmography strip
+
 - Seven tall, narrow portrait posters in a row (about 145 px wide, about 480 px tall) with even gaps.
 - Posters are **greyscale** by default.
 - The hovered poster turns **full colour**, grows slightly and lifts up.
@@ -57,6 +63,7 @@ Nothing else is shown: no forms, lists, tables, comments, admin or mobile layout
 - Black background.
 
 ## A7. Motion seen
+
 - Posters enter staggered from the left, at different heights, then settle into one row.
 - Hover on a poster: greyscale to colour plus lift.
 - The hero and the strip alternate (transition between the two screens).
@@ -69,71 +76,78 @@ Nothing else is shown: no forms, lists, tables, comments, admin or mobile layout
 Everything below was decided by us (Claude Code session on 2026-10-17 with WH). None of it is in the reference.
 
 ## B1. Decisions made
-| Decision | Choice | Why |
-|---|---|---|
-| Navigation position | **Fixed at the top** of the viewport (reference has it at the bottom) | Requested by WH |
-| Font | **Inter** | Requested by WH. Free, close to the reference's neo-grotesque feel |
-| Brand | **BingeMate** wordmark in the yellow chip. No IMDb name, logo, or Dune artwork | We are not IMDb; also avoids copyright issues |
-| Imagery | Mock posters (CSS/SVG placeholders) first, real dataset posters later | Backend and data are not ready |
-| Theme | Dark only | Matches the reference; avoids doubling the styling work |
-| Visuals first | Static preview at `docs/design/preview.html` before React pages | Review the look cheaply before building it |
+
+| Decision            | Choice                                                                         | Why                                                                |
+| ------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------ |
+| Navigation position | **Fixed at the top** of the viewport (reference has it at the bottom)          | Requested by WH                                                    |
+| Font                | **Inter**                                                                      | Requested by WH. Free, close to the reference's neo-grotesque feel |
+| Brand               | **BingeMate** wordmark in the yellow chip. No IMDb name, logo, or Dune artwork | We are not IMDb; also avoids copyright issues                      |
+| Imagery             | Mock posters (CSS/SVG placeholders) first, real dataset posters later          | Backend and data are not ready                                     |
+| Theme               | Dark only                                                                      | Matches the reference; avoids doubling the styling work            |
+| Visuals first       | Static preview at `docs/design/preview.html` before React pages                | Review the look cheaply before building it                         |
 
 ## B2. Design tokens (proposed)
+
 Names are CSS custom properties. Values are our estimates from Part A; adjust here first, then in code.
 
-| Token | Value | Use |
-|---|---|---|
-| `--bg` | `#070707` | Page background |
-| `--surface` | `#161616` | Cards, inputs, panels |
-| `--surface-2` | `#222222` | Raised surfaces, hover |
-| `--dock` | `rgba(38,38,38,0.82)` | Nav dock fill (with blur) |
-| `--border` | `rgba(255,255,255,0.14)` | Outlines |
-| `--text` | `#ffffff` | Primary text |
-| `--text-muted` | `#9a9a9a` | Secondary text |
-| `--ghost` | `#1e1e1e` | Giant background words |
-| `--accent` | `#f5c518` | Logo chip, rating, primary actions |
-| `--accent-ink` | `#111111` | Text on accent |
-| `--danger` | `#ff5c5c` | Errors, destructive actions |
-| `--success` | `#4cd083` | Approved / success |
-| `--warn` | `#f5a623` | Pending |
+| Token          | Value                    | Use                                |
+| -------------- | ------------------------ | ---------------------------------- |
+| `--bg`         | `#070707`                | Page background                    |
+| `--surface`    | `#161616`                | Cards, inputs, panels              |
+| `--surface-2`  | `#222222`                | Raised surfaces, hover             |
+| `--dock`       | `rgba(38,38,38,0.82)`    | Nav dock fill (with blur)          |
+| `--border`     | `rgba(255,255,255,0.14)` | Outlines                           |
+| `--text`       | `#ffffff`                | Primary text                       |
+| `--text-muted` | `#9a9a9a`                | Secondary text                     |
+| `--ghost`      | `#1e1e1e`                | Giant background words             |
+| `--accent`     | `#f5c518`                | Logo chip, rating, primary actions |
+| `--accent-ink` | `#111111`                | Text on accent                     |
+| `--danger`     | `#ff5c5c`                | Errors, destructive actions        |
+| `--success`    | `#4cd083`                | Approved / success                 |
+| `--warn`       | `#f5a623`                | Pending                            |
 
 Type scale (Inter):
 
-| Token | Size | Weight | Use |
-|---|---|---|---|
-| `--fs-display` | `clamp(3.5rem, 8vw, 7rem)` | 500, letter-spacing -0.04em | Hero titles |
-| `--fs-h1` | 2.5rem | 600 | Page titles |
-| `--fs-h2` | 1.5rem | 600 | Section titles |
-| `--fs-body` | 0.95rem | 400 | Body |
-| `--fs-small` | 0.8rem | 400/500 | Nav, labels, captions |
+| Token          | Size                       | Weight                      | Use                   |
+| -------------- | -------------------------- | --------------------------- | --------------------- |
+| `--fs-display` | `clamp(3.5rem, 8vw, 7rem)` | 500, letter-spacing -0.04em | Hero titles           |
+| `--fs-h1`      | 2.5rem                     | 600                         | Page titles           |
+| `--fs-h2`      | 1.5rem                     | 600                         | Section titles        |
+| `--fs-body`    | 0.95rem                    | 400                         | Body                  |
+| `--fs-small`   | 0.8rem                     | 400/500                     | Nav, labels, captions |
 
 Shape and spacing: pill radius `999px`; poster radius `8px`; panel radius `16px`; spacing steps 4, 8, 12, 16, 24, 32, 48, 64 px.
 
 ## B3. Fixed top navigation (our spec)
+
 - `position: fixed; top: 16px; left: 50%; transform: translateX(-50%)`, `z-index` above all content.
 - Same dock as the reference: logo chip, text links, icon buttons.
 - Our links (the reference's `Actors/Description/Title` are placeholders): `Menu`, `Browse`, `Trending`, `My Lists`.
 - Our icon buttons: `Save` (watchlist), `Search`, `Sign in` (becomes the user menu when logged in).
-- Role-based items (Creator, Admin) appear after login, as in `MainLayout`.
+- Role-based items appear after login, as in `MainLayout`: **Creator** for every member, **Admin** for admins. Signup includes **Username**; its hint is "3 to 30 characters: letters, digits, spaces, _ - and .". Validation messages and **Username already taken** appear under that field.
 - Page content needs top padding so it does not sit under the dock.
 - On narrow screens the text links collapse into the `Menu` button.
 
 ## B4. Pages not in the reference (our extensions)
+
 Same tokens, same pill and dock language. Proposed:
 
-| Page | Proposed treatment |
-|---|---|
-| Home | Reference hero (featured title) followed by a poster strip of trending titles |
-| Browse | Filter pills row (type, genre, rating) over a grid of portrait posters, greyscale-to-colour on hover |
-| Title detail | The reference hero, then reviews and comments in `--surface` panels below |
-| Login / Register | Centred panel on `--bg`, pill-radius inputs and a yellow primary button |
-| My Lists | Pill tabs (Completed, In progress, Plan to) with a poster grid |
-| Review form | Panel with a rating control and media-specific fields (movie, book, TV) |
-| Creator | Table of submissions with status badges (Pending, Approved, Rejected) |
-| Admin | Tables for users and the approval queue, using the same badge styles |
-| Forbidden / 404 | Giant ghost text (`403`, `404`) in the style of the surname word |
+| Page             | Proposed treatment                                                                                                                                                         |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Home             | Reference hero (featured title) followed by a poster strip of trending titles                                                                                              |
+| Browse           | Filter pills row (type, genre, rating) over a grid of portrait posters, greyscale-to-colour on hover                                                                       |
+| Title detail     | The reference hero, then reviews and comments in `--surface` panels below                                                                                                  |
+| Login / Register | Centred panel on `--bg`, pill-radius inputs and a yellow primary button                                                                                                    |
+| My Lists         | Pill tabs (Completed, In progress, Plan to) with a poster grid                                                                                                             |
+| Review form      | Panel with a star rating control and a text box, the same for every media type                                                                                             |
+| Creator          | Table of submissions with status badges (Pending, Approved, Rejected). The edit form shows “Changing the image sends this title back for approval” beside the image field. |
+| Admin            | Tables for users and the approval queue, using the same badge styles                                                                                                       |
+| Forbidden / 404  | Giant ghost text (`403`, `404`) in the style of the surname word                                                                                                           |
+
+Submissions (all statuses) and approved-title stats have a Delete button with inline “Delete this title? This cannot be undone.” and Confirm / Cancel. Controls are disabled during deletion; success refreshes the table, while a server error appears inline and keeps the row.
 
 ## B5. Components (our spec)
+
 - **Primary button:** `--accent` fill, `--accent-ink` text, pill.
 - **Secondary button:** outlined pill like the reference's tags.
 - **Input:** `--surface` fill, 1 px `--border`, pill or 12 px radius, yellow focus ring.
@@ -143,6 +157,7 @@ Same tokens, same pill and dock language. Proposed:
 - **Empty / loading / error states:** muted text with a ghost headline.
 
 ## B6. Accessibility notes (ours)
+
 - White on near-black passes contrast. `--text-muted` (`#9a9a9a`) on `--bg` is about 7:1, fine for body.
 - Black text on the yellow accent passes. Do not put white text on yellow.
 - Keep a visible focus ring (yellow) on every interactive element.
@@ -151,6 +166,7 @@ Same tokens, same pill and dock language. Proposed:
 - The ghost words are decorative: `aria-hidden="true"`.
 
 ## B7. Open items
+
 - Mobile layout is not defined by the reference. Our rule: dock collapses, strip becomes a horizontal scroller.
 - Real posters come from the dataset later (URL field on titles). Until then use the mock posters.
 - Exact colours and sizes need a pass against full-resolution screenshots if the team wants closer fidelity.

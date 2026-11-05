@@ -12,7 +12,6 @@ type Body = {
   review_id: number;
   media_type: string;
   text: string;
-  details: Record<string, unknown>;
 };
 
 /**
@@ -58,7 +57,6 @@ export async function main(): Promise<void> {
           userId: lookup(ids.users, header['user_id'], 'user'),
           mediaType: b.media_type,
           body: b.text,
-          details: b.details,
         };
         // Same date as the Postgres header, including the made-up date for undated reviews.
         doc['createdAt'] = reviewCreatedAt(header['created_at'], String(b.review_id));

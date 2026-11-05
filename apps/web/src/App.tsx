@@ -37,7 +37,7 @@ export function App() {
               <Route path="me/lists" element={<MyLists />} />
               <Route path="me/profile" element={<Profile />} />
             </Route>
-            <Route element={<ProtectedRoute roles={[Role.CREATOR, Role.ADMIN]} />}>
+            <Route element={<ProtectedRoute roles={[Role.MEMBER]} />}>
               <Route path="creator">
                 <Route index element={<CreatorDashboard />} />
                 <Route path="new" element={<SubmissionForm />} />

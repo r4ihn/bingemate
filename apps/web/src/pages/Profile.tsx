@@ -25,8 +25,7 @@ import { useAsync } from '../hooks/useAsync.js';
 import { LIST_STATUSES } from '../labels.js';
 
 const ROLE_LABEL: Record<Role, string> = {
-  [Role.CONSUMER]: 'Member',
-  [Role.CREATOR]: 'Creator',
+  [Role.MEMBER]: 'Member',
   [Role.ADMIN]: 'Admin',
 };
 

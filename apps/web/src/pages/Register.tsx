@@ -8,7 +8,10 @@ export function Register() {
       title="Create account"
       submitLabel="Create account"
       strict
-      submit={(email, password) => authApi.register({ email, password })}
+      withUsername
+      submit={({ email, password, username }) =>
+        authApi.register({ email, password, username: username! })
+      }
       footer={
         <>
           Already have an account?{' '}

@@ -13,9 +13,14 @@ interface FakeUser {
   email: string;
   passwordHash: string;
   role: string;
+  username: string | null;
 }
 
-const db = vi.hoisted(() => ({ users: [] as FakeUser[] }));
+const db = vi.hoisted(() => ({
+  users: [] as FakeUser[],
+  target: undefined as unknown,
+  omitMeta: false,
+}));
 
 vi.mock('../../src/db/prisma.js', async () => {
   const { Prisma } = await import('@prisma/client');
@@ -24,15 +29,27 @@ vi.mock('../../src/db/prisma.js', async () => {
       user: {
         findUnique: async ({ where }: { where: { id?: string; email?: string } }) =>
           db.users.find((u) => (where.id ? u.id === where.id : u.email === where.email)) ?? null,
-        create: async ({ data }: { data: { email: string; passwordHash: string } }) => {
+        create: async ({
+          data,
+        }: {
+          data: { email: string; passwordHash: string; username: string };
+        }) => {
+          if (db.target !== undefined || db.omitMeta) {
+            throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+              code: 'P2002',
+              clientVersion: 'test',
+              ...(db.omitMeta ? {} : { meta: { modelName: 'User', target: db.target } }),
+            });
+          }
           // Like the real unique email column
           if (db.users.some((u) => u.email === data.email)) {
             throw new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
               code: 'P2002',
               clientVersion: 'test',
+              meta: { target: ['email'] },
             });
           }
-          const user = { id: `user_${db.users.length + 1}`, role: 'CONSUMER', ...data };
+          const user = { id: `user_${db.users.length + 1}`, role: 'MEMBER', ...data };
           db.users.push(user);
           return user;
         },
@@ -41,28 +58,118 @@ vi.mock('../../src/db/prisma.js', async () => {
   };
 });
 
+vi.mock('../../src/middleware/rateLimit.js', () => ({
+  authLimiter: (_req: unknown, _res: unknown, next: () => void) => next(),
+}));
+
 const { createApp } = await import('../../src/app.js');
 
-// One app for the whole file: authLimiter allows 20 register/login calls per
-// 15 minutes, and this file stays under that.
+// These tests exercise auth; isolate the production limiter's shared request counter.
 const app = createApp();
-const credentials = { email: 'me@test.com', password: 'abc12345' };
+const credentials = { email: 'me@test.com', password: 'abc12345', username: 'Casey Lee' };
 
 beforeEach(() => {
   db.users.length = 0;
+  db.target = undefined;
+  db.omitMeta = false;
 });
 
 describe('POST /api/auth/register', () => {
-  it('creates a CONSUMER, sets an httpOnly cookie and never returns the hash', async () => {
+  it('creates a MEMBER, sets an httpOnly cookie and never returns the hash', async () => {
     const res = await request(app).post('/api/auth/register').send(credentials);
 
     expect(res.status).toBe(201);
-    expect(res.body).toEqual({ id: expect.any(String), email: credentials.email, role: 'CONSUMER' });
+    expect(res.body).toEqual({
+      id: expect.any(String),
+      email: credentials.email,
+      role: 'MEMBER',
+      username: credentials.username,
+    });
     expect(res.body.passwordHash).toBeUndefined();
 
     const cookie = String(res.headers['set-cookie']);
     expect(cookie).toContain('token=');
     expect(cookie).toContain('HttpOnly');
+  });
+
+  it('stores the normalised username', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, username: '  Casey  Lee ' });
+    expect(res.status).toBe(201);
+    expect(res.body.username).toBe('Casey Lee');
+    expect(db.users[0]?.username).toBe('Casey Lee');
+  });
+
+  it.each(
+    [
+      'User_username_lower_key',
+      ['User_username_lower_key'],
+      ['username'],
+      ['lower(username)'],
+      ['LOWER(USERNAME)'],
+    ].map((target) => [target]),
+  )('returns username conflict for target %j', async (target) => {
+    db.target = target;
+    const res = await request(app).post('/api/auth/register').send(credentials);
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'Username already taken' });
+  });
+
+  it.each(
+    [['email'], 'User_email_key', ['User_email_key'], ['EMAIL'], ['username', 'email']].map(
+      (target) => [target],
+    ),
+  )('returns email conflict for target %j', async (target) => {
+    db.target = target;
+    const res = await request(app).post('/api/auth/register').send(credentials);
+    expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'Email already in use' });
+  });
+
+  it('returns 500 for an unknown unique constraint', async () => {
+    db.target = ['something_else'];
+    const res = await request(app).post('/api/auth/register').send(credentials);
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'InternalServerError' });
+  });
+
+  it('returns 500 for a unique constraint error without meta', async () => {
+    db.omitMeta = true;
+    const res = await request(app).post('/api/auth/register').send(credentials);
+    expect(res.status).toBe(500);
+    expect(res.body).toEqual({ error: 'InternalServerError' });
+  });
+
+  it('returns the shared username validation message in a 400', async () => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, username: 'AdMiN' });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({
+      error: 'ValidationError',
+      details: { formErrors: [], fieldErrors: { username: ['This username is reserved'] } },
+    });
+    expect(db.users).toHaveLength(0);
+  });
+
+  it.each([
+    ['аdmin', 'Username cannot mix letters from different alphabets'],
+    ['a.d.m.i.n', 'This username is reserved'],
+    ['Suppօrt', 'Username contains letters from an unsupported alphabet'],
+    ['adm1n', 'This username is reserved'],
+    ['admㅤin', 'Username cannot contain invisible characters'],
+    ['ᴀᴅᴍɪɴ', 'This username is reserved'],
+  ])('refuses impersonating username %s with a 400', async (username, message) => {
+    const res = await request(app)
+      .post('/api/auth/register')
+      .send({ ...credentials, username });
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({
+      error: 'ValidationError',
+      details: { formErrors: [], fieldErrors: { username: [message] } },
+    });
+    expect(db.users).toHaveLength(0);
   });
 
   it('stores a bcrypt hash, not the plain password', async () => {
@@ -77,6 +184,7 @@ describe('POST /api/auth/register', () => {
     const res = await request(app).post('/api/auth/register').send(credentials);
 
     expect(res.status).toBe(409);
+    expect(res.body).toEqual({ error: 'Email already in use' });
   });
 
   it('returns 409, not 500, when two registers for one email arrive together', async () => {
@@ -118,7 +226,19 @@ describe('POST /api/auth/login', () => {
 
     expect(res.status).toBe(200);
     expect(res.body.email).toBe(credentials.email);
+    expect(res.body.username).toBe(credentials.username);
     expect(String(res.headers['set-cookie'])).toContain('token=');
+  });
+
+  it('returns null username for a legacy user on login and me', async () => {
+    db.users[0]!.username = null;
+    const agent = request.agent(app);
+    const login = await agent.post('/api/auth/login').send(credentials);
+    expect(login.status).toBe(200);
+    expect(login.body.username).toBeNull();
+    const me = await agent.get('/api/auth/me');
+    expect(me.status).toBe(200);
+    expect(me.body.username).toBeNull();
   });
 
   it('gives the same 401 for a wrong password and an unknown email', async () => {
@@ -156,7 +276,12 @@ describe('GET /api/auth/me', () => {
     const res = await agent.get('/api/auth/me');
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ id: expect.any(String), email: credentials.email, role: 'CONSUMER' });
+    expect(res.body).toEqual({
+      id: expect.any(String),
+      email: credentials.email,
+      role: 'MEMBER',
+      username: credentials.username,
+    });
   });
 });
 

@@ -51,7 +51,7 @@ describe('creatorApi', () => {
 });
 
 describe('reviewsApi', () => {
-  const input = { rating: 4, body: 'ok', fields: { runtimeMinutes: 100 } };
+  const input = { rating: 4, body: 'ok' };
   const title = (id: string) => db.titles.find((t) => t.id === id)!;
 
   it('the first review sets the title average and count, and deleting it clears them', async () => {
@@ -80,22 +80,21 @@ describe('reviewsApi', () => {
   });
 
   it.each([0, 6, 4.5, Number.NaN])('create rejects rating %s', async (rating) => {
-    await expect(
-      reviewsApi.create('mock-1', { rating, body: 'ok', fields: { runtimeMinutes: 100 } }),
-    ).rejects.toMatchObject({ status: 400 });
+    await expect(reviewsApi.create('mock-1', { rating, body: 'ok' })).rejects.toMatchObject({
+      status: 400,
+    });
   });
 
   it('create accepts the top rating, 5', async () => {
     const review = await reviewsApi.create('mock-1', {
       rating: 5,
       body: 'ok',
-      fields: { runtimeMinutes: 100 },
     });
     expect(review.rating).toBe(5);
   });
 
   it('create rejects a second review by the same user on the same title (409)', async () => {
-    const input = { rating: 4, body: 'ok', fields: { runtimeMinutes: 100 } };
+    const input = { rating: 4, body: 'ok' };
     await reviewsApi.create('mock-20', input);
     await expect(reviewsApi.create('mock-20', input)).rejects.toMatchObject({ status: 409 });
   });
@@ -204,9 +203,9 @@ describe('titlesApi and adminApi', () => {
 
   it('adminApi.setRole changes a user role', async () => {
     const page = await adminApi.users(1);
-    const target = page.data.find((u) => u.role === Role.CONSUMER)!;
-    await adminApi.setRole(target.id, Role.CREATOR);
-    expect(db.users.find((u) => u.id === target.id)?.role).toBe(Role.CREATOR);
+    const target = page.data.find((u) => u.role === Role.MEMBER)!;
+    await adminApi.setRole(target.id, Role.ADMIN);
+    expect(db.users.find((u) => u.id === target.id)?.role).toBe(Role.ADMIN);
   });
 });
 
@@ -247,14 +246,14 @@ describe('titlesApi.search', () => {
 });
 
 describe('mock writes follow the signed-in user', () => {
-  const alex = { id: 'user-alex', email: 'alex@example.com', role: Role.CONSUMER };
-  const studio = { id: 'user-studio', email: 'studio@example.com', role: Role.CREATOR };
-  const input = { rating: 4, body: 'ok', fields: { runtimeMinutes: 100 } };
+  const alex = { id: 'user-alex', email: 'alex@example.com', role: Role.MEMBER };
+  const studio = { id: 'user-studio', email: 'studio@example.com', role: Role.MEMBER };
+  const input = { rating: 4, body: 'ok' };
 
   it('a review is stored under the signed-in user, with their role', async () => {
     setMockActor(alex);
     const review = await reviewsApi.create('mock-20', input);
-    expect(review.author).toEqual({ id: 'user-alex', name: 'alex', role: Role.CONSUMER });
+    expect(review.author).toEqual({ id: 'user-alex', name: 'alex', role: Role.MEMBER });
   });
 
   it('two users can each review the same title', async () => {
@@ -264,11 +263,11 @@ describe('mock writes follow the signed-in user', () => {
     await expect(reviewsApi.create('mock-20', input)).resolves.toBeDefined();
   });
 
-  it('a creator reply carries the CREATOR role', async () => {
+  it('a creator reply carries the MEMBER role', async () => {
     setMockActor(studio);
     const [review] = db.reviews;
     const reply = await repliesApi.create((review as { id: string }).id, 'Thanks!');
-    expect(reply.author).toMatchObject({ id: 'user-studio', role: Role.CREATOR });
+    expect(reply.author).toMatchObject({ id: 'user-studio', role: Role.MEMBER });
   });
 
   it("a creator sees their own submissions and the demo titles, not another creator's", async () => {

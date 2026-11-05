@@ -1,10 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import { ApiError } from '../../api/client.js';
-import { creatorApi } from '../../api/creator.js';
+import { creatorApi, PosterUploadError } from '../../api/creator.js';
 import * as image from '../../image.js';
 import { MOCK_USER, db, resetDb } from '../../mocks/db.js';
 import { renderWithProviders } from '../../test/utils.js';
@@ -12,15 +12,28 @@ import { CreatorDashboard } from './CreatorDashboard.js';
 import { CreatorStats } from './CreatorStats.js';
 import { SubmissionForm } from './SubmissionForm.js';
 
-function renderCreator(route: string) {
+function Where() {
+  const location = useLocation();
+  return <p data-testid="location">{JSON.stringify(location)}</p>;
+}
+
+function renderCreator(route: string, state?: unknown) {
   renderWithProviders(
     <Routes>
-      <Route path="/creator" element={<CreatorDashboard />} />
+      <Route
+        path="/creator"
+        element={
+          <>
+            <CreatorDashboard />
+            <Where />
+          </>
+        }
+      />
       <Route path="/creator/new" element={<SubmissionForm />} />
       <Route path="/creator/:id/edit" element={<SubmissionForm />} />
       <Route path="/creator/stats" element={<CreatorStats />} />
     </Routes>,
-    { route, role: Role.CREATOR },
+    { route, state, role: Role.MEMBER },
   );
   return userEvent.setup();
 }
@@ -49,6 +62,28 @@ const hugePicture = () => {
 };
 
 describe('CreatorDashboard', () => {
+  it('shows no notice when location state has none', async () => {
+    renderCreator('/creator');
+    await screen.findByRole('table');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('consumes the notice from router state so remounting after a reload does not show it', async () => {
+    const notice =
+      'Your title was saved, but its image could not be uploaded. Choose Edit on it to try the image again.';
+    renderCreator('/creator', { notice });
+    expect(await screen.findByRole('alert')).toHaveTextContent(notice);
+    await waitFor(() => {
+      expect(JSON.parse(screen.getByTestId('location').textContent!).state).toBeNull();
+    });
+    const location = JSON.parse(screen.getByTestId('location').textContent!);
+    cleanup();
+    renderCreator(location.pathname, location.state);
+    await screen.findByRole('table');
+    expect(screen.queryByText(notice)).not.toBeInTheDocument();
+  });
+
   it('lists own submissions with their status', async () => {
     renderCreator('/creator');
     const approved = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
@@ -70,6 +105,75 @@ describe('CreatorDashboard', () => {
     expect(screen.queryByText(title('mock-28').name)).not.toBeInTheDocument();
   });
 
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'confirms before deleting %s and cancel leaves it untouched',
+    async (id) => {
+      const remove = vi.spyOn(creatorApi, 'remove');
+      const user = renderCreator('/creator');
+      const row = await screen.findByRole('row', { name: new RegExp(title(id).name) });
+      await user.click(within(row).getByRole('button', { name: 'Delete' }));
+      expect(
+        within(row).getByText('Delete this title? This cannot be undone.'),
+      ).toBeInTheDocument();
+      expect(remove).not.toHaveBeenCalled();
+      await user.click(within(row).getByRole('button', { name: 'Cancel' }));
+      expect(remove).not.toHaveBeenCalled();
+      expect(row).toBeInTheDocument();
+      expect(within(row).queryByRole('button', { name: 'Confirm' })).not.toBeInTheDocument();
+    },
+  );
+
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'deletes %s from submissions and stats after confirmation',
+    async (id) => {
+      const name = title(id).name;
+      const remove = vi.spyOn(creatorApi, 'remove');
+      const user = renderCreator('/creator');
+      const row = await screen.findByRole('row', { name: new RegExp(name) });
+      await user.click(within(row).getByRole('button', { name: 'Delete' }));
+      await user.click(within(row).getByRole('button', { name: 'Confirm' }));
+      await waitFor(() => expect(row).not.toBeInTheDocument());
+      expect(remove).toHaveBeenCalledExactlyOnceWith(id);
+      expect(db.titles.some((t) => t.id === id)).toBe(false);
+      await user.click(screen.getByRole('link', { name: 'Stats' }));
+      if (id === 'mock-24') await screen.findByText('No stats yet');
+      else await screen.findByRole('table');
+      expect(screen.queryByText(name)).not.toBeInTheDocument();
+    },
+  );
+
+  it('shows the server message on 409 and keeps the row', async () => {
+    const message = 'Other users have reviewed or listed this title. Ask an admin to delete it.';
+    vi.spyOn(creatorApi, 'remove').mockRejectedValue(new ApiError(409, message));
+    const user = renderCreator('/creator');
+    const row = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    await user.click(within(row).getByRole('button', { name: 'Confirm' }));
+    expect(await within(row).findByRole('alert')).toHaveTextContent(message);
+    expect(row).toBeInTheDocument();
+    expect(within(row).getByRole('button', { name: 'Confirm' })).toBeEnabled();
+  });
+
+  it('disables confirmation and cancel while deletion runs', async () => {
+    let finish: () => void = () => undefined;
+    const remove = vi.spyOn(creatorApi, 'remove').mockReturnValue(
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+    );
+    const user = renderCreator('/creator');
+    const row = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    const confirm = within(row).getByRole('button', { name: 'Confirm' });
+    await user.click(confirm);
+    expect(confirm).toBeDisabled();
+    expect(within(row).getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    await user.click(confirm);
+    expect(remove).toHaveBeenCalledTimes(1);
+    finish();
+    await waitFor(() => expect(within(row).getByRole('button', { name: 'Delete' })).toBeEnabled());
+  });
+
   it('empty submissions shows an empty state', async () => {
     for (const t of db.titles) if (t.createdBy === MOCK_USER) t.createdBy = undefined;
     renderCreator('/creator');
@@ -78,6 +182,36 @@ describe('CreatorDashboard', () => {
 });
 
 describe('SubmissionForm (new)', () => {
+  it('leaves the new form after a partial upload failure, preventing a duplicate retry', async () => {
+    const submission = { title: title('mock-25') };
+    const submit = vi
+      .spyOn(creatorApi, 'submit')
+      .mockRejectedValue(new PosterUploadError(413, 'Image too large', submission));
+    const user = renderCreator('/creator/new');
+    await user.type(screen.getByLabelText('Title'), 'Saved title');
+    await user.upload(screen.getByLabelText(/Poster image/), picture());
+    const button = screen.getByRole('button', { name: 'Submit for approval' });
+    await user.click(button);
+    const notice = await screen.findByRole('alert');
+    expect(notice).toHaveTextContent(
+      'Your title was saved, but its image could not be uploaded. Choose Edit on it to try the image again.',
+    );
+    expect(JSON.parse(screen.getByTestId('location').textContent!).pathname).toBe('/creator');
+    expect(screen.queryByRole('button', { name: 'Submit for approval' })).not.toBeInTheDocument();
+    await user.click(button);
+    expect(submit).toHaveBeenCalledTimes(1);
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(screen.queryByText(/Your title was saved/)).not.toBeInTheDocument();
+  });
+
+  it('enables the media type control for a new submission', () => {
+    renderCreator('/creator/new');
+    expect(screen.getByRole('combobox', { name: 'Type' })).toBeEnabled();
+    expect(
+      screen.queryByText('The type cannot change after a title is created'),
+    ).not.toBeInTheDocument();
+  });
+
   it('a new submission is listed as PENDING', async () => {
     const u = renderCreator('/creator/new');
     await u.type(screen.getByLabelText('Title'), 'Brand New Title');
@@ -107,6 +241,24 @@ describe('SubmissionForm (new)', () => {
 });
 
 describe('SubmissionForm (poster image)', () => {
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'explains image re-approval when editing %s',
+    async (id) => {
+      renderCreator(`/creator/${id}/edit`);
+      const picker = await screen.findByLabelText('Poster image (optional)');
+      expect(picker).toHaveAccessibleDescription(
+        /Changing the image sends this title back for approval/,
+      );
+    },
+  );
+
+  it('does not show the image re-approval hint for a new title', () => {
+    renderCreator('/creator/new');
+    expect(
+      screen.queryByText('Changing the image sends this title back for approval'),
+    ).not.toBeInTheDocument();
+  });
+
   const fillTitle = async (user: ReturnType<typeof userEvent.setup>) =>
     user.type(screen.getByLabelText('Title'), 'Night Train');
 
@@ -340,6 +492,31 @@ describe('SubmissionForm (poster image)', () => {
 });
 
 describe('SubmissionForm (edit)', () => {
+  it.each(['mock-24', 'mock-25', 'mock-26'])(
+    'disables the media type control with a hint when editing %s',
+    async (id) => {
+      renderCreator(`/creator/${id}/edit`);
+      const control = await screen.findByRole('combobox', { name: 'Type' });
+      expect(control).toBeDisabled();
+      expect(control).toHaveValue(title(id).mediaType);
+      expect(
+        screen.getByText('The type cannot change after a title is created'),
+      ).toBeInTheDocument();
+    },
+  );
+
+  it('omits mediaType from the update input', async () => {
+    const update = vi.spyOn(creatorApi, 'update');
+    const user = renderCreator('/creator/mock-25/edit');
+    const name = await screen.findByDisplayValue(title('mock-25').name);
+    await user.type(name, ' 2');
+    await user.click(screen.getByRole('button', { name: 'Save changes' }));
+    await screen.findByRole('row', { name: /Iron Garden 2/ });
+    expect(update).toHaveBeenCalledOnce();
+    expect(update.mock.calls[0]?.[1]).toMatchObject({ name: 'Iron Garden 2' });
+    expect(update.mock.calls[0]?.[1]).not.toHaveProperty('mediaType');
+  });
+
   it('editing an APPROVED title warns first and saves nothing until confirmed', async () => {
     const update = vi.spyOn(creatorApi, 'update');
     const t = title('mock-24');
@@ -393,6 +570,17 @@ describe('CreatorStats', () => {
     expect(within(row).getByText(stat!.avgRating.toFixed(1))).toBeInTheDocument();
     expect(within(row).getByText(String(stat!.reviewCount))).toBeInTheDocument();
     expect(within(row).getByText(String(stat!.listAdds))).toBeInTheDocument();
+  });
+
+  it('deletes an approved title and refreshes stats', async () => {
+    const stats = vi.spyOn(creatorApi, 'stats');
+    const user = renderCreator('/creator/stats');
+    const row = await screen.findByRole('row', { name: new RegExp(title('mock-24').name) });
+    await user.click(within(row).getByRole('button', { name: 'Delete' }));
+    await user.click(within(row).getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(row).not.toBeInTheDocument());
+    expect(stats).toHaveBeenCalledTimes(2);
+    expect(db.titles.some((t) => t.id === 'mock-24')).toBe(false);
   });
 
   it('shows an empty state when no title is approved yet', async () => {

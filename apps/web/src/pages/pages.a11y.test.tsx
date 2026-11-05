@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import type { ReactElement } from 'react';
 import { Route, Routes } from 'react-router-dom';
 import { Role } from '@bingemate/shared';
@@ -24,12 +25,12 @@ const pages: [string, string, string, ReactElement, Role?][] = [
   ['TitleDetail', '/titles/:id', '/titles/mock-1', <TitleDetail />],
   ['Login', '/login', '/login', <Login />],
   ['Register', '/register', '/register', <Register />],
-  ['MyLists', '/me/lists', '/me/lists', <MyLists />, Role.CONSUMER],
+  ['MyLists', '/me/lists', '/me/lists', <MyLists />, Role.MEMBER],
   ['Forbidden', '/forbidden', '/forbidden', <Forbidden />],
   ['NotFound', '*', '/nope', <NotFound />],
-  ['CreatorDashboard', '/creator', '/creator', <CreatorDashboard />, Role.CREATOR],
-  ['SubmissionForm', '/creator/new', '/creator/new', <SubmissionForm />, Role.CREATOR],
-  ['CreatorStats', '/creator/stats', '/creator/stats', <CreatorStats />, Role.CREATOR],
+  ['CreatorDashboard', '/creator', '/creator', <CreatorDashboard />, Role.MEMBER],
+  ['SubmissionForm', '/creator/new', '/creator/new', <SubmissionForm />, Role.MEMBER],
+  ['CreatorStats', '/creator/stats', '/creator/stats', <CreatorStats />, Role.MEMBER],
   ['AdminDashboard', '/admin', '/admin', <AdminDashboard />, Role.ADMIN],
 ];
 
@@ -45,4 +46,44 @@ describe('every page has exactly one h1', () => {
     );
     await waitFor(() => expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1));
   });
+});
+
+it('Browse discovery selects have visible labels and work from the keyboard', async () => {
+  const user = userEvent.setup();
+  renderWithProviders(<Browse />, { route: '/browse?type=MOVIE' });
+  await screen.findByRole('option', { name: 'Drama' });
+  const genre = screen.getByRole('combobox', { name: 'Genre' });
+  const sort = screen.getByRole('combobox', { name: 'Sort' });
+  expect(document.querySelector(`label[for="${genre.id}"]`)).toHaveTextContent('Genre');
+  expect(document.querySelector(`label[for="${sort.id}"]`)).toHaveTextContent('Sort');
+  genre.focus();
+  await user.tab();
+  expect(sort).toHaveFocus();
+  await user.selectOptions(sort, 'rating');
+  expect(sort).toHaveValue('rating');
+});
+
+it('Home trending strip retains named keyboard-focusable title links', async () => {
+  renderWithProviders(<Home />);
+  await screen.findByRole('heading', { level: 1 });
+  const strip = document.getElementById('strip')!;
+  const links = within(strip).getAllByRole('link');
+  expect(links).toHaveLength(7);
+  for (const link of links) {
+    expect(link).toHaveAccessibleName();
+    expect(link.tabIndex).toBe(0);
+  }
+});
+
+it('Register username has a visible label, described hint and keyboard order', async () => {
+  renderWithProviders(<Register />, { route: '/register' });
+  const input = screen.getByRole('textbox', { name: 'Username' });
+  expect(input.closest('label')).toHaveTextContent('Username');
+  expect(input).toHaveAccessibleDescription(/characters: letters, digits/);
+  const u = userEvent.setup();
+  screen.getByLabelText('Email').focus();
+  await u.tab();
+  expect(input).toHaveFocus();
+  await u.tab();
+  expect(screen.getByLabelText('Password')).toHaveFocus();
 });

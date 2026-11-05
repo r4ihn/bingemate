@@ -8,7 +8,16 @@ const EMAIL_OVERRIDES: Record<string, string> = {
   demo_creator: 'creator@bingemate.dev',
 };
 
-const ROLE_BY_ID: Record<string, string> = { '1': 'CONSUMER', '2': 'CREATOR', '3': 'ADMIN' };
+export const ROLE_BY_ID: Record<string, string> = { '1': 'MEMBER', '2': 'MEMBER', '3': 'ADMIN' };
+
+/** Keep input order and probe every suffix, including names already present in the input. */
+export function uniqueUsername(name: string, seen: Set<string>): string {
+  let candidate = name;
+  let suffix = 2;
+  while (seen.has(candidate.toLowerCase())) candidate = `${name} (${suffix++})`;
+  seen.add(candidate.toLowerCase());
+  return candidate;
+}
 
 export function main(): void {
   const log = new StepLog('clean-users');
@@ -28,13 +37,11 @@ export function main(): void {
     }
     if (username !== u['username']) log.bump('username whitespace fixed');
     seenIds.add(id);
-    // Usernames are display names (reviewers' real names), so repeats are legal; just note them.
-    const lower = username.toLowerCase();
-    if (seenNames.has(lower)) log.bump('username repeats an earlier one (kept)');
-    seenNames.add(lower);
+    const uniqueName = uniqueUsername(username, seenNames);
+    if (uniqueName !== username) log.bump('duplicate username renamed');
     out.push({
       user_id: id,
-      username,
+      username: uniqueName,
       role,
       email: EMAIL_OVERRIDES[username] ?? `user${id}@seed.bingemate.local`,
     });

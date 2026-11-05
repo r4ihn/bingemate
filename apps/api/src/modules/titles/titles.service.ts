@@ -1,7 +1,8 @@
 import type { Prisma } from '@prisma/client';
-import type { Paginated, TitleDetailDTO, TitleSummary } from '@bingemate/shared';
+import type { Paginated, TitleDetailDTO, TitleDetailsDTO, TitleSummary } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
+import { getTitleRank } from './ranking.service.js';
 import type { ListQuery, TitleSort } from './titles.schema.js';
 
 export const summarySelect = {
@@ -28,6 +29,33 @@ export function toSummary(t: SummaryRow): TitleSummary {
     ...(t.posterUrl ? { posterUrl: t.posterUrl } : {}),
     createdById: t.createdById,
   };
+}
+
+const detailsSelect = {
+  mediaType: true,
+  movieDetails: {
+    select: { runtimeMin: true, tagline: true, rated: true, letterboxdRating: true },
+  },
+  tvDetails: {
+    select: {
+      numSeasons: true,
+      duration: true,
+      contentRating: true,
+      metascore: true,
+      userscore: true,
+    },
+  },
+  bookDetails: { select: { publisher: true, ratingsCount: true } },
+} satisfies Prisma.TitleSelect;
+
+type DetailsRow = Prisma.TitleGetPayload<{ select: typeof detailsSelect }>;
+
+/** Only the table matching the title's own type counts. */
+function toDetails(t: DetailsRow): TitleDetailsDTO | null {
+  if (t.mediaType === 'MOVIE' && t.movieDetails) return { mediaType: 'MOVIE', ...t.movieDetails };
+  if (t.mediaType === 'TV_SHOW' && t.tvDetails) return { mediaType: 'TV_SHOW', ...t.tvDetails };
+  if (t.mediaType === 'BOOK' && t.bookDetails) return { mediaType: 'BOOK', ...t.bookDetails };
+  return null;
 }
 
 /** Every order ends on id, so pages never repeat or skip a row when the sort key ties. */
@@ -73,6 +101,7 @@ export async function getTitle(id: string): Promise<TitleDetailDTO> {
     where: { id, status: 'APPROVED' },
     select: {
       ...summarySelect,
+      ...detailsSelect,
       description: true,
       releaseYear: true,
       genres: { select: { genre: { select: { name: true } } } },
@@ -80,11 +109,20 @@ export async function getTitle(id: string): Promise<TitleDetailDTO> {
     },
   });
   if (!t) throw new HttpError(404, 'Title not found');
+  let rank = null;
+  try {
+    rank = await getTitleRank(id);
+  } catch (err) {
+    console.error('Title rank lookup failed:', err);
+  }
   return {
     ...toSummary(t),
     description: t.description,
     releaseYear: t.releaseYear,
     genres: t.genres.map((g) => g.genre.name).sort(),
     people: t.people.map((p) => ({ id: p.person.id, name: p.person.name, role: p.role })),
+    details: toDetails(t),
+    rankInType: rank?.rankInType ?? null,
+    topPercent: rank?.topPercent ?? null,
   };
 }

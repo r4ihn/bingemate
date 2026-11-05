@@ -12,28 +12,13 @@ import { ReviewList } from './ReviewList.js';
 afterEach(() => vi.restoreAllMocks());
 
 describe('ReviewList with unexpected data', () => {
-  it.each([
-    [{ season: 2 }, 'Season 2'],
-    [{ episodes: 8 }, '8 episodes'],
-  ])('displays partial TV fields %j', async (fields, label) => {
-    const review: Review = {
-      id: 'partial', titleId: 't1', author: { id: 'a', name: 'someone', role: Role.CONSUMER },
-      rating: 4, body: 'Partial TV details', fields, createdAt: new Date().toISOString(),
-    };
-    vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({ data: [review], page: 1, pageSize: 5, total: 1 });
-    renderWithProviders(<ReviewList titleId="t1" />);
-    expect(await screen.findByText(label)).toBeInTheDocument();
-    expect(document.body.textContent).not.toMatch(/undefined/);
-  });
-
-  it('never prints "undefined" for a review whose media fields have an unknown shape', async () => {
+  it('never prints "undefined" for a review that is only stars and text', async () => {
     const odd = {
       id: 'r-odd',
       titleId: 't1',
-      author: { id: 'a', name: 'someone', role: Role.CONSUMER },
+      author: { id: 'a', name: 'someone', role: Role.MEMBER },
       rating: 4,
       body: 'Odd one',
-      fields: {},
       createdAt: new Date().toISOString(),
     } as unknown as Review;
     vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({
@@ -51,10 +36,9 @@ describe('ReviewList with unexpected data', () => {
     const review = {
       id: 'r-stars',
       titleId: 't1',
-      author: { id: 'a', name: 'someone', role: Role.CONSUMER },
+      author: { id: 'a', name: 'someone', role: Role.MEMBER },
       rating: 4,
       body: 'Four stars',
-      fields: { runtimeMinutes: 90 },
       createdAt: new Date().toISOString(),
     } as Review;
     vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({
@@ -72,10 +56,9 @@ describe('ReviewList with unexpected data', () => {
     const review = (id: string, authorId: string, name: string): Review => ({
       id,
       titleId: 't1',
-      author: { id: authorId, name, role: Role.CREATOR },
+      author: { id: authorId, name, role: Role.MEMBER },
       rating: 4,
       body: `Review by ${name}`,
-      fields: { runtimeMinutes: 90 },
       createdAt: new Date().toISOString(),
     });
     vi.spyOn(reviewsApi, 'listByTitle').mockResolvedValue({
@@ -104,21 +87,20 @@ describe('review card actions', () => {
   const review = (id: string, authorId: string, name: string): Review => ({
     id,
     titleId: 'mock-20',
-    author: { id: authorId, name, role: Role.CONSUMER },
+    author: { id: authorId, name, role: Role.MEMBER },
     rating: 4,
     body: `Words by ${name}`,
-    fields: { runtimeMinutes: 100 },
     createdAt: new Date().toISOString(),
   });
 
   beforeEach(() => {
     resetDb();
-    setMockActor({ id: 'test-user', email: 'sam@test.dev', role: Role.CONSUMER });
+    setMockActor({ id: 'test-user', email: 'sam@test.dev', role: Role.MEMBER });
     db.reviews.push(review('r-mine', 'test-user', 'sam_k'), review('r-other', 'other', 'maya_r'));
   });
 
   const mount = () =>
-    renderWithProviders(<ReviewList titleId="mock-20" title={movie} />, { role: Role.CONSUMER });
+    renderWithProviders(<ReviewList titleId="mock-20" title={movie} />, { role: Role.MEMBER });
   const card = (text: string) => screen.getByText(text).closest('article') as HTMLElement;
 
   it('puts Reply, Edit and Delete in one row on your own review, and marks it You', async () => {
@@ -177,7 +159,7 @@ describe('review card actions', () => {
   });
 
   it('has no Edit button when the list is not given the title to edit against', async () => {
-    renderWithProviders(<ReviewList titleId="mock-20" />, { role: Role.CONSUMER });
+    renderWithProviders(<ReviewList titleId="mock-20" />, { role: Role.MEMBER });
     await screen.findByText('Words by sam_k');
     expect(screen.queryByRole('button', { name: /^Edit review/ })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete review by sam_k' })).toBeInTheDocument();

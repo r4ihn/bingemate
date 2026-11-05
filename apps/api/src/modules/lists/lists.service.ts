@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import type { AuthUser, ListItemDTO, ListStatus, Paginated } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
+import { lockTitle } from '../reviews/rating.js';
 import { summarySelect, toSummary } from '../titles/titles.service.js';
 import type { ListQuery } from './lists.schema.js';
 
@@ -55,6 +56,7 @@ export async function addEntry(
   const already = new HttpError(409, 'This title is already on your list');
   try {
     return await prisma.$transaction(async (tx) => {
+      await lockTitle(tx, titleId);
       const title = await tx.title.findFirst({
         where: { id: titleId, status: 'APPROVED' },
         select: { id: true },
@@ -83,7 +85,7 @@ export async function setEntryStatus(
 ): Promise<ListItemDTO> {
   return prisma.$transaction(async (tx) => {
     const entry = await tx.listEntry.findFirst({
-      where: { id, userId: user.id },
+      where: { id, userId: user.id, title: { status: 'APPROVED' } },
       select: { id: true },
     });
     if (!entry) throw new HttpError(404, 'List entry not found');

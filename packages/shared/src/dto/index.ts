@@ -6,10 +6,11 @@ export interface AuthUser {
   id: string;
   email: string;
   role: Role;
-  username?: string | null;
+  username: string | null;
 }
 
 export interface RegisterRequest {
+  username: string;
   email: string;
   password: string;
 }
@@ -31,6 +32,12 @@ export interface TitleSummary {
   createdById?: string | null;
 }
 
+export interface SubmissionDTO extends TitleSummary {
+  updatedAt: string;
+  description: string | null;
+  rejectionReason: string | null;
+}
+
 export interface Paginated<T> {
   data: T[];
   page: number;
@@ -50,27 +57,40 @@ export interface TitlePersonDTO {
   role: PersonRole;
 }
 
+/** Facts only one media type has. `mediaType` says which shape this is. */
+export type TitleDetailsDTO =
+  | {
+      mediaType: 'MOVIE';
+      runtimeMin: number | null;
+      tagline: string | null;
+      rated: string | null;
+      letterboxdRating: number | null;
+    }
+  | {
+      mediaType: 'TV_SHOW';
+      numSeasons: number | null;
+      duration: number | null;
+      contentRating: string | null;
+      metascore: number | null;
+      userscore: number | null;
+    }
+  | { mediaType: 'BOOK'; publisher: string | null; ratingsCount: number | null };
+
 /** One title with the fields only the detail page needs. */
 export interface TitleDetailDTO extends TitleSummary {
+  rankInType: number | null;
+  topPercent: number | null;
   description: string | null;
   releaseYear: number | null;
   genres: string[];
   people: TitlePersonDTO[];
+  details: TitleDetailsDTO | null;
 }
 
 export interface AuthorDTO {
   id: string;
   name: string;
   role: Role;
-  username?: string | null;
-}
-
-/** Media-specific extras on a review; a title's media type decides which ones apply. */
-export interface ReviewFieldsDTO {
-  runtimeMinutes?: number;
-  chapters?: number;
-  season?: number;
-  episodes?: number;
 }
 
 export interface ReviewDTO {
@@ -79,7 +99,6 @@ export interface ReviewDTO {
   author: AuthorDTO;
   rating: number;
   body: string;
-  fields: ReviewFieldsDTO;
   createdAt: string;
 }
 
@@ -124,12 +143,12 @@ export interface TrendingCardDTO {
   posterUrl?: string;
   avgRating: number;
   reviewCount: number;
+  recentReviews: number;
   score: number;
 }
 
 /** The signed-in user's own account page. The email is private to its owner, so only this DTO adds it to a sign-in. */
 export interface ProfileDTO extends AuthUser {
-  username: string | null;
   createdAt: string;
 }
 

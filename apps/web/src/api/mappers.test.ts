@@ -1,7 +1,7 @@
 import { MediaType, Role, TitleStatus } from '@bingemate/shared';
 import type { ReplyDTO, ReviewDTO, TitleDetailDTO, TitleSummary } from '@bingemate/shared';
 import { describe, expect, it } from 'vitest';
-import { detailToTitle, mapReply, mapReview, mapReviewFields, summaryToTitle } from './mappers.js';
+import { detailToTitle, mapReply, mapReview, mapSubmission, summaryToTitle } from './mappers.js';
 
 const summary: TitleSummary = {
   id: 't1',
@@ -15,6 +15,9 @@ const summary: TitleSummary = {
 const detail: TitleDetailDTO = {
   ...summary,
   description: 'Spice.',
+  rankInType: 3,
+  topPercent: 1,
+  details: null,
   releaseYear: 2021,
   genres: ['Sci-Fi'],
   people: [],
@@ -23,7 +26,7 @@ const detail: TitleDetailDTO = {
 describe('summaryToTitle', () => {
   it('gives an empty synopsis and no invented fields', () => {
     const t = summaryToTitle(summary);
-    expect(t).toEqual({ ...summary, synopsis: '' });
+    expect(t).toEqual({ ...summary, rankInType: null, topPercent: null, synopsis: '' });
     expect('year' in t).toBe(false);
     expect('hue' in t).toBe(false);
     expect('studio' in t).toBe(false);
@@ -40,6 +43,54 @@ describe('summaryToTitle', () => {
 });
 
 describe('detailToTitle', () => {
+  const withDetails = (details: TitleDetailDTO['details']) => detailToTitle({ ...detail, details });
+
+  it('carries rank and percent through the detail mapper', () => {
+    expect(detailToTitle(detail)).toMatchObject({ rankInType: 3, topPercent: 1 });
+    expect(detailToTitle({ ...detail, rankInType: null, topPercent: null })).toMatchObject({
+      rankInType: null,
+      topPercent: null,
+    });
+  });
+
+  it('maps movie details to a runtime and rating', () => {
+    const t = withDetails({
+      mediaType: 'MOVIE',
+      runtimeMin: 109,
+      tagline: null,
+      rated: 'R',
+      letterboxdRating: null,
+    });
+    expect(t.runtime).toBe('109 min');
+    expect(t.rated).toBe('R');
+  });
+  const tv = {
+    mediaType: 'TV_SHOW',
+    numSeasons: 1,
+    duration: 50,
+    contentRating: 'TV-MA',
+    metascore: null,
+    userscore: null,
+  } as const;
+  it('maps TV details, with one season in the singular', () => {
+    const t = withDetails(tv);
+    expect(t.seasons).toBe('1 season');
+    expect(t.runtime).toBe('50 min per episode');
+    expect(t.rated).toBe('TV-MA');
+  });
+  it('counts several seasons in the plural', () => {
+    expect(withDetails({ ...tv, numSeasons: 5 }).seasons).toBe('5 seasons');
+  });
+  it('maps a book publisher', () => {
+    const t = withDetails({ mediaType: 'BOOK', publisher: 'NYU Press', ratingsCount: null });
+    expect(t.publisher).toBe('NYU Press');
+  });
+  it('adds no fact fields for null or blank details', () => {
+    const blank = withDetails({ ...tv, numSeasons: null, duration: null, contentRating: null });
+    for (const t of [withDetails(null), blank]) {
+      for (const key of ['runtime', 'rated', 'seasons', 'publisher']) expect(key in t).toBe(false);
+    }
+  });
   it('maps description to synopsis and releaseYear to year', () => {
     const t = detailToTitle(detail);
     expect(t.synopsis).toBe('Spice.');
@@ -76,29 +127,7 @@ describe('detailToTitle', () => {
   });
 });
 
-describe('mapReviewFields', () => {
-  it('maps movie fields', () => {
-    expect(mapReviewFields({ runtimeMinutes: 120 })).toEqual({ runtimeMinutes: 120 });
-  });
-  it('maps book fields', () => {
-    expect(mapReviewFields({ chapters: 12 })).toEqual({ chapters: 12 });
-  });
-  it('maps TV fields', () => {
-    expect(mapReviewFields({ season: 2, episodes: 8 })).toEqual({ season: 2, episodes: 8 });
-  });
-  it('maps an empty object to an empty object', () => {
-    expect(mapReviewFields({})).toEqual({});
-  });
-  it('preserves partial TV fields', () => {
-    expect(mapReviewFields({ season: 2 })).toEqual({ season: 2 });
-    expect(mapReviewFields({ episodes: 8 })).toEqual({ episodes: 8 });
-  });
-  it('keeps a zero value', () => {
-    expect(mapReviewFields({ runtimeMinutes: 0 })).toEqual({ runtimeMinutes: 0 });
-  });
-});
-
-const author = { id: 'u1', name: 'Ann', role: Role.CREATOR };
+const author = { id: 'u1', name: 'Ann', role: Role.MEMBER };
 
 describe('mapReview', () => {
   const dto: ReviewDTO = {
@@ -107,7 +136,6 @@ describe('mapReview', () => {
     author,
     rating: 4,
     body: 'Good',
-    fields: { runtimeMinutes: 90 },
     createdAt: '2026-01-01T00:00:00.000Z',
   };
   it('maps every field', () => {
@@ -115,9 +143,6 @@ describe('mapReview', () => {
   });
   it('copies the author rather than sharing it', () => {
     expect(mapReview(dto).author).not.toBe(dto.author);
-  });
-  it('handles empty fields', () => {
-    expect(mapReview({ ...dto, fields: {} }).fields).toEqual({});
   });
 });
 
@@ -149,5 +174,31 @@ describe('mapReply', () => {
     expect(reply).not.toHaveProperty('editedAt');
     expect(reply).not.toHaveProperty('parentId');
     expect(reply).not.toHaveProperty('isOfficial');
+  });
+});
+
+describe('mapSubmission', () => {
+  const updatedAt = '2026-11-02T00:00:00.000Z';
+  it('maps summary fields, description and rejection reason', () => {
+    const row = {
+      ...summary,
+      posterUrl: '/p.jpg',
+      createdById: 'c1',
+      description: 'Sand.',
+      updatedAt,
+      rejectionReason: 'Fix it',
+    };
+    expect(mapSubmission(row)).toEqual({
+      title: { ...summaryToTitle(row), synopsis: 'Sand.', version: updatedAt },
+      rejectionReason: 'Fix it',
+    });
+  });
+  it('maps a null description and reason to empty synopsis and undefined', () => {
+    expect(
+      mapSubmission({ ...summary, description: null, rejectionReason: null, updatedAt }),
+    ).toEqual({
+      title: { ...summary, rankInType: null, topPercent: null, synopsis: '', version: updatedAt },
+      rejectionReason: undefined,
+    });
   });
 });

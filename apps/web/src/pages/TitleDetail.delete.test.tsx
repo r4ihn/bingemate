@@ -19,7 +19,7 @@ function renderTitle(id: string, role?: Role) {
 }
 
 // renderWithProviders signs in as { id: 'test-user' }
-const me = { id: 'test-user', name: 'You', role: Role.CONSUMER };
+const me = { id: 'test-user', name: 'You', role: Role.MEMBER };
 const deleteButtons = (kind: 'review' | 'reply') =>
   screen.queryAllByRole('button', { name: new RegExp(`^Delete ${kind}`) });
 
@@ -35,7 +35,7 @@ describe('delete controls', () => {
   });
 
   it('are hidden from a user who wrote none of the content', async () => {
-    renderTitle('mock-1', Role.CONSUMER);
+    renderTitle('mock-1', Role.MEMBER);
     await screen.findByText('Great pacing in the second half.');
     expect(deleteButtons('review')).toHaveLength(0);
     expect(deleteButtons('reply')).toHaveLength(0);
@@ -48,10 +48,9 @@ describe('delete controls', () => {
       author: me,
       rating: 4,
       body: 'My own take',
-      fields: { runtimeMinutes: 100 },
       createdAt: new Date().toISOString(),
     });
-    renderTitle('mock-20', Role.CONSUMER);
+    renderTitle('mock-20', Role.MEMBER);
     await screen.findByText('My own take');
     expect(deleteButtons('review')).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Delete review by You' })).toBeInTheDocument();
@@ -65,7 +64,7 @@ describe('delete controls', () => {
       body: 'My own reply',
       createdAt: new Date().toISOString(),
     });
-    const u = renderTitle('mock-1', Role.CONSUMER);
+    const u = renderTitle('mock-1', Role.MEMBER);
     await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
     await screen.findByText('My own reply');
     expect(deleteButtons('reply')).toHaveLength(1);
@@ -115,7 +114,7 @@ describe('delete controls', () => {
       createdAt: new Date().toISOString(),
     });
     const remove = vi.spyOn(repliesApi, 'remove');
-    const u = renderTitle('mock-1', Role.CONSUMER);
+    const u = renderTitle('mock-1', Role.MEMBER);
     await u.click(await screen.findByRole('button', { name: /^View \d+ more replies/ }));
     await screen.findByText('My own reply');
     await u.click(deleteButtons('reply')[0] as HTMLElement);

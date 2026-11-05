@@ -26,6 +26,7 @@ export function main(): void {
   const books = readProcessed('books.csv');
   const titles = [...movies, ...tv, ...books];
   const titleIds = new Set(titles.map((t) => t['title_id']));
+  const posters = readProcessed('title_posters.csv');
   const genres = readProcessed('genres.csv');
   const titleGenres = readProcessed('title_genres.csv');
   const people = readProcessed('people.csv');
@@ -63,6 +64,15 @@ export function main(): void {
       const y = Number(t['release_year']);
       return t['release_year'] === '' || (y >= 1000 && y <= new Date().getFullYear() + 1);
     }),
+  );
+
+  // Posters (hotlinked, so they must be https URLs on titles that exist)
+  check(
+    'every poster belongs to a title, once, with an https URL',
+    unique(posters, (p) => p['title_id'] ?? '') &&
+      posters.every(
+        (p) => titleIds.has(p['title_id']) && /^https:\/\/[^\s"]+$/.test(p['poster_url'] ?? ''),
+      ),
   );
 
   // Genres
@@ -114,10 +124,12 @@ export function main(): void {
     unique(users, (u) => u['user_id'] ?? '') && unique(users, (u) => u['email'] ?? ''),
   );
   check(
-    'exactly one ADMIN and one CREATOR in the dataset',
-    users.filter((u) => u['role'] === 'ADMIN').length === 1 &&
-      users.filter((u) => u['role'] === 'CREATOR').length === 1,
+    'exactly one ADMIN in the dataset',
+    users.filter((u) => u['role'] === 'ADMIN').length === 1,
   );
+
+  check('usernames unique ignoring case', unique(users, u => (u['username'] ?? '').toLowerCase()));
+  check('user roles are ADMIN or MEMBER', users.every(u => u['role'] === 'ADMIN' || u['role'] === 'MEMBER'));
 
   // Reviews: Postgres headers vs Mongo bodies
   check(

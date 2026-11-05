@@ -6,6 +6,12 @@ export const MEDIA_LABEL: Record<MediaType, string> = {
   [MediaType.TV_SHOW]: 'TV show',
 };
 
+export const MEDIA_LABEL_PLURAL: Record<MediaType, string> = {
+  [MediaType.MOVIE]: 'Movies',
+  [MediaType.BOOK]: 'Books',
+  [MediaType.TV_SHOW]: 'TV shows',
+};
+
 /** Media type filter choices shared by Browse and the nav search; `undefined` means all types. */
 export const MEDIA_FILTERS: { value: MediaType | undefined; label: string }[] = [
   { value: undefined, label: 'All' },

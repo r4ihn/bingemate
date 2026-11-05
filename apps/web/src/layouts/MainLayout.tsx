@@ -24,7 +24,7 @@ function navLinks(user: AuthUser | null) {
     links.push({ to: '/me/lists', label: 'My Lists' });
     links.push({ to: '/me/profile', label: 'Profile' });
   }
-  if (user && (user.role === Role.CREATOR || user.role === Role.ADMIN)) {
+  if (user?.role === Role.MEMBER) {
     links.push({ to: '/creator', label: 'Creator' });
   }
   if (user?.role === Role.ADMIN) links.push({ to: '/admin', label: 'Admin' });

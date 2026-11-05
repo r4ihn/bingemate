@@ -8,10 +8,13 @@ const trendingCardSchema = new Schema(
     mediaType: { type: String, required: true },
     avgRating: { type: Number, required: true },
     reviewCount: { type: Number, required: true },
+    recentReviews: { type: Number, default: 0 },
     posterUrl: { type: String },
     score: { type: Number, required: true, index: true },
   },
   { timestamps: true },
 );
+
+trendingCardSchema.index({ recentReviews: -1 });
 
 export const TrendingCard = model('TrendingCard', trendingCardSchema);

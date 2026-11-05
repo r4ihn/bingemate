@@ -15,7 +15,7 @@ function run(roles: Parameters<typeof authorize>, user?: Request['user']) {
   }
 }
 
-const user = (role: 'CONSUMER' | 'CREATOR' | 'ADMIN') => ({ id: 'u1', email: 'a@b.c', role });
+const user = (role: 'MEMBER' | 'ADMIN') => ({ id: 'u1', email: 'a@b.c', username: null, role });
 
 describe('authorize', () => {
   it('returns 401 when no user is signed in', () => {
@@ -23,14 +23,11 @@ describe('authorize', () => {
   });
 
   it.each([
-    // [allowed roles, user role, expected status (undefined = let through)]
     [['ADMIN'], 'ADMIN', undefined],
-    [['ADMIN'], 'CREATOR', 403],
-    [['ADMIN'], 'CONSUMER', 403],
-    [['ADMIN', 'CREATOR'], 'CREATOR', undefined],
-    [['ADMIN', 'CREATOR'], 'CONSUMER', 403],
-    [['CONSUMER', 'CREATOR'], 'CONSUMER', undefined],
-    [['CONSUMER', 'CREATOR'], 'ADMIN', 403],
+    [['ADMIN'], 'MEMBER', 403],
+    [['MEMBER'], 'MEMBER', undefined],
+    [['MEMBER'], 'ADMIN', 403],
+    [['ADMIN', 'MEMBER'], 'MEMBER', undefined],
   ] as const)('authorize(%j) with a %s gives %s', (roles, role, expected) => {
     const { next, status } = run([...roles], user(role));
 

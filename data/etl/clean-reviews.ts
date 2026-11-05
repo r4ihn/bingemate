@@ -1,4 +1,4 @@
-import { cleanMultiline, cleanText, toInt, toIsoDate, toNumber, toStars } from './lib/clean.js';
+import { cleanMultiline, toInt, toIsoDate, toNumber, toStars } from './lib/clean.js';
 import {
   readJsonLines,
   readProcessed,
@@ -16,7 +16,6 @@ type RawBody = {
   user_id: number;
   media_type: string;
   text: string | null;
-  details: Record<string, unknown> | null;
 };
 
 type Header = {
@@ -123,12 +122,11 @@ export function main(): void {
     }
     if (text !== b.text) log.bump('review text whitespace normalised');
     // Rating, username and title name are dropped from the body: the rating lives in PostgreSQL
-    // and the others are derivable by join. `details` keeps the media-specific fields.
+    // and the others are derivable by join.
     outBodies.push({
       review_id: h.review_id,
       media_type: mediaFor(b.media_type),
       text,
-      details: cleanDetails(b.details),
       comments: [],
     });
     finalHeaders.push(h);
@@ -158,15 +156,6 @@ function isNewer(a: Header, b: Header): boolean {
 
 function mediaFor(raw: string): string {
   return raw === 'tv' ? 'TV_SHOW' : raw.toUpperCase();
-}
-
-/** Trim string values in the media-specific details and turn blanks into null. */
-function cleanDetails(details: Record<string, unknown> | null): Record<string, unknown> {
-  const out: Record<string, unknown> = {};
-  for (const [k, v] of Object.entries(details ?? {})) {
-    out[k] = typeof v === 'string' ? cleanText(v) : (v ?? null);
-  }
-  return out;
 }
 
 runIfMain(import.meta.url, main);

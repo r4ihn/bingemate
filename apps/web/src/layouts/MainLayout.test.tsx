@@ -31,30 +31,33 @@ describe('MainLayout role-aware links', () => {
     expect(link('Admin')).not.toBeInTheDocument();
   });
 
-  it('a CONSUMER sees My Lists but no Creator or Admin link', () => {
-    renderLayout(Role.CONSUMER);
+  it('a MEMBER sees Browse, My Lists and Creator but no Admin', () => {
+    renderLayout(Role.MEMBER);
+    expect(link('Browse')).toBeInTheDocument();
     expect(link('My Lists')).toBeInTheDocument();
-    expect(link('Creator')).not.toBeInTheDocument();
+    expect(link('Creator')).toBeInTheDocument();
     expect(link('Admin')).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Log out' })).toBeInTheDocument();
   });
 
-  it('a CREATOR sees the Creator link but not Admin', () => {
-    renderLayout(Role.CREATOR);
-    expect(link('Creator')).toBeInTheDocument();
-    expect(link('Admin')).not.toBeInTheDocument();
-  });
-
-  it('an ADMIN sees both Creator and Admin', () => {
+  it('an ADMIN sees the Admin link but not Creator', () => {
     renderLayout(Role.ADMIN);
-    expect(link('Creator')).toBeInTheDocument();
+    expect(link('Creator')).not.toBeInTheDocument();
     expect(link('Admin')).toBeInTheDocument();
   });
 });
 
 describe('MainLayout mobile menu and skip link', () => {
+  it('an ADMIN sees Admin but not Creator in the mobile menu', async () => {
+    const u = renderLayout(Role.ADMIN);
+    await u.click(screen.getByRole('button', { name: 'Menu' }));
+    const mobile = screen.getByRole('navigation', { name: 'Mobile menu' });
+    expect(within(mobile).getByRole('link', { name: 'Admin' })).toBeInTheDocument();
+    expect(within(mobile).queryByRole('link', { name: 'Creator' })).not.toBeInTheDocument();
+  });
+
   it('Menu button toggles the mobile links and closes after choosing one', async () => {
-    const u = renderLayout(Role.CONSUMER);
+    const u = renderLayout(Role.MEMBER);
     const menu = screen.getByRole('button', { name: 'Menu' });
     expect(menu).toHaveAttribute('aria-expanded', 'false');
     expect(screen.queryByRole('navigation', { name: 'Mobile menu' })).not.toBeInTheDocument();

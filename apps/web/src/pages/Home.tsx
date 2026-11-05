@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Breadcrumb } from '../components/Breadcrumb.js';
 import { posterStyle } from '../components/MockPoster.js';
 import { TitleHero } from '../components/TitleHero.js';
+import { trendingApi } from '../api/trending.js';
 import { titlesApi } from '../api/titles.js';
 import { StateMessage } from '../components/StateMessage.js';
 import { TypeRails } from '../components/TypeRails.js';
@@ -11,8 +12,6 @@ import { useAsync } from '../hooks/useAsync.js';
 import { MEDIA_SECTION } from '../labels.js';
 import type { TitleDetail } from '../types/title.js';
 
-// Temporary: until SJ's trending queries exist (TASKS.md section 6/8), the hero and strip show the
-// first approved titles from the titles API
 const STRIP_SIZE = 7;
 
 // Vertical offsets make the posters settle unevenly, as in the reference
@@ -83,7 +82,16 @@ function Strip({ titles }: { titles: TitleDetail[] }) {
 }
 
 export function Home() {
-  const { state, reload } = useAsync(() => titlesApi.search({ pageSize: STRIP_SIZE + 1 }), []);
+  const { state, reload } = useAsync(async () => {
+    let trending: TitleDetail[] = [];
+    try {
+      trending = await trendingApi.list({ limit: STRIP_SIZE });
+    } catch {
+      // A missing or unavailable refresh must not leave Home empty.
+    }
+    const titles = await titlesApi.search({ pageSize: STRIP_SIZE + 1 });
+    return { ...titles, strip: trending.length ? trending : titles.items.slice(1) };
+  }, []);
 
   if (state.status !== 'ready' || state.data.items.length === 0) {
     return (
@@ -99,7 +107,7 @@ export function Home() {
     );
   }
 
-  const [featured, ...rest] = state.data.items as [TitleDetail, ...TitleDetail[]];
+  const [featured] = state.data.items as [TitleDetail, ...TitleDetail[]];
   return (
     <>
       <TitleHero
@@ -107,7 +115,7 @@ export function Home() {
         breadcrumb={['Main', MEDIA_SECTION[featured.mediaType], featured.name]}
         scrollHint={{ label: 'Scroll for more titles ↓', href: '#strip' }}
       />
-      <Strip titles={rest} />
+      <Strip titles={state.data.strip} />
       <TypeRails />
     </>
   );

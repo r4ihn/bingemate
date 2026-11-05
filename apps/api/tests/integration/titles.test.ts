@@ -10,9 +10,11 @@ process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 const findMany = vi.fn();
 const count = vi.fn();
 const findFirst = vi.fn();
+const $queryRaw = vi.fn();
 vi.mock('../../src/db/prisma.js', () => ({
   prisma: {
     title: { findMany, count, findFirst },
+    $queryRaw,
     $transaction: (queries: unknown[]) => Promise.all(queries),
   },
 }));
@@ -43,6 +45,7 @@ beforeEach(() => {
   findMany.mockReset().mockResolvedValue([row()]);
   count.mockReset().mockResolvedValue(1);
   findFirst.mockReset();
+  $queryRaw.mockReset().mockResolvedValue([]);
 });
 
 describe('GET /api/titles', () => {
@@ -170,6 +173,103 @@ describe('GET /api/titles/:id', () => {
     expect(firstArgs(findFirst).where).toEqual({ id: 't1', status: 'APPROVED' });
   });
 
+  const detailRow = (over: Record<string, unknown>) =>
+    row({ description: null, releaseYear: null, genres: [], people: [], ...over });
+  const getDetails = async (over: Record<string, unknown>) => {
+    findFirst.mockResolvedValue(detailRow(over));
+    const res = await request(app).get('/api/titles/t1');
+    expect(res.status).toBe(200);
+    return res.body.details;
+  };
+
+  it('carries rankInType and topPercent from the ranking row', async () => {
+    findFirst.mockResolvedValue(detailRow({}));
+    $queryRaw.mockResolvedValue([{ rankInType: 3n, topPercent: 1 }]);
+    const res = await request(app).get('/api/titles/t1');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ rankInType: 3, topPercent: 1 });
+  });
+
+  it('returns 200 with null rank fields when there is no ranking row', async () => {
+    findFirst.mockResolvedValue(detailRow({}));
+    const res = await request(app).get('/api/titles/t1');
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ rankInType: null, topPercent: null });
+  });
+
+  it('returns 200 with null rank fields and logs when the rank query rejects', async () => {
+    findFirst.mockResolvedValue(detailRow({}));
+    const error = new Error('Ranking unavailable');
+    $queryRaw.mockRejectedValue(error);
+    const log = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const res = await request(app).get('/api/titles/t1');
+      expect(res.status).toBe(200);
+      expect(res.body).toMatchObject({ rankInType: null, topPercent: null });
+      expect(log).toHaveBeenCalledWith('Title rank lookup failed:', error);
+    } finally {
+      log.mockRestore();
+    }
+  });
+
+  it('passes the rank lookup id as a SQL parameter', async () => {
+    findFirst.mockResolvedValue(detailRow({}));
+    const res = await request(app).get('/api/titles/t1');
+    expect(res.status).toBe(200);
+    const query = $queryRaw.mock.calls[0]![0];
+    expect(typeof query).toBe('object');
+    expect(query.values).toEqual(['t1']);
+    expect(query.sql).not.toContain('t1');
+  });
+
+  it('returns movie details', async () => {
+    const movieDetails = { runtimeMin: 109, tagline: null, rated: 'R', letterboxdRating: 4.32 };
+    expect(await getDetails({ movieDetails })).toEqual({ mediaType: 'MOVIE', ...movieDetails });
+  });
+
+  it('returns TV details and keeps a score of 0', async () => {
+    const tvDetails = {
+      numSeasons: 5,
+      duration: 23,
+      contentRating: 'TV-MA',
+      metascore: 93,
+      userscore: 0,
+    };
+    expect(await getDetails({ mediaType: 'TV_SHOW', tvDetails })).toEqual({
+      mediaType: 'TV_SHOW',
+      ...tvDetails,
+    });
+  });
+
+  it('returns book details and keeps a ratings count of 0', async () => {
+    const bookDetails = { publisher: 'NYU Press', ratingsCount: 0 };
+    expect(await getDetails({ mediaType: 'BOOK', bookDetails })).toEqual({
+      mediaType: 'BOOK',
+      ...bookDetails,
+    });
+  });
+
+  it('returns null details when the title has no row', async () => {
+    expect(await getDetails({ movieDetails: null })).toBeNull();
+  });
+
+  it('ignores a details row of another type', async () => {
+    const movieDetails = { runtimeMin: 109, tagline: null, rated: 'R', letterboxdRating: 4.32 };
+    expect(await getDetails({ mediaType: 'BOOK', movieDetails })).toBeNull();
+  });
+
+  it('asks for all three details relations', async () => {
+    await getDetails({});
+    expect(Object.keys(firstArgs(findFirst).select)).toEqual(
+      expect.arrayContaining(['movieDetails', 'tvDetails', 'bookDetails']),
+    );
+  });
+
+  it('does not join details for the list', async () => {
+    await request(app).get('/api/titles');
+    expect(Object.keys(firstArgs(findMany).select)).not.toContain('movieDetails');
+  });
+
   it('answers 404 for a missing, pending or rejected title alike', async () => {
     findFirst.mockResolvedValue(null);
 
@@ -177,5 +277,6 @@ describe('GET /api/titles/:id', () => {
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: 'Title not found' });
+    expect($queryRaw).not.toHaveBeenCalled();
   });
 });

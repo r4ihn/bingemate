@@ -2,16 +2,19 @@ import { PrismaClient, type Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { emptyIdMap, lookup, newId, saveIdMap } from './id-mapping.js';
 import { toInt } from './lib/clean.js';
+import type { Row } from './lib/csv.js';
 import { reviewCreatedAt } from './lib/dates.js';
+import { bookDetailsRow, movieDetailsRow, tvDetailsRow } from './lib/details.js';
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
+import { hasMoviePoster, titleVisibility } from './lib/posters.js';
 
 const DEV_PASSWORD = 'Password123!'; // same as prisma/seed.ts
 const BATCH = 2000;
 const TX_TIMEOUT_MS = 10 * 60 * 1000; // the full dataset loads in well under this
 
-type Role = 'ADMIN' | 'CREATOR' | 'CONSUMER';
+type Role = 'ADMIN' | 'MEMBER';
 type PersonRole = 'AUTHOR' | 'DIRECTOR' | 'ACTOR' | 'SHOWRUNNER' | 'WRITER';
 type MediaType = 'MOVIE' | 'TV_SHOW' | 'BOOK';
 type ListStatus = 'COMPLETED' | 'IN_PROGRESS' | 'PLAN_TO';
@@ -72,26 +75,52 @@ export async function main(): Promise<void> {
             id,
             email: u['email'] ?? '',
             username: u['username'] ?? null,
-            role: (u['role'] ?? 'CONSUMER') as Role,
+            role: (u['role'] ?? 'MEMBER') as Role,
             passwordHash,
           };
         });
         await insertAll(log, 'users', users, (data) => tx.user.createMany({ data }));
 
-        const titles = readProcessedTitles().map((t) => {
+        const posters = new Map(
+          readProcessed('title_posters.csv').map((p) => [
+            p['title_id'] ?? '',
+            p['poster_url'] ?? '',
+          ]),
+        );
+        const rawTitles = readProcessedTitles();
+        const moviesHavePosters = hasMoviePoster(rawTitles, posters);
+        if (!moviesHavePosters) log.warn('no movie posters loaded: every movie stays visible');
+        const titles = rawTitles.map((t) => {
           const id = newId();
           ids.titles[t['title_id'] ?? ''] = id;
+          const posterUrl = posters.get(t['title_id'] ?? '') || null;
           return {
             id,
             name: t['name'] ?? '',
             mediaType: (t['media_type'] ?? '') as MediaType,
-            status: 'APPROVED' as const,
+            ...titleVisibility(t['media_type'] ?? '', posterUrl, moviesHavePosters),
             releaseYear: toInt(t['release_year']),
             description: t['description'] || null,
+            posterUrl,
             createdById: null,
           };
         });
         await insertAll(log, 'titles', titles, (data) => tx.title.createMany({ data }));
+
+        const detailRows = <T>(file: string, toRow: (t: Row, id: string) => T | null): T[] =>
+          readProcessed(file).flatMap((t) => {
+            const row = toRow(t, lookup(ids.titles, t['title_id'], 'title'));
+            return row === null ? [] : [row];
+          });
+        await insertAll(log, 'movie_details', detailRows('movies.csv', movieDetailsRow), (data) =>
+          tx.movieDetails.createMany({ data }),
+        );
+        await insertAll(log, 'tv_details', detailRows('tv_shows.csv', tvDetailsRow), (data) =>
+          tx.tvDetails.createMany({ data }),
+        );
+        await insertAll(log, 'book_details', detailRows('books.csv', bookDetailsRow), (data) =>
+          tx.bookDetails.createMany({ data }),
+        );
 
         const genres = readProcessed('genres.csv').map((g) => {
           const id = newId();

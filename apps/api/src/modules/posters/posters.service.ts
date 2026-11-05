@@ -13,7 +13,7 @@ async function assertCanChangeImage(user: AuthUser, titleId: string): Promise<vo
     select: { createdById: true },
   });
   if (!title) throw new HttpError(404, 'Title not found');
-  const owner = user.role === Role.CREATOR && title.createdById === user.id;
+  const owner = user.role === Role.MEMBER && title.createdById === user.id;
   if (!owner && user.role !== Role.ADMIN) {
     throw new HttpError(403, 'You can only change the image of a title you created');
   }
@@ -38,7 +38,7 @@ export async function putPoster(
 
   // Hide the title before overwriting bytes available at its old public URL. If either store
   // fails afterwards, leave it pending: restoring approval could publish an unreviewed image.
-  if (user.role === Role.CREATOR) {
+  if (user.role === Role.MEMBER) {
     await prisma.title.updateMany({
       where: { id: titleId, createdById: user.id, status: 'APPROVED' },
       data: { status: 'PENDING' },
@@ -68,7 +68,7 @@ export async function getPoster(
       id: titleId,
       ...(user?.role === Role.ADMIN ? {} : { OR: [
         { status: 'APPROVED' },
-        ...(user?.role === Role.CREATOR ? [{ createdById: user.id }] : []),
+        ...(user?.role === Role.MEMBER ? [{ createdById: user.id }] : []),
       ] }),
     },
     select: { id: true, status: true },

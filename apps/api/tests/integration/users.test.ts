@@ -10,7 +10,7 @@ process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 // CI has no database, so Prisma is replaced by stubs. Zod, bcrypt, JWT, cookies and the rate
 // limiter run for real.
 const prisma = vi.hoisted(() => ({
-  user: { findUnique: vi.fn(), update: vi.fn() },
+  user: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
 }));
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
 
@@ -55,6 +55,8 @@ beforeAll(async () => {
 beforeEach(() => {
   for (const fn of Object.values(prisma.user)) fn.mockReset();
   prisma.user.findUnique.mockResolvedValue(profileRow());
+  // Nobody else has the name unless a test says so
+  prisma.user.findFirst.mockResolvedValue(null);
   prisma.user.update.mockImplementation(async ({ data }: { data: Record<string, unknown> }) =>
     profileRow(data),
   );

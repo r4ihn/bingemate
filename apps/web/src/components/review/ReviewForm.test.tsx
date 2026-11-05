@@ -8,7 +8,7 @@ import { reviewsApi } from '../../api/reviews.js';
 import { db, resetDb } from '../../mocks/db.js';
 import { rate, renderWithProviders } from '../../test/utils.js';
 import type { Review } from '../../types/review.js';
-import { ReviewForm, ReviewEditForm } from './ReviewForm.js';
+import { ReviewForm } from './ReviewForm.js';
 
 const base = { id: 'mock-20', status: TitleStatus.APPROVED, avgRating: 4, reviewCount: 0 };
 const movie: TitleSummary = { ...base, name: 'Quiet Orbit', mediaType: MediaType.MOVIE };
@@ -17,16 +17,15 @@ const tv: TitleSummary = { ...base, name: 'Harbour Nine', mediaType: MediaType.T
 const fake: Review = {
   id: 'r1',
   titleId: 'mock-20',
-  author: { id: 'mock-user', name: 'You', role: Role.CONSUMER },
+  author: { id: 'mock-user', name: 'You', role: Role.MEMBER },
   rating: 4,
   body: 'Great',
-  fields: { runtimeMinutes: 100 },
   createdAt: new Date().toISOString(),
 };
 
 function mount(title = movie, onSubmitted = vi.fn()) {
   renderWithProviders(<ReviewForm title={title} onSubmitted={onSubmitted} />, {
-    role: Role.CONSUMER,
+    role: Role.MEMBER,
   });
   return { onSubmitted, user: userEvent.setup() };
 }
@@ -40,38 +39,26 @@ async function setup(title = movie, onSubmitted = vi.fn()) {
 
 async function fill(
   user: ReturnType<typeof userEvent.setup>,
-  { rating = 4 as number | null, body = 'Great', media = '100' } = {},
+  { rating = 4 as number | null, body = 'Great' } = {},
 ) {
   if (rating) await rate(user, rating);
   if (body) await user.type(screen.getByLabelText('Your review'), body);
-  if (media) await user.type(screen.getByLabelText('Runtime watched (minutes)'), media);
 }
 
 beforeEach(() => resetDb());
 afterEach(() => vi.restoreAllMocks());
 
 describe('ReviewForm', () => {
-  it('preserves a partial TV review through editing and submission', async () => {
-    const existing = { ...fake, fields: { season: 2 } };
-    const update = vi.spyOn(reviewsApi, 'update').mockResolvedValue(existing);
-    renderWithProviders(<ReviewEditForm title={tv} existing={existing} onSubmitted={vi.fn()} />, { role: Role.CONSUMER });
-    expect(screen.getByLabelText('Season')).toHaveValue('2');
-    expect(screen.getByLabelText('Episodes watched')).toHaveValue('');
-    await userEvent.setup().click(screen.getByRole('button', { name: 'Save changes' }));
-    expect(update).toHaveBeenCalledWith('r1', expect.objectContaining({ fields: { season: 2 } }));
-  });
-
-  it('renders movie fields for MOVIE and season/episode fields for TV_SHOW', async () => {
-    await setup(movie);
-    expect(screen.getByLabelText('Runtime watched (minutes)')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Season')).not.toBeInTheDocument();
-  });
-
-  it('renders season and episode fields for TV_SHOW', async () => {
-    await setup(tv);
-    expect(screen.getByLabelText('Season')).toBeInTheDocument();
-    expect(screen.getByLabelText('Episodes watched')).toBeInTheDocument();
-    expect(screen.queryByLabelText('Runtime watched (minutes)')).not.toBeInTheDocument();
+  it.each([
+    ['a movie', movie],
+    ['a TV show', tv],
+    ['a book', { ...movie, mediaType: MediaType.BOOK }],
+  ])('asks only for stars and text on %s', async (_label, title) => {
+    await setup(title);
+    expect(screen.getByRole('radiogroup')).toBeInTheDocument();
+    // the review box is the only text input: no runtime, chapters, season or episodes
+    expect(screen.getAllByRole('textbox')).toHaveLength(1);
+    expect(screen.getByLabelText('Your review')).toBeInTheDocument();
   });
 
   it('shows a login link instead of the form to anonymous visitors', () => {
@@ -128,13 +115,12 @@ describe('ReviewForm', () => {
 
   it('submits the typed values, calls onSubmitted and clears the form', async () => {
     const { onSubmitted, user } = await setup();
-    await fill(user, { rating: 5, body: 'Loved it', media: '120' });
+    await fill(user, { rating: 5, body: 'Loved it' });
     await user.click(screen.getByRole('button', { name: 'Post review' }));
     await vi.waitFor(() => expect(onSubmitted).toHaveBeenCalledOnce());
     expect(onSubmitted.mock.calls[0]?.[0]).toMatchObject({
       rating: 5,
       body: 'Loved it',
-      fields: { runtimeMinutes: 120 },
     });
     expect(screen.getByLabelText('Your review')).toHaveValue('');
   });
@@ -150,7 +136,7 @@ describe('ReviewForm', () => {
   });
 
   it('shows a message with the rating instead of the form when the user already reviewed the title', async () => {
-    db.reviews.push({ ...fake, author: { id: 'test-user', name: 'You', role: Role.CONSUMER } });
+    db.reviews.push({ ...fake, author: { id: 'test-user', name: 'You', role: Role.MEMBER } });
     mount();
     expect(await screen.findByText(/You have already reviewed this title/)).toBeInTheDocument();
     expect(screen.getByRole('img', { name: '4 out of 5 stars' })).toBeInTheDocument();
@@ -161,7 +147,7 @@ describe('ReviewForm', () => {
     db.reviews.push({
       ...fake,
       titleId: 'mock-21',
-      author: { id: 'test-user', name: 'You', role: Role.CONSUMER },
+      author: { id: 'test-user', name: 'You', role: Role.MEMBER },
     });
     mount();
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
@@ -172,17 +158,6 @@ describe('ReviewForm', () => {
     mount();
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
   });
-  it('keeps only digits in the media fields, typed or pasted', async () => {
-    const { user } = await setup();
-    const runtime = screen.getByLabelText('Runtime watched (minutes)');
-    await user.type(runtime, '1a2.b-3 e');
-    expect(runtime).toHaveValue('123');
-    await user.clear(runtime);
-    await user.click(runtime);
-    await user.paste('9x0 min');
-    expect(runtime).toHaveValue('90');
-  });
-
   it('shows admins nothing: no form and no login prompt', async () => {
     const { container } = renderWithProviders(<ReviewForm title={movie} onSubmitted={vi.fn()} />, {
       role: Role.ADMIN,
@@ -194,7 +169,7 @@ describe('ReviewForm', () => {
   it('tells the creator of the title they can reply but not review, with no form', async () => {
     renderWithProviders(
       <ReviewForm title={{ ...movie, createdById: 'test-user' }} onSubmitted={vi.fn()} />,
-      { role: Role.CREATOR },
+      { role: Role.MEMBER },
     );
     expect(await screen.findByText(/You created this title/)).toBeInTheDocument();
     expect(screen.queryByLabelText('Your review')).not.toBeInTheDocument();
@@ -203,13 +178,13 @@ describe('ReviewForm', () => {
   it('still shows the form to a creator on a title someone else created', async () => {
     renderWithProviders(
       <ReviewForm title={{ ...movie, createdById: 'someone-else' }} onSubmitted={vi.fn()} />,
-      { role: Role.CREATOR },
+      { role: Role.MEMBER },
     );
     expect(await screen.findByLabelText('Your review')).toBeInTheDocument();
   });
 
   describe('editing', () => {
-    const mine = { ...fake, author: { id: 'test-user', name: 'You', role: Role.CONSUMER } };
+    const mine = { ...fake, author: { id: 'test-user', name: 'You', role: Role.MEMBER } };
 
     async function edit() {
       db.reviews.push({ ...mine });
@@ -236,7 +211,6 @@ describe('ReviewForm', () => {
       await edit();
       expect(screen.getByRole('heading', { name: 'Edit your review' })).toBeInTheDocument();
       expect(screen.getByLabelText('Your review')).toHaveValue('Great');
-      expect(screen.getByLabelText('Runtime watched (minutes)')).toHaveValue('100');
       expect(screen.getByRole('button', { name: 'Save changes' })).toBeInTheDocument();
     });
 
@@ -260,7 +234,7 @@ describe('ReviewForm', () => {
       expect(db.titles.find((t) => t.id === 'mock-20')?.avgRating).toBe(2);
     });
 
-    it('still checks the fields before saving', async () => {
+    it('still checks the text before saving', async () => {
       const { user } = await edit();
       await user.clear(screen.getByLabelText('Your review'));
       const update = vi.spyOn(reviewsApi, 'update');
