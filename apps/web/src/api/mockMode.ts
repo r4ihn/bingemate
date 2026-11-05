@@ -17,7 +17,3 @@ export const delay = () => new Promise<void>((resolve) => setTimeout(resolve, LA
 
 /** Return copies so UI code can never mutate the mock store by accident. */
 export const clone = <T>(value: T): T => structuredClone(value);
-
-export function notWired(what: string): never {
-  throw new Error(`Real API not wired yet: ${what}`);
-}

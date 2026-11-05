@@ -884,7 +884,9 @@ describe('adminApi title queue (real)', () => {
     const page1 = Array.from({ length: 50 }, (_, n) => ({ ...dto, id: `p${n}` }));
     fetchMock
       .mockReturnValueOnce(json({ data: page1, page: 1, pageSize: 50, total: 51 }))
-      .mockReturnValueOnce(json({ data: [{ ...dto, id: 'p50' }], page: 2, pageSize: 50, total: 51 }));
+      .mockReturnValueOnce(
+        json({ data: [{ ...dto, id: 'p50' }], page: 2, pageSize: 50, total: 51 }),
+      );
     const titles = await adminApi.pendingTitles();
     expect(titles).toHaveLength(51);
     expect(fetchMock.mock.calls.map((c) => c[0])).toEqual([
@@ -972,5 +974,57 @@ describe('adminApi title queue (real)', () => {
     expect(error).toBeInstanceOf(ApiError);
     expect(error).toMatchObject({ status: 409, message });
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('adminApi users and moderation (real)', () => {
+  const user = { id: 'u2', email: 'u2@example.com', role: Role.MEMBER };
+
+  it('users asks for one page of 10 and returns it as sent', async () => {
+    const page = { data: [user], page: 2, pageSize: 10, total: 11 };
+    fetchMock.mockReturnValueOnce(json(page));
+    expect(await adminApi.users(2)).toEqual(page);
+    expect(lastCall().url).toBe('/api/admin/users?page=2&pageSize=10');
+    expect(lastCall().init.method).toBeUndefined();
+    expect(lastCall().init.credentials).toBe('include');
+  });
+
+  it('setRole patches only the role and returns the updated user', async () => {
+    fetchMock.mockReturnValueOnce(json({ ...user, role: Role.ADMIN }));
+    expect(await adminApi.setRole('a/b c', Role.ADMIN)).toEqual({ ...user, role: Role.ADMIN });
+    expect(lastCall().url).toBe('/api/admin/users/a%2Fb%20c/role');
+    expect(lastCall().init.method).toBe('PATCH');
+    expect(JSON.parse(lastCall().init.body as string)).toEqual({ role: 'ADMIN' });
+  });
+
+  it('setRole surfaces the 400 for your own role with the server message', async () => {
+    const message = 'You cannot change your own role';
+    fetchMock.mockReturnValueOnce(json({ error: message }, 400));
+    const error: unknown = await adminApi.setRole('a1', Role.MEMBER).catch((e: unknown) => e);
+    expect(error).toBeInstanceOf(ApiError);
+    expect(error).toMatchObject({ status: 400, message });
+  });
+
+  it('reviews asks for one page of 10 across all titles', async () => {
+    const row = {
+      id: 'r1',
+      titleId: 't1',
+      titleName: 'Dune',
+      author: { id: 'u1', name: 'Ann' },
+      rating: 4,
+      body: 'Great sand.',
+      createdAt: '2026-11-01T00:00:00.000Z',
+    };
+    const page = { data: [row], page: 1, pageSize: 10, total: 1 };
+    fetchMock.mockReturnValueOnce(json(page));
+    expect(await adminApi.reviews(1)).toEqual(page);
+    expect(lastCall().url).toBe('/api/admin/reviews?page=1&pageSize=10');
+  });
+
+  it('removeReview deletes through the shared review route', async () => {
+    fetchMock.mockReturnValueOnce(Promise.resolve(new Response(null, { status: 204 })));
+    await expect(adminApi.removeReview('r/1')).resolves.toBeUndefined();
+    expect(lastCall().url).toBe('/api/reviews/r%2F1');
+    expect(lastCall().init.method).toBe('DELETE');
   });
 });

@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { adminRouter } from './modules/admin/admin.routes.js';
 import { adminTitlesRouter } from './modules/admin/adminTitles.routes.js';
 import { authRouter } from './modules/auth/auth.routes.js';
 import { creatorRouter } from './modules/creator/creator.routes.js';
@@ -28,6 +29,7 @@ router.use(reviewStatsRouter);
 router.use('/auth', authRouter);
 router.use('/users', usersRouter);
 router.use('/admin/titles', adminTitlesRouter);
+router.use('/admin', adminRouter);
 router.use('/titles/:titleId/reviews', titleReviewsRouter);
 router.use('/titles/:titleId/poster', posterRouter);
 router.use('/titles', submissionsRouter);

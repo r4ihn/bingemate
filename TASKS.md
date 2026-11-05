@@ -27,10 +27,10 @@ Five stacked pull requests are open. Merge them in order; after each merge GitHu
 
 CI on 3 Nov: `verify` passed on #17, and both `verify` and the new `verify-real-db` passed on the whole stack (draft PR #21, closed afterwards; Actions only runs for PRs into `main`). Later the same day, both jobs also passed on the stack including #23 (draft PR #24, closed): the real-database job applied all seven migrations and 4 test files passed.
 
-| Other branch                                                              | State                                                                                                                    |
-| ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `feat/admin-endpoints` _(RA)_                                             | Admin endpoints (§4). One commit, which only edits an older TASKS.md; no code yet. 6 commits behind `main`: rebase first |
-| `feat/api-queries`, `feat/api-reviews-replies-lists`, `feat/title-poster` | Merged; can be deleted                                                                                                   |
+| Other branch                                                              | State                                                                                          |
+| ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `feat/admin-endpoints` _(RA)_                                             | Admin users, roles and review moderation (§4), API and web. Rebased on `main` 5 Nov; open a PR |
+| `feat/api-queries`, `feat/api-reviews-replies-lists`, `feat/title-poster` | Merged; can be deleted                                                                         |
 
 Local clean-up after the stack merges: delete `backup/pre-rebase/*`, `backup/pre-review-fixes/*` and `demo/live-test`.
 
@@ -112,10 +112,10 @@ Local clean-up after the stack merges: delete `backup/pre-rebase/*`, `backup/pre
 Admins are separate from members: no title submission and no reviews or replies. All members see **Creator**. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap.
 
 - [x] Delete any review (PostgreSQL header + MongoDB body) or reply, and keep the PostgreSQL aggregates in sync. `DELETE /reviews/:id` and `DELETE /replies/:id` accept an admin (§5)
-- [ ] An admin endpoint that lists reviews across all titles, paginated, for the Moderation page (for example `GET /admin/reviews`; name to agree). The web calls it `adminApi.reviews` and it is mock-only today. Not started (branch `feat/admin-endpoints` has no code yet)
-- [ ] `GET /admin/users` (paginated), `PATCH /admin/users/:id/role`. Not started (branch `feat/admin-endpoints`). Shapes from `apps/web/src/api/admin.ts`: `Paginated<{ id, email, role }>` and the updated user back; an admin cannot change their own role (400), unknown id 404; a new role takes effect at the user's next login (the old JWT keeps its role for up to 2h)
-- [~] Title approval queue (`feat/web-wire-writes`): `GET /api/admin/titles?status=PENDING` (paginated, oldest first) and `PATCH /api/admin/titles/:id/status` (`APPROVED` or `REJECTED` with an optional reason that is kept only for `REJECTED`). ADMIN only. Checked on the real stack. The rest of §4 (users, roles, review moderation) is still RA's
-- [x] Admin pages in the frontend _(with WH)_. UI done against mock data (PR #3); real endpoints still to be wired
+- [x] `GET /admin/reviews` (`feat/admin-endpoints`): every review across all titles, any title status, newest first, paginated, with the title name and MongoDB body for the Moderation page. Its Delete button uses `DELETE /reviews/:id`. Checked on the real databases (`tests/real/admin.real.ts`)
+- [x] `GET /admin/users` (paginated, newest first) and `PATCH /admin/users/:id/role` (`feat/admin-endpoints`): `Paginated<{ id, email, role }>` and the updated user back; an admin cannot change their own role (400), unknown id 404; a new role takes effect at the user's next login (the old JWT keeps its role for up to 2h). Checked on the real databases
+- [~] Title approval queue (`feat/web-wire-writes`): `GET /api/admin/titles?status=PENDING` (paginated, oldest first) and `PATCH /api/admin/titles/:id/status` (`APPROVED` or `REJECTED` with an optional reason that is kept only for `REJECTED`). ADMIN only. Checked on the real stack
+- [x] Admin pages in the frontend _(with WH)_. UI from PR #3; Users and Moderation now call the real endpoints (`feat/admin-endpoints`)
 
 ## 5. MongoDB: reviews, replies, trending (HS lead; SJ co-owns trending)
 
