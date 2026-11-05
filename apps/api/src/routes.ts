@@ -11,6 +11,7 @@ import { reviewStatsRouter } from './modules/reviewStats/reviewStats.routes.js';
 import { trendingRouter } from './modules/trending/trending.routes.js';
 import { submissionsRouter } from './modules/titles/submissions.routes.js';
 import { titlesRouter } from './modules/titles/titles.routes.js';
+import { usersRouter } from './modules/users/users.routes.js';
 
 /**
  * Mounts all module routers under /api.
@@ -25,6 +26,7 @@ router.get('/', (_req, res) => {
 
 router.use(reviewStatsRouter);
 router.use('/auth', authRouter);
+router.use('/users', usersRouter);
 router.use('/admin/titles', adminTitlesRouter);
 router.use('/titles/:titleId/reviews', titleReviewsRouter);
 router.use('/titles/:titleId/poster', posterRouter);

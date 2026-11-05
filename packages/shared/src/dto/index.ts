@@ -146,3 +146,17 @@ export interface TrendingCardDTO {
   recentReviews: number;
   score: number;
 }
+
+/** The signed-in user's own account page. The email is private to its owner, so only this DTO adds it to a sign-in. */
+export interface ProfileDTO extends AuthUser {
+  createdAt: string;
+}
+
+export interface UpdateUsernameRequest {
+  username: string;
+}
+
+export interface ChangePasswordRequest {
+  currentPassword: string;
+  newPassword: string;
+}
