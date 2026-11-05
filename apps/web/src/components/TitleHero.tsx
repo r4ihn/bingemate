@@ -1,7 +1,9 @@
+import { useState } from 'react';
 import { Breadcrumb } from './Breadcrumb.js';
 import { Pill } from './Pill.js';
 import { formatRating } from '../format.js';
 import { useImageFailed } from './PosterCard.js';
+import { TrailerDialog } from './TrailerDialog.js';
 import type { TitleDetail } from '../types/title.js';
 
 const SILHOUETTES = [
@@ -15,7 +17,8 @@ const SILHOUETTES = [
 /**
  * Full-bleed title hero from the reference design (docs/ui.md A5). With a poster, a blurred copy fills
  * the background and the poster itself stands in the middle. Without one, or when the image fails to
- * load, the colours follow the title's hue and silhouettes stand in for the art.
+ * load, the colours follow the title's hue and silhouettes stand in for the art. With a trailer, the
+ * play button and the poster both open it; without one there is no play button.
  */
 export function TitleHero({
   title,
@@ -28,6 +31,8 @@ export function TitleHero({
 }) {
   const failed = useImageFailed(title.posterUrl);
   const poster = title.posterUrl && !failed ? title.posterUrl : null;
+  const [playing, setPlaying] = useState(false);
+  const trailer = title.trailerKey ?? null;
   const h = title.hue ?? 25;
   const countries = title.countries ?? []; // UI-only field: real data may omit it
   const background = [
@@ -52,11 +57,25 @@ export function TitleHero({
             style={{ backgroundImage: `url("${poster.replace(/["\\]/g, '\\$&')}")` }}
           />
           <div aria-hidden="true" className="absolute inset-0 bg-black/45" />
-          <img
-            src={poster}
-            alt={`Poster for ${title.name}`}
-            className="absolute top-[40%] left-1/2 aspect-[2/3] h-[52%] -translate-x-1/2 -translate-y-1/2 rounded-2xl object-cover shadow-2xl md:top-1/2 md:h-[62%]"
-          />
+          {trailer ? (
+            // A larger click target for the mouse; keyboard and screen reader users get the play button.
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden="true"
+              data-testid="hero-poster-play"
+              onClick={() => setPlaying(true)}
+              className="absolute top-[40%] left-1/2 aspect-[2/3] h-[52%] -translate-x-1/2 -translate-y-1/2 cursor-pointer overflow-hidden rounded-2xl shadow-2xl transition-transform duration-300 hover:scale-[1.02] md:top-1/2 md:h-[62%] motion-reduce:transition-none"
+            >
+              <img src={poster} alt="" className="h-full w-full object-cover" />
+            </button>
+          ) : (
+            <img
+              src={poster}
+              alt={`Poster for ${title.name}`}
+              className="absolute top-[40%] left-1/2 aspect-[2/3] h-[52%] -translate-x-1/2 -translate-y-1/2 rounded-2xl object-cover shadow-2xl md:top-1/2 md:h-[62%]"
+            />
+          )}
         </>
       ) : (
         /* Silhouettes stand in for the poster art */
@@ -84,15 +103,21 @@ export function TitleHero({
           ))}
       </h1>
 
-      <button
-        type="button"
-        aria-label="Play trailer"
-        className="absolute top-[40%] left-1/2 z-10 grid h-[110px] w-[110px] -translate-x-1/2 -translate-y-1/2 md:top-1/2 cursor-pointer place-items-center rounded-full bg-[rgb(120_100_90/0.6)] backdrop-blur-md"
-      >
-        <svg viewBox="0 0 24 24" className="ml-1 h-[34px] w-[34px] fill-white" aria-hidden="true">
-          <path d="M6 3l15 9-15 9z" />
-        </svg>
-      </button>
+      {trailer && (
+        <button
+          type="button"
+          aria-label={`Play trailer for ${title.name}`}
+          onClick={() => setPlaying(true)}
+          className="absolute top-[40%] left-1/2 z-10 grid h-[110px] w-[110px] -translate-x-1/2 -translate-y-1/2 md:top-1/2 cursor-pointer place-items-center rounded-full bg-[rgb(120_100_90/0.6)] backdrop-blur-md"
+        >
+          <svg viewBox="0 0 24 24" className="ml-1 h-[34px] w-[34px] fill-white" aria-hidden="true">
+            <path d="M6 3l15 9-15 9z" />
+          </svg>
+        </button>
+      )}
+      {playing && trailer && (
+        <TrailerDialog trailerKey={trailer} title={title.name} onClose={() => setPlaying(false)} />
+      )}
 
       {/* One bottom-anchored stack on phones; on md+ the synopsis and facts are placed separately */}
       <div className="absolute inset-x-8 bottom-20 z-10 flex flex-col gap-8 md:contents">

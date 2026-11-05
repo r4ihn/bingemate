@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MediaType, TitleStatus } from '@bingemate/shared';
 import type { TitleDetail } from '../types/title.js';
@@ -58,5 +59,62 @@ describe('TitleHero poster', () => {
     renderHero(base);
     expect(screen.queryByRole('img')).toBeNull();
     expect(screen.queryByTestId('hero-backdrop')).toBeNull();
+  });
+});
+
+describe('TitleHero trailer', () => {
+  const base = {
+    id: 't1',
+    name: '1492: Conquest of Paradise',
+    mediaType: MediaType.MOVIE,
+    status: TitleStatus.APPROVED,
+    avgRating: 4,
+    reviewCount: 3,
+    synopsis: '',
+    rankInType: null,
+    topPercent: null,
+    posterUrl: 'https://image.tmdb.org/t/p/w500/x.jpg',
+  } satisfies TitleDetail;
+  const renderHero = (title: TitleDetail) =>
+    render(
+      <MemoryRouter>
+        <TitleHero title={title} breadcrumb={['Main']} />
+      </MemoryRouter>,
+    );
+
+  it('has no play button when the title has no trailer', () => {
+    renderHero(base);
+    expect(screen.queryByRole('button', { name: /Play trailer/ })).toBeNull();
+    expect(screen.queryByTestId('hero-poster-play')).toBeNull();
+  });
+
+  it('the play button opens the trailer, and Close removes it', async () => {
+    const user = userEvent.setup();
+    renderHero({ ...base, trailerKey: 'abcDEF12345' });
+
+    await user.click(
+      screen.getByRole('button', { name: 'Play trailer for 1492: Conquest of Paradise' }),
+    );
+    expect(screen.getByTitle('Trailer for 1492: Conquest of Paradise')).toHaveAttribute(
+      'src',
+      'https://www.youtube-nocookie.com/embed/abcDEF12345?autoplay=1&rel=0',
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByTitle('Trailer for 1492: Conquest of Paradise')).toBeNull();
+  });
+
+  it('clicking the poster opens the trailer too', async () => {
+    const user = userEvent.setup();
+    renderHero({ ...base, trailerKey: 'abcDEF12345' });
+    await user.click(screen.getByTestId('hero-poster-play'));
+    expect(screen.getByTitle('Trailer for 1492: Conquest of Paradise')).toBeInTheDocument();
+  });
+
+  it('never embeds something that is not a YouTube id', async () => {
+    const user = userEvent.setup();
+    renderHero({ ...base, trailerKey: '"><script>' });
+    await user.click(screen.getByRole('button', { name: /Play trailer/ }));
+    expect(document.querySelector('iframe')).toBeNull();
   });
 });

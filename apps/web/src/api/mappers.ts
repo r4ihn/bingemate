@@ -39,6 +39,7 @@ export function summaryToTitle(s: TitleSummary): TitleDetail {
     rankInType: null,
     topPercent: null,
     ...(s.posterUrl !== undefined && { posterUrl: resolvePosterUrl(s.posterUrl) }),
+    ...(s.trailerKey !== undefined && { trailerKey: s.trailerKey }),
     ...(s.createdById !== undefined && { createdById: s.createdById }),
   };
 }
