@@ -44,7 +44,7 @@ export function PosterCard({ title, children }: { title: PosterTitle; children?:
 }
 
 /** True once the browser reports that the poster URL could not be loaded. */
-function useImageFailed(url: string | null | undefined): boolean {
+export function useImageFailed(url: string | null | undefined): boolean {
   const [failed, setFailed] = useState(false);
   useEffect(() => {
     setFailed(false);

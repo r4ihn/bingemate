@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { PrismaClient, type Prisma } from '@prisma/client';
 import bcrypt from 'bcrypt';
 import { emptyIdMap, lookup, newId, saveIdMap } from './id-mapping.js';
@@ -6,7 +7,7 @@ import type { Row } from './lib/csv.js';
 import { reviewCreatedAt } from './lib/dates.js';
 import { bookDetailsRow, movieDetailsRow, tvDetailsRow } from './lib/details.js';
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
-import { readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
+import { PROCESSED_DIR, readProcessed, readProcessedTitles, runIfMain } from './lib/io.js';
 import { StepLog } from './lib/log.js';
 import { hasMoviePoster, titleVisibility } from './lib/posters.js';
 
@@ -87,6 +88,13 @@ export async function main(): Promise<void> {
             p['poster_url'] ?? '',
           ]),
         );
+        // Optional: written by clean-trailers.ts from fetch-trailers.ts (needs TMDB_API_KEY).
+        const trailers = new Map(
+          (existsSync(PROCESSED_DIR + 'title_trailers.csv')
+            ? readProcessed('title_trailers.csv')
+            : []
+          ).map((r) => [r['title_id'] ?? '', r['youtube_key'] ?? '']),
+        );
         const rawTitles = readProcessedTitles();
         const moviesHavePosters = hasMoviePoster(rawTitles, posters);
         if (!moviesHavePosters) log.warn('no movie posters loaded: every movie stays visible');
@@ -102,6 +110,7 @@ export async function main(): Promise<void> {
             releaseYear: toInt(t['release_year']),
             description: t['description'] || null,
             posterUrl,
+            trailerKey: trailers.get(t['title_id'] ?? '') || null,
             createdById: null,
           };
         });

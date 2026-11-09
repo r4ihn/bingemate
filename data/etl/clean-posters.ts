@@ -54,7 +54,7 @@ function postersByKey(
 
 /**
  * Matches the poster sources to our titles on normalised name + release year, then falls back to
- * the saved online lookups, and writes title_id -> poster_url. Every source is optional: raw files
+ * the saved online lookups (a TMDB lookup replaces a dead link from the files), and writes title_id -> poster_url. Every source is optional: raw files
  * are not committed, so without them the step writes an empty file and titles keep the gradient.
  */
 export function main(): void {
@@ -113,10 +113,24 @@ export function main(): void {
     }
   }
 
+  const found = (existsSync(RAW_DIR + LOOKUP_SOURCE) ? readRaw(LOOKUP_SOURCE) : []).filter(
+    (r) => (r['poster_url'] ?? '') !== '',
+  );
+  const byTitle = (rows: Row[]) =>
+    new Map(rows.map((r) => [r['title_id'] ?? '', r['poster_url'] ?? '']));
+  // fetch-posters only asks TMDB about a title whose poster is missing or whose link is dead, so a
+  // TMDB answer replaces the file's link. Other lookups only fill a gap.
+  const tmdb = byTitle(found.filter((r) => r['source'] === 'tmdb'));
+  const lookups = byTitle(found.filter((r) => r['source'] !== 'tmdb'));
+
   const out: Record<string, unknown>[] = [];
+  let movieLookups = 0;
   for (const m of movies) {
     const hit = best.get(`${normalise(m['name'] ?? '')}|${m['release_year'] ?? ''}`);
-    if (hit) out.push({ title_id: m['title_id'], poster_url: hit.url });
+    const looked = tmdb.get(m['title_id'] ?? '');
+    if (looked !== undefined) movieLookups++;
+    const url = looked ?? hit?.url;
+    if (url !== undefined) out.push({ title_id: m['title_id'], poster_url: url });
     else {
       const { title_id, name, release_year } = m;
       log.reject('no poster match (keeps the gradient)', { title_id, name, release_year });
@@ -124,13 +138,8 @@ export function main(): void {
   }
 
   log.count('movies with a poster', out.length);
+  log.count('movies with a poster from a TMDB lookup', movieLookups);
   log.count('movies without a poster', movies.length - out.length);
-
-  const lookups = new Map(
-    (existsSync(RAW_DIR + LOOKUP_SOURCE) ? readRaw(LOOKUP_SOURCE) : [])
-      .filter((r) => (r['poster_url'] ?? '') !== '')
-      .map((r) => [r['title_id'] ?? '', r['poster_url'] ?? '']),
-  );
   const addRest = (
     label: string,
     titles: Row[],
@@ -141,9 +150,10 @@ export function main(): void {
     let fromLookup = 0;
     for (const t of titles) {
       const id = t['title_id'] ?? '';
+      const fromTmdb = tmdb.get(id);
       const file = files.get(`${normalise(toKeyName(t['name'] ?? ''))}|${t['release_year'] ?? ''}`);
-      const url = file ?? lookups.get(id);
-      if (file !== undefined) fromFile++;
+      const url = fromTmdb ?? file ?? lookups.get(id);
+      if (fromTmdb === undefined && file !== undefined) fromFile++;
       else if (url !== undefined) fromLookup++;
       if (url !== undefined) out.push({ title_id: id, poster_url: url });
     }
