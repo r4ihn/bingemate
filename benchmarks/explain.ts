@@ -137,7 +137,7 @@ export function postgresQueries(input: Inputs): Query[] {
     },
     {
       name: 'rating-stats-hot',
-      note: 'title_rating_stats row used by recomputeTitleRating for hottest title',
+      note: 'title_rating_stats row used by the review_rating_* triggers for hottest title',
       sql: 'SELECT review_count, avg_rating FROM "title_rating_stats" WHERE title_id = $1',
       params: [input.hotId],
     },

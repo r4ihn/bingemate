@@ -147,7 +147,7 @@ Remove orphan Mongo review bodies and replies whose PostgreSQL review is gone (f
   `id-map.json`, which the Mongo loader needs.
 - Everyone gets the dev password `Password123!` (one bcrypt hash, cost 12). Dataset users have placeholder emails.
 - Imported titles are `APPROVED` with `createdById` NULL. Undated reviews get a made-up `createdAt` between 2022 and 2025.
-- `Title.avgRating` / `reviewCount` are filled from the `title_rating_stats` view at the end of the load.
+- `Title.avgRating` / `reviewCount` are filled by the `review_rating_insert` trigger as the reviews go in (one recompute per batch, from the `title_rating_stats` view). `verify-load.ts` checks that they match the view and probes the triggers in a rolled-back transaction.
 - Mongo body: `body` = cleaned text, `mediaType` = a copy of the title's type,
   `createdAt` = the Postgres review date. Imported review extras are not written. Comments stay in their own collection.
 - Last load (3 seconds for Postgres): 5,478 users, 1,500 titles, 178 genres, 3,060 title_genres, 12,758 people,
@@ -178,7 +178,7 @@ Every run writes to `../processed/logs/`:
 5. **Genre filter**: all genres are in the data; decide the view/query that limits the browse filter to common ones. (SJ)
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star
    were my calls; confirm with the team.
-7. Aggregates are computed by the loader through the view; keep that in sync when reviews are written through the API. (HS)
+7. ~~Aggregates kept in sync when reviews are written through the API~~: done by database triggers on `Review` (migration `20261105120000_rating_triggers`, 2026-11-05), which also cover cascaded deletes and manual SQL. (HS)
 
 ## Posters
 
