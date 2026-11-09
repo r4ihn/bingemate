@@ -1,4 +1,4 @@
-# BingeMate: Initial Project Structure
+# BingeMate: Project Structure
 
 Monorepo with npm workspaces: React SPA (`apps/web`) → Express API (`apps/api`) → PostgreSQL (Prisma) + MongoDB (Mongoose).
 `packages/shared` holds the types both sides use (roles, media types, DTOs), so frontend and backend cannot drift apart.
@@ -28,8 +28,10 @@ bingemate/
 │   │   │   │   │   ├── auth.routes.ts
 │   │   │   │   │   ├── auth.service.ts
 │   │   │   │   │   └── auth.schemas.ts
+│   │   │   │   ├── users/                # profile: GET/PATCH /users/me, PATCH /users/me/password
 │   │   │   │   ├── titles/               # JW (CRUD) + SJ (search/filter)
 │   │   │   │   ├── genres/
+│   │   │   │   ├── people/               # person search, credits, degrees of separation (recursive CTE)
 │   │   │   │   ├── lists/                # completed / in-progress / plan-to
 │   │   │   │   ├── reviews/              # HS: PG header row + Mongo body, one service writes both
 │   │   │   │   ├── replies/              # HS (MongoDB), flat replies under reviews
@@ -37,7 +39,7 @@ bingemate/
 │   │   │   │   ├── posters/              # image GET / PUT / DELETE
 │   │   │   │   ├── trending/             # SJ (SQL aggregates) + HS (trending cards)
 │   │   │   │   ├── creator/              # JW: own titles, submission status, stats
-│   │   │   │   └── admin/                # built: title approval; RA users/roles/moderation endpoints planned
+│   │   │   │   └── admin/                # title approval queue, users and roles, review moderation list
 │   │   │   ├── mongo/
 │   │   │   │   └── models/
 │   │   │   │       ├── reviewBody.model.ts  # _id = PG reviews.id; one shape: text plus a mediaType copy
@@ -57,7 +59,8 @@ bingemate/
 │   │   │   └── server.ts                 # entry point: connect DBs, listen
 │   │   ├── tests/
 │   │   │   ├── unit/
-│   │   │   └── integration/              # Supertest against test DBs
+│   │   │   ├── integration/              # Supertest with Prisma and MongoDB stubbed
+│   │   │   └── real/                     # npm run test:real: real PostgreSQL + MongoDB (_test databases)
 │   │   ├── .env.example
 │   │   ├── package.json
 │   │   └── tsconfig.json
@@ -71,17 +74,22 @@ bingemate/
 │       │   │   ├── titles.ts
 │       │   │   ├── reviews.ts
 │       │   │   ├── lists.ts
+│       │   │   ├── people.ts
+│       │   │   ├── users.ts
+│       │   │   ├── creator.ts, genres.ts, trending.ts
 │       │   │   └── admin.ts
 │       │   ├── auth/
 │       │   │   ├── AuthContext.tsx
 │       │   │   ├── ProtectedRoute.tsx
 │       │   │   └── RoleGate.tsx          # show/hide UI by role
-│       │   ├── components/               # TitleCard, ReviewCard, CommentThread, FilterBar, Pagination…
+│       │   ├── components/               # TitleHero, TrailerDialog, TitleCredits, ConnectionFinder, review/reply cards, Pagination…
 │       │   ├── layouts/
 │       │   ├── pages/
 │       │   │   ├── Home.tsx              # trending cards
 │       │   │   ├── Browse.tsx            # search + filters
-│       │   │   ├── TitleDetail.tsx       # info + reviews + comments
+│       │   │   ├── TitleDetail.tsx       # hero (poster, trailer) + cast and crew + reviews + replies
+│       │   │   ├── Person.tsx            # credits + "How are they connected?" finder
+│       │   │   ├── Profile.tsx           # account details, username and password forms, list counts
 │       │   │   ├── Login.tsx
 │       │   │   ├── Register.tsx
 │       │   │   ├── MyLists.tsx
@@ -107,27 +115,36 @@ bingemate/
 │       └── tsconfig.json
 │
 ├── data/
-│   ├── raw/                              # downloaded Kaggle/Zenodo files (gitignored)
-│   ├── processed/                        # cleaned CSV/JSON (gitignored)
-│   └── etl/                              # JW + HS
-│       ├── clean-movies.ts
-│       ├── clean-books.ts
-│       ├── clean-tvshows.ts
-│       ├── load-postgres.ts
-│       ├── load-mongo-reviews.ts
+│   ├── raw/                              # dataset files and TMDB lookups (committed)
+│   ├── processed/                        # cleaned CSV/JSONL (committed; id-map and logs stay local)
+│   └── etl/                              # JW + HS (see data/etl/README.md)
+│       ├── clean-all.ts                  # runs every clean-*.ts (movies, books, tvshows, people, posters, trailers…)
+│       ├── fetch-posters.ts              # TMDB: replace dead or missing poster links (needs TMDB_API_KEY)
+│       ├── fetch-trailers.ts             # TMDB: best YouTube trailer per movie / TV show
+│       ├── load-all.ts                   # load-postgres.ts + load-mongo-reviews.ts
+│       ├── update-media.ts               # copy new poster/trailer links into a loaded database
+│       ├── verify-load.ts
 │       └── id-mapping.ts                 # dataset title → titles.id
 │
 ├── benchmarks/                           # SJ: SQL vs NoSQL comparison
 │   ├── scenarios/
 │   ├── run.ts
+│   ├── seed-bench.ts
+│   ├── explain.ts
+│   ├── people-connection.ts              # EXPLAIN ANALYZE of the degrees-of-separation query
 │   └── results/
 │
-├── docs/
-│   ├── er-diagram.png
-│   ├── architecture.svg
-│   └── api.md                            # endpoint list + required role
+├── scripts/
+│   └── up.mjs                            # npm run up: install, env files, databases, migrate, load, dev
 │
-├── .github/workflows/ci.yml              # lint, typecheck, test
+├── docs/
+│   ├── architecture.svg
+│   ├── api.md                            # endpoint list + required role
+│   ├── user-manual.md
+│   ├── benchmarks/                       # explain.md, results.md
+│   └── e2e/                              # Playwright click-through scripts
+│
+├── .github/workflows/ci.yml              # verify (lint, typecheck, test) + verify-real-db
 ├── docker-compose.yml                    # postgres + mongo (bound to localhost)
 ├── .gitignore
 ├── .prettierrc
@@ -140,16 +157,16 @@ bingemate/
 
 ## Data split (from the report)
 
-| Store               | Holds                                                                                                                                                                                                                                                                                                                                                           |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| PostgreSQL (Prisma) | users (+ role, bcrypt hash), titles (+ status PENDING/APPROVED/REJECTED, created_by, rejection_reason), movie_details, tv_details, book_details (one optional row per title, type enforced by a composite foreign key), genres, people, title_genres, title_people, list_entries, reviews header (id, user_id, title_id, rating, timestamps), rating aggregates |
-| MongoDB (Mongoose)  | review bodies (`_id` = PG `Review.id`, `titleId`, `userId`, copied `mediaType`, `body` text, `createdAt`, `updatedAt`; one shape for all media types), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                           |
+| Store               | Holds                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PostgreSQL (Prisma) | users (+ role, bcrypt hash), titles (+ status PENDING/APPROVED/REJECTED, created_by, rejection_reason, poster_url, trailer_key), movie_details, tv_details, book_details (one optional row per title, type enforced by a composite foreign key), genres, people, title_genres, title_people, list_entries, reviews header (id, user_id, title_id, rating, timestamps), rating aggregates |
+| MongoDB (Mongoose)  | review bodies (`_id` = PG `Review.id`, `titleId`, `userId`, copied `mediaType`, `body` text, `createdAt`, `updatedAt`; one shape for all media types), replies (one flat list per review), poster images, denormalised trending cards                                                                                                                                                    |
 
 Cross-database link: PostgreSQL `Review.id` equals MongoDB `ReviewBody._id`; replies store `reviewId` / `userId`. Review creation first commits a PostgreSQL transaction that locks the Title row and inserts the Review header. It then writes the Mongo body with the same id. If that fails, a compensating transaction locks the title and removes the header; compensation failures are logged. `Title.avgRating` / `reviewCount` are maintained by the database, not the API: three statement-level triggers on `Review` (`review_rating_insert`, `_update`, `_delete`, using transition tables) recompute the affected titles from `title_rating_stats` in the same transaction, so cascaded deletes, bulk loads and manual SQL keep the totals right too (migration `20261105120000_rating_triggers`). The API still takes the Title row lock first so two concurrent reviews of one title cannot each aggregate without seeing the other. There is no cross-store transaction or foreign key. Deleting a title or review also attempts to remove its Mongo body and replies.
 
-[Architecture diagram](docs/architecture.svg): app-level middleware parses JSON and cookies and enables credentialed CORS; routers are followed by the final 404 and error handlers. `authenticate`, `optionalAuthenticate`, `authorize(role)` and Zod validation are attached to individual routes or feature routers as required, with no global authentication, validation or rate-limit pipeline. Only login/register and poster PUT/DELETE are rate limited. The React client sends the JWT in the httpOnly `token` cookie using `credentials: 'include'`.
+[Architecture diagram](docs/architecture.svg): app-level middleware parses JSON and cookies and enables credentialed CORS; routers are followed by the final 404 and error handlers. `authenticate`, `optionalAuthenticate`, `authorize(role)` and Zod validation are attached to individual routes or feature routers as required, with no global authentication, validation or rate-limit pipeline. Only login/register, poster PUT/DELETE and the password change are rate limited. The React client sends the JWT in the httpOnly `token` cookie using `credentials: 'include'`.
 
-The `admin` module implements title listing and status changes. Separate admin user, role and review-moderation endpoints remain planned (RA); the existing review DELETE endpoint already allows an admin to remove a review. The `people` module serves person search, person pages and `GET /people/:id/connection/:otherId`, the shortest chain of shared approved titles between two people, found by a breadth-first recursive CTE (see docs/api.md). The four SQL views are `title_rating_stats`, `genre_filter_options`, `trending_titles` and `creator_title_stats`; the materialized view `title_rank_in_type` uses `RANK` and `PERCENT_RANK` per media type and is read for title-page ranking. ETL scripts, `cleanupOrphans`, `backfill-undated-dates`, benchmark seed/run/explain scripts and the isolated real-database test suite are tooling outside the runtime tiers.
+The `admin` module serves the title approval queue (`/admin/titles`), the user list and role changes (`/admin/users`), and a review list across every title for moderation (`/admin/reviews`); removal uses the shared `DELETE /reviews/:id` and `DELETE /replies/:id`. The `users` module lets a signed-in user read their profile and change their username or password; both changes re-issue the cookie so the JWT carries the new name. The `people` module serves person search, person pages and `GET /people/:id/connection/:otherId`, the shortest chain of shared approved titles between two people, found by a breadth-first recursive CTE (see docs/api.md). The four SQL views are `title_rating_stats`, `genre_filter_options`, `trending_titles` and `creator_title_stats`; the materialized view `title_rank_in_type` uses `RANK` and `PERCENT_RANK` per media type and is read for title-page ranking. `Title.trailerKey` holds an optional YouTube id (a CHECK refuses anything else, migration `20261105130000_title_trailer`); the web app plays it from the title hero in a `youtube-nocookie.com` embed. `scripts/up.mjs`, ETL scripts (including the TMDB poster and trailer fetchers and `update-media`), `cleanupOrphans`, `backfill-undated-dates`, benchmark seed/run/explain/people-connection scripts and the isolated real-database test suite are tooling outside the runtime tiers.
 
 ## Authentication and membership
 

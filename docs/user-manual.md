@@ -5,7 +5,7 @@
 You use BingeMate to browse movies, TV shows and books, read and write reviews, reply to reviews, and keep personal lists. Creators submit titles. Admins approve or reject them. The source contains a React website and an Express API. This manual describes the current source, including features that are still incomplete.
 
 - PostgreSQL holds accounts, password hashes and roles.
-- PostgreSQL holds titles, approval status, genres, people and media details.
+- PostgreSQL holds titles, approval status, genres, people, media details and trailer ids.
 - PostgreSQL holds list entries, review ratings, rating totals and ranking views.
 - MongoDB holds review text, replies, poster images and cached trending cards.
 - A PostgreSQL review ID matches its MongoDB review-body ID; there is no transaction across both stores.
@@ -23,11 +23,13 @@ Keep these local ports available:
 | 5432  | PostgreSQL 16 |
 | 27017 | MongoDB 7     |
 
-The database ports bind to `127.0.0.1`. Docker volumes preserve their data between container restarts.
+If 5432 or 27017 is taken (for example by a PostgreSQL installed on your machine), `npm run up` picks the next free port and saves it as `POSTGRES_PORT` / `MONGO_PORT` in the root `.env`; use that port wherever this manual says 5432 or 27017. The database ports bind to `127.0.0.1`. Docker volumes preserve their data between container restarts.
 
 ## 3. Set it up
 
-Run these commands in order from the repository root:
+**The short way.** With Docker running, run `npm run up` from the repository root. It installs dependencies, creates `apps/api/.env` (with a random `JWT_SECRET`) and `apps/web/.env`, starts both databases, applies migrations, loads the dataset into an empty database, rebuilds trending, and starts the API and the website. Run it again after every `git pull`; it never replaces existing data unless you add `--reload-data`. The root README lists its other options. Put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first if you want real data.
+
+**The long way.** Run these commands in order from the repository root:
 
 ```sh
 npm install
@@ -43,10 +45,9 @@ Choose **one** data option below. On a newly created database, `npm run prisma:m
 
 ### Option A: load the dataset
 
-You need the raw inputs described in [the ETL README](../data/etl/README.md) in `data/raw/`. Raw and processed data are gitignored. If your zip does not include the inputs, use Option B.
+The cleaned dataset is committed in `data/processed/`, so no cleaning step is needed. (To rebuild it from `data/raw/`, run `npx tsx data/etl/clean-all.ts` first; see [the ETL README](../data/etl/README.md).)
 
 ```sh
-npx tsx data/etl/clean-all.ts
 npx tsx data/etl/load-all.ts --reset
 npx tsx data/etl/verify-load.ts
 npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
@@ -113,7 +114,9 @@ http://localhost:4000/api/titles?type=MOVIE&genre=Drama&sort=rating&minRating=4&
 
 The API accepts genre names without regard to case. Its sorts are `name` (alphabetical, default), `rating` (highest first), `year` (newest first, missing years last) and `reviews` (most first).
 
-Choose a title card to open `/titles/:id`. You can read the synopsis, available facts, average rating out of 5, and reviews. Reviews are newest first. Long review text has a **Read more** control. Missing optional facts are hidden.
+Choose a title card to open `/titles/:id`. You can read the synopsis, available facts (runtime, seasons, publisher), average rating out of 5, the cast and crew, and reviews. Reviews are newest first. Long review text has a **Read more** control. Missing optional facts are hidden. The poster stands in the hero over a blurred copy of itself; a title without a poster keeps a coloured gradient. When a movie or TV show has a trailer, the hero shows a play button, and the button or the poster opens the trailer in a dialog (a `youtube-nocookie.com` embed). Books have no trailers.
+
+Choose a name under the cast and crew to open `/people/:id`. The person page lists their approved titles, newest first, with every role they had on each. Under **How are they connected?**, search for another person (type at least two letters) and choose them: the page shows the shortest chain of shared titles between the two, for example _A was in Film 1 with B, who was in Film 2 with C_, up to six steps. Only approved titles count. If there is no chain within six steps, the page says "No link to <name> within 6 steps."
 
 When ranking data exists, you see a line such as `#3 in Movies · top 1%`. This is the requested “#N in Movies - top X%” rank line; the screen uses a middle dot. The media label changes for books and TV shows. The line is hidden when the title is unranked or its rank lookup fails. Ranks refresh with the trending job.
 
@@ -142,6 +145,10 @@ If you already reviewed the title, choose **Edit review** above the reviews or *
 Choose **Reply** under a review, enter text, and choose **Post reply**. Replies form one flat list, oldest first. Longer threads have a control to show more replies. You can **Edit** your own reply and choose **Save changes**, or **Delete** it with confirmation. Reply text must be non-empty and at most 2,000 characters. A changed reply shows an edited mark. An admin can delete replies too.
 
 Members can review other people's titles, but cannot review a title they created (403 **You cannot review a title you created**). They can reply under their own titles. Admins never write or edit reviews or replies. Reviews and replies are available only under approved titles.
+
+#### Your profile
+
+Open **Profile** in the top bar, or `/me/profile`. You see your username, role, email ("Only you can see your email"), **Member since**, and how many titles you have on each list. To change your username, enter a new one and save; the same rules as signup apply, and **Username already taken** appears if another member has it in any case. To change your password, enter your current password and a new one (at least eight characters, a letter and a digit, and different from the current one). You stay signed in after either change. The password form allows 10 attempts per 15 minutes.
 
 #### Lists
 
@@ -183,7 +190,9 @@ Choose **Approve** to publish a title. To reject it, type a reason in the box in
 
 If two admins act on the same version of a title, the later request receives HTTP 409: **This title changed after you opened it. Reload the queue and review it again.** The screen displays this message and reloads. Review the current title before deciding again.
 
-Admin user/role management and review moderation are not built yet as working real-API screens. **Users** and **Moderation** have mock UI, but their admin endpoints and real wiring are missing. With mocks off, those screens fail to load. Existing review and reply DELETE endpoints already allow admins to delete, including through controls on public title pages. This does not provide a complete admin moderation dashboard.
+Open **Users** at `/admin/users` to see every account, newest first, with its email and role. Change a role with the role select. You cannot change your own role. A new role takes effect the next time that user logs in; until then their current session keeps the old role (at most two hours).
+
+Open **Moderation** at `/admin/moderation` to see every review on every title, newest first, with the title name, author, stars and text. Choose **Delete** and confirm to remove a review and its replies. Admins can also delete reviews and replies from the public title pages.
 
 ## 5. Background jobs and maintenance commands
 
@@ -281,7 +290,9 @@ The seed refuses non-empty targets unless you request `--reset`, which deletes b
 | HTTP 409 while deleting your title                                                                       | Other users have reviewed or listed it. Ask an admin to remove it. Retrying as the owning member cannot bypass this restriction.                                                                                                                            |
 | HTTP 409 while deciding an approval                                                                      | Reload and review the current title. The exact stale-version message is in the admin instructions above.                                                                                                                                                    |
 | Creator image upload fails after title creation                                                          | Return to the Creator page and edit the saved title. Retry with JPEG, PNG or WebP. Do not submit a duplicate title.                                                                                                                                         |
-| Users or Moderation fails to load with mocks off                                                         | Those real admin endpoints are missing. Use the implemented Approval queue; there is no setup command that enables the missing screens.                                                                                                                     |
+| HTTP 400 `You cannot change your own role`                                                               | Ask another admin to change it. An admin cannot change their own role.                                                                                                                                                                                      |
+| A role change does not seem to apply                                                                     | The user must log out and in again; the old session keeps its role for up to two hours.                                                                                                                                                                     |
+| HTTP 400 `Current password is incorrect` on Profile                                                      | Enter your current password exactly. After 10 attempts in 15 minutes the form is refused with 429 until the window passes.                                                                                                                                  |
 
 ## Known gaps
 
@@ -300,7 +311,8 @@ These entries reflect [TASKS.md section 12](../TASKS.md#12-known-gaps-and-follow
 Additional open problems from the tracker and current code:
 
 - Signup usernames and the member role merge are implemented (migration `20261103140000_members_and_usernames`; test counts: see the PR). The updated signup browser checks still need a run; the historical results in the manual test checklist do not verify them. Lookalikes beyond the practical reserved-name mapping can still evade the username validator.
-- Admin user/role and review-moderation endpoints are not built. Their screens have mock implementations only. Title approval endpoints are implemented.
+- Admin Users and Moderation work on the real API (PR #27) but have not yet been clicked through in a real browser; the 3 Nov browser run predates them. The same goes for the Profile page, person pages and trailers.
+- There is no account deletion, by the user or by an admin.
 - Search uses `ILIKE`. Whether to add the `pg_trgm` extension is still a team decision after rare-term searches approached 100 ms on synthetic scale data (section 6).
 - Browse still performs a total count for pagination. The tracker records about 25 ms on the synthetic benchmark data, now the largest part of a browse request (section 6).
 - Browse has no minimum-rating or release-year control (API only), and the large title at the top of Home is not a trending one. The member submission, admin and member reading flows were walked through in a real browser on 3 Nov 2026 (`docs/manual-test-checklist.md`); keyboard-only use, screen readers and the phone layout of the creator and admin screens are still unchecked.

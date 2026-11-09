@@ -27,10 +27,12 @@ Figure: `docs/architecture.svg`. Say what lives where and why: PostgreSQL for en
 
 ### 3. Relational design (JW; SJ writes the window-function paragraph)
 
-- ER diagram (Eraser link in `docs/eraser-diagrams.md`; the Eraser file does not yet show the rank view or the two new `Title` indexes).
+- ER diagram (Eraser link in `docs/eraser-diagrams.md`; redrawn 3 Nov, so it does not yet show `Title.trailerKey` or the rating triggers).
 - Normalisation and the choice of per-media-type details tables with a composite key that stops a title changing type while it has details (`schema.prisma`, migration `title_details`).
 - Constraints that carry the rules: `CHECK (rating BETWEEN 1 AND 5)`, unique `(userId, titleId)` on reviews and list entries, foreign keys with cascades.
 - The four views (`title_rating_stats`, `genre_filter_options`, `trending_titles`, `creator_title_stats`) and the materialized view `title_rank_in_type` with `RANK()` and `PERCENT_RANK()`, refreshed concurrently; why materialized (a plain view would re-rank every title per page request).
+- Triggers: three statement-level triggers on `Review` with transition tables keep `Title.avgRating` / `reviewCount` right on every path, including cascades and bulk loads (migration `rating_triggers`, `tests/real/ratingTriggers.real.ts`).
+- Recursive CTE: degrees of separation between people as a breadth-first search in one query, and why the textbook `UNION ALL` walk did not finish (`benchmarks/README.md`, `people.service.ts`).
 - Transactions and locking: the title row lock (`lockTitle`) shared by add-to-list, create-review and delete; the real concurrent test that fails when the lock is removed. Source: `apps/api/tests/real/submissions.real.ts`.
 
 ### 4. Document design (HS)
@@ -46,7 +48,7 @@ The write order (PostgreSQL transaction, then MongoDB, then undo the header if t
 
 ### 6. Roles, security and approval (RA)
 
-Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the rules (admins never submit titles or write reviews or replies; members cannot review their own titles but can reply under them), the approval workflow with the optimistic `updatedAt` version check, re-moderation on edit or image change. Explain signup usernames: Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. PostgreSQL enforces a unique constraint through the expression index on `lower("username")` in migration `20261103140000_members_and_usernames`; later colliding legacy names receive suffixes such as ` (2)`. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap. Say plainly that admin user management and review moderation are not finished.
+Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the rules (admins never submit titles or write reviews or replies; members cannot review their own titles but can reply under them), the approval workflow with the optimistic `updatedAt` version check, re-moderation on edit or image change. Explain signup usernames: Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. PostgreSQL enforces a unique constraint through the expression index on `lower("username")` in migration `20261103140000_members_and_usernames`; later colliding legacy names receive suffixes such as ` (2)`. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap. Admin user and role management and review moderation are built (PR #27): an admin cannot change their own role, and a new role applies at the next login because the JWT carries the old one. Members change their own username and password on Profile (PR #25); the password change needs the current password, is rate limited, and re-issues the cookie.
 
 ### 7. Performance (SJ)
 
@@ -58,11 +60,11 @@ Authentication (bcrypt, JWT in an httpOnly cookie), role checks per route, the r
 
 ### 8. Testing and CI (WH)
 
-540 API tests with the stores stubbed, 492 web tests, 14 real-database tests, each rule checked by breaking the code on purpose; the CI jobs. State that the real-database CI job needs a green GitHub run before it is claimed.
+API tests with the stores stubbed, web tests and real-database tests (take the counts from a fresh `npm test` and `npm run test:real` run when writing), each rule checked by breaking the code on purpose; the two CI jobs (`verify` and `verify-real-db`, both green on GitHub since 3 Nov).
 
 ### 9. Limitations and next steps (ALL)
 
-Admin user and role management and review moderation; `pg_trgm` for rare-term search (95 to 101 ms on 950,000 titles); cached or approximate page totals; the missing year-sort index; Eraser diagrams to refresh; cold-cache benchmarks; browser checks of the creator and admin flows.
+Account deletion; `pg_trgm` for rare-term search (95 to 101 ms on 950,000 titles); cached or approximate page totals; the missing year-sort index; Eraser diagrams to refresh; cold-cache benchmarks; browser checks of the screens merged after 3 Nov (admin Users and Moderation, Profile, people pages, trailers).
 
 ### 10. Contributions (ALL)
 
