@@ -62,7 +62,7 @@ The updated script adds signup, a case-insensitive taken username, client-side i
 - Keyboard-only use and screen readers. The review form and the admin reason box do have accessible names (for example "Reason for <title>"), but nobody has tried them with assistive technology.
 - Any browser except headless Chromium; no Safari or Firefox.
 - Phone layout of the creator and admin screens (only Home and Browse were measured at 320 px).
-- Admin user and role management and review moderation: they are not built (`TASKS.md` section 4).
+- Admin Users and Moderation, the Profile page, person pages and trailers: they were merged after this run (PRs #25 to #31) and have not been clicked through in a browser yet.
 - Load or concurrency from the browser. Concurrency is covered by the real-database tests.
 
 ## Notes for the team

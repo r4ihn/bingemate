@@ -20,4 +20,5 @@ Notes
 
 - The relational and MongoDB files are "anyone with the link can edit". Treat the links as team-only. The architecture file has no link access.
 - Not drawn: the `Title` year-sort index, which is not shipped (Prisma 5.20 cannot declare `NULLS LAST`).
+- Stale since the redraw (to add): `Title.trailerKey` and its CHECK (migration `title_trailer`), the three rating triggers on `Review` (migration `rating_triggers`), and on the architecture diagram the `users` and `people` modules and the admin users and moderation routes.
 - Eraser's AI edit ran out of free credits on 2026-10-27, so edits are made by writing the diagram code directly. Anyone editing by hand should re-read the code first: it is the source of truth, and the diagrams are a copy.

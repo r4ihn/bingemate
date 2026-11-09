@@ -25,11 +25,11 @@ migrations, loads the full dataset from `data/processed` (1,500 titles with post
 database and rebuilds trending, then starts the API and the website. Open **http://localhost:5173**. Every step is
 safe to repeat, so run it again after every `git pull`. It never replaces existing data by itself.
 
-| Option                          | Does                                                                       |
-| ------------------------------- | -------------------------------------------------------------------------- |
-| `npm run up -- --reload-data`   | Wipe local PostgreSQL + MongoDB and load `data/processed` again            |
-| `npm run up -- --demo`          | Use the small demo seed (3 titles, no posters) instead of the dataset      |
-| `npm run up -- --no-dev`        | Prepare everything, don't start the servers                                |
+| Option                        | Does                                                                  |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `npm run up -- --reload-data` | Wipe local PostgreSQL + MongoDB and load `data/processed` again       |
+| `npm run up -- --demo`        | Use the small demo seed (3 titles, no posters) instead of the dataset |
+| `npm run up -- --no-dev`      | Prepare everything, don't start the servers                           |
 
 For real data instead of mocks, put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first.
 
@@ -86,7 +86,9 @@ cd apps/api && npm run dev                      # API on :4000
 cd apps/web && VITE_USE_MOCKS=false npm run dev # website on :5173, real data
 ```
 
-With mocks off, browsing, search, reviews, replies, My Lists, Creator submissions and stats, image uploads and the admin approval queue use the API. Admin Users and Moderation remain mock-only.
+With mocks off, every page uses the API: browsing, search, title pages (with cast and crew, posters and trailers), people pages and the "How are they connected?" finder, reviews, replies, My Lists, Profile (change username and password), Creator submissions and stats, image uploads, and all three admin screens (approval queue, Users and roles, Moderation).
+
+Posters and trailers come from `data/processed` (fetched from TMDB ahead of time; see `data/etl/README.md`). To copy newer poster and trailer links into a database that is already loaded, without `--reset`, run `npx tsx data/etl/update-media.ts` (a dry run), then the same command with `--apply`, then refresh trending (below).
 
 Visitors browse approved titles. Signup collects Email, Username and Password and signs in a `MEMBER`; every member can use **Creator** to submit titles. Admins never submit titles or write reviews or replies. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap.
 
@@ -109,19 +111,21 @@ npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
 
 ## Scripts
 
-| Command                     | What                              |
-| --------------------------- | --------------------------------- |
-| `npm run lint`              | ESLint across the monorepo        |
-| `npm run typecheck`         | `tsc --noEmit` in every workspace |
-| `npm test`                  | run all workspace tests           |
-| `npm run format`            | Prettier write                    |
-| `npm run db:up` / `db:down` | start / stop local databases      |
+| Command                     | What                                                 |
+| --------------------------- | ---------------------------------------------------- |
+| `npm run up`                | set up and start everything                          |
+| `npm run dev`               | API, then the website once the API answers `/health` |
+| `npm run lint`              | ESLint across the monorepo                           |
+| `npm run typecheck`         | `tsc --noEmit` in every workspace                    |
+| `npm test`                  | run all workspace tests                              |
+| `npm run format`            | Prettier write                                       |
+| `npm run db:up` / `db:down` | start / stop local databases                         |
 
 ## Real-database tests
 
 Create the isolated PostgreSQL database: `docker exec bingemate-postgres createdb -U bingemate bingemate_test`.
-Export `export TEST_DATABASE_URL=postgresql://bingemate:bingemate@localhost:5432/bingemate_test?schema=public` (adjust credentials).
-Export `export TEST_MONGO_URI=mongodb://localhost:27017/bingemate_test` with MongoDB running locally.
+Export `export TEST_DATABASE_URL=postgresql://bingemate:bingemate@localhost:5432/bingemate_test?schema=public` (adjust credentials, and use the `POSTGRES_PORT` from the root `.env` if `npm run up` picked another port).
+Export `export TEST_MONGO_URI=mongodb://localhost:27017/bingemate_test` with MongoDB running locally (again, use `MONGO_PORT` if it is set).
 Run `npm run test:real --workspace apps/api`; global setup deploys migrations automatically.
 This suite truncates every app table and drops every Mongo collection in that `_test` database; `npm test` stays stubbed.
 

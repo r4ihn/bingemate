@@ -136,12 +136,14 @@ Same tokens, same pill and dock language. Proposed:
 | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Home             | Reference hero (featured title) followed by a poster strip of trending titles                                                                                              |
 | Browse           | Filter pills row (type, genre, rating) over a grid of portrait posters, greyscale-to-colour on hover                                                                       |
-| Title detail     | The reference hero, then reviews and comments in `--surface` panels below                                                                                                  |
+| Title detail     | The reference hero (real poster over a blurred copy; play button only when there is a trailer), then cast and crew, then reviews and replies in `--surface` panels below   |
+| Person           | Name and credits as a poster grid (2 to 5 columns), then the "How are they connected?" finder with the chain as linked steps                                               |
+| Profile          | Account card (initial, name, role badge, email, member since), list counts, and username and password forms in panels                                                      |
 | Login / Register | Centred panel on `--bg`, pill-radius inputs and a yellow primary button                                                                                                    |
 | My Lists         | Pill tabs (Completed, In progress, Plan to) with a poster grid                                                                                                             |
 | Review form      | Panel with a star rating control and a text box, the same for every media type                                                                                             |
 | Creator          | Table of submissions with status badges (Pending, Approved, Rejected). The edit form shows “Changing the image sends this title back for approval” beside the image field. |
-| Admin            | Tables for users and the approval queue, using the same badge styles                                                                                                       |
+| Admin            | Tables for the approval queue, users (role select) and moderation (every review), using the same badge styles                                                              |
 | Forbidden / 404  | Giant ghost text (`403`, `404`) in the style of the surname word                                                                                                           |
 
 Submissions (all statuses) and approved-title stats have a Delete button with inline “Delete this title? This cannot be undone.” and Confirm / Cancel. Controls are disabled during deletion; success refreshes the table, while a server error appears inline and keeps the row.
@@ -168,5 +170,5 @@ Submissions (all statuses) and approved-title stats have a Delete button with in
 ## B7. Open items
 
 - Mobile layout is not defined by the reference. Our rule: dock collapses, strip becomes a horizontal scroller.
-- Real posters come from the dataset later (URL field on titles). Until then use the mock posters.
+- Real posters are in (`titles.posterUrl`, dead links replaced from TMDB in PR #30); titles without one keep the gradient. Trailers open in a dialog from the hero (PR #31).
 - Exact colours and sizes need a pass against full-resolution screenshots if the team wants closer fidelity.
