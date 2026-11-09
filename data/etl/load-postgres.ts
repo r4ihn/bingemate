@@ -187,13 +187,12 @@ export async function main(): Promise<void> {
           tx.listEntry.createMany({ data }),
         );
 
-        // Denormalised aggregates, computed by the title_rating_stats view in the same database.
-        const updated = await tx.$executeRaw`
-          UPDATE "Title" t
-          SET "avgRating" = s."avg_rating", "reviewCount" = s."review_count"
-          FROM "title_rating_stats" s
-          WHERE s."title_id" = t."id"`;
-        log.count('titles with refreshed avgRating/reviewCount', updated);
+        // Title.avgRating / reviewCount were filled while the reviews went in: the review_rating_insert
+        // trigger recomputes them from title_rating_stats once per batch (migration
+        // 20261105120000_rating_triggers). verify-load.ts checks that they match the view.
+        const [rated] = await tx.$queryRaw<{ n: number }[]>`
+          SELECT COUNT(*)::int AS "n" FROM "Title" WHERE "reviewCount" > 0`;
+        log.count('titles with reviews (avgRating/reviewCount set by trigger)', rated?.n ?? 0);
       },
       { timeout: TX_TIMEOUT_MS, maxWait: 10_000 },
     );

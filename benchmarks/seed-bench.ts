@@ -174,7 +174,8 @@ async function loadPostgres(pg: PrismaClient, o: Options): Promise<void> {
     }
     console.log(`Review conflict loss: ${o.reviews - inserted}`);
   });
-  // Same numeric ROUND(AVG(...), 2) as title_rating_stats / recomputeTitleRating.
+  // The review_rating_* triggers already keep these in sync; this is a cheap no-op safety net with the
+  // same numeric ROUND(AVG(...), 2) as title_rating_stats.
   await phase(
     'PostgreSQL title rating aggregates',
     () => pg.$executeRaw`

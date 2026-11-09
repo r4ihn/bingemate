@@ -150,7 +150,23 @@ BENCH_DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_be
 
 `--drop-only` ignores scenario selection, drops all `bench_*` tables in the current
 PostgreSQL schema and Mongo collections, deletes `bench-ins-` review rows/bodies,
-and recomputes affected title ratings. It cannot be combined with `--keep-setup`.
+and the `review_rating_delete` trigger restores the affected title ratings. It cannot be combined with `--keep-setup`.
 `--list` and argument validation require neither credentials nor connections.
 All database modes validate both `BENCH_*` URLs before constructing clients and
 never fall back to the application's environment variables.
+
+## Degrees of separation (`people-connection.ts`)
+
+`EXPLAIN (ANALYZE, BUFFERS)` of the recursive people query from the most-credited person to a fixed
+sample of other people, grouped by how many steps apart they are. It only reads, so it runs on the
+development database (the `_bench` database has no people), and it refuses a non-local `DATABASE_URL`.
+
+```sh
+npx tsx --env-file=apps/api/.env benchmarks/people-connection.ts --sample 40 --max-depth 6
+```
+
+The query visits each person once: level by level, each recursion step carries the whole frontier and
+the set already visited. The textbook alternative, a `UNION ALL` walk over every path with a cycle
+check, did not finish within two minutes on this data, because a single title's cast of 36 people
+already has 36! orderings. A run on 2026-11-05 (12,758 people, 30 pairs): 2 steps median 63 ms,
+3 steps 100 ms, 4 steps 145 ms, 5 steps 151 ms, no chain within 6 steps 157 ms, worst 348 ms.

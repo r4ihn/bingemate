@@ -1,4 +1,4 @@
-import { MediaType, Role, TitleStatus } from '@bingemate/shared';
+import { MediaType, PersonRole, Role, TitleStatus } from '@bingemate/shared';
 import type { ReplyDTO, ReviewDTO, TitleDetailDTO, TitleSummary } from '@bingemate/shared';
 import { describe, expect, it } from 'vitest';
 import { detailToTitle, mapReply, mapReview, mapSubmission, summaryToTitle } from './mappers.js';
@@ -112,13 +112,19 @@ describe('detailToTitle', () => {
     expect(t.runtime).toBeUndefined();
     expect(t.hue).toBeUndefined();
   });
-  it('keeps posterUrl and createdById, and does not leak genres or people', () => {
+  it('keeps posterUrl and createdById, and does not leak genres', () => {
     const t = detailToTitle({ ...detail, posterUrl: '/p.jpg', createdById: 'u9' });
     expect(t.posterUrl).toBe('/p.jpg');
     expect(t.createdById).toBe('u9');
     expect('genres' in t).toBe(false);
-    expect('people' in t).toBe(false);
     expect('description' in t).toBe(false);
+  });
+  it('keeps cast and crew as id, name and role', () => {
+    const t = detailToTitle({
+      ...detail,
+      people: [{ id: 'p1', name: 'Greta', role: PersonRole.DIRECTOR }],
+    });
+    expect(t.people).toEqual([{ id: 'p1', name: 'Greta', role: PersonRole.DIRECTOR }]);
   });
   it('omits posterUrl when absent and keeps a null createdById', () => {
     const t = detailToTitle({ ...detail, createdById: null });

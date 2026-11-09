@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Prisma } from '@prisma/client';
 import type { Scenario } from '../lib/scenario.js';
 import { collection, ensureReviewText, removeInserted } from '../lib/setup.js';
-import { lockTitle, recomputeTitleRating } from '../../apps/api/src/modules/reviews/rating.js';
+import { lockTitle } from '../../apps/api/src/modules/reviews/rating.js';
 
 let counter = 0;
 let users: string[] = [];
@@ -16,7 +16,7 @@ const body = 'Synthetic benchmark review body.';
 export default {
   name: 'insert-review',
   description:
-    'Single SQL text-row insert versus Mongo body insert; app performs a locked PG Review transaction, recomputes title ratings, then inserts the Mongo body. Random existing users and cold-tail titles; unique-pair conflicts are retried and included in timing. All bench-ins- rows are removed and touched title aggregates restored by cleanup.',
+    'Single SQL text-row insert versus Mongo body insert; app performs a locked PG Review transaction (the review_rating_insert trigger recomputes title ratings), then inserts the Mongo body. Random existing users and cold-tail titles; unique-pair conflicts are retried and included in timing. All bench-ins- rows are removed and touched title aggregates restored by cleanup.',
   async setup(ctx) {
     inserted.length = 0;
     touched.clear();
@@ -62,7 +62,6 @@ export default {
           await lockTitle(tx, title.id);
           await tx.$executeRaw(Prisma.sql`INSERT INTO "Review" (id, "userId", "titleId", rating, "createdAt", "updatedAt")
             VALUES (${reviewId}, ${userId}, ${title.id}, ${4}, now(), now())`);
-          await recomputeTitleRating(tx, title.id);
         });
       } catch (err) {
         // Raw SQL uniqueness errors use P2010 + PostgreSQL SQLSTATE 23505.
@@ -90,7 +89,6 @@ export default {
         await ctx.pg.$transaction(async (tx) => {
           await lockTitle(tx, title.id);
           await tx.$executeRaw(Prisma.sql`DELETE FROM "Review" WHERE id = ${reviewId}`);
-          await recomputeTitleRating(tx, title.id);
         });
         throw err;
       }
