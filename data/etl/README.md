@@ -206,7 +206,7 @@ It needs the network, so it is not part of `clean-all`. Run `clean-all`, then
 `npx tsx --env-file=apps/api/.env data/etl/fetch-posters.ts`, then `clean-all` again. It can be stopped
 and resumed; `--retry-misses` asks TMDB again about the titles it had no answer for.
 
-To put new posters into a database that is already loaded without
+To put new posters (and trailers, below) into a database that is already loaded without
 `load-all --reset` (which replaces every user, review and list entry), run
 `npx tsx data/etl/update-media.ts` (a dry run), then add `--apply`, then rebuild the trending cards. It
 only touches imported titles, never an uploaded poster, and shows a movie again that was hidden only
@@ -219,6 +219,22 @@ A movie with no poster loads as `REJECTED`, which hides it, and is listed in
 `processed/logs/clean-posters.rejects.csv`. TV shows and books are never hidden. Every source is
 optional: with none in `data/raw/`, the step warns, writes an empty `title_posters.csv`, nothing is
 hidden, and every title keeps the gradient.
+
+## Trailers
+
+`fetch-trailers.ts` finds each movie and TV show on TMDB with the same matching rules as the posters,
+reads its videos, and keeps the best YouTube one: a trailer before a teaser, official before a fan
+upload, English before other languages. It saves `data/raw/lookup_trailers.csv` (`title_id`, `name`,
+`tmdb_id`, `youtube_key`; an empty key when TMDB has none) and can be stopped and resumed. Run it with
+`npx tsx --env-file=apps/api/.env data/etl/fetch-trailers.ts`; it needs `TMDB_API_KEY`.
+
+`clean-trailers.ts` (part of `clean-all`) writes `title_trailers.csv` (`title_id`, `youtube_key`),
+keeping only 11-character YouTube ids for titles still in the dataset. `load-postgres.ts` puts it in
+`Title.trailerKey`, and `update-media.ts` copies it into a loaded database. A CHECK on the column
+(migration `20261105130000_title_trailer`) refuses anything that is not a YouTube id, because the web
+app puts the key straight into a `youtube-nocookie.com/embed/<key>` URL. Books have no trailers.
+
+On 2026-11-05, 761 of the 1,000 movies and TV shows have a trailer.
 
 ## Media details
 

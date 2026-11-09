@@ -13,6 +13,7 @@ export const summarySelect = {
   avgRating: true,
   reviewCount: true,
   posterUrl: true,
+  trailerKey: true,
   createdById: true,
 } satisfies Prisma.TitleSelect;
 
@@ -27,6 +28,7 @@ export function toSummary(t: SummaryRow): TitleSummary {
     avgRating: t.avgRating,
     reviewCount: t.reviewCount,
     ...(t.posterUrl ? { posterUrl: t.posterUrl } : {}),
+    ...(t.trailerKey ? { trailerKey: t.trailerKey } : {}),
     createdById: t.createdById,
   };
 }
