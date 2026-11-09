@@ -205,6 +205,36 @@ export async function main(): Promise<void> {
     });
     check('avgRating is within 0..5', bad === 0);
 
+    // The review_rating_* triggers must keep the totals in sync on their own: delete a title's reviews
+    // in a transaction that is always rolled back and read the title inside it.
+    const reviewed = await prisma.title.findFirst({
+      where: { reviewCount: { gt: 0 } },
+      select: { id: true },
+    });
+    if (!reviewed) {
+      check('there is a reviewed title to probe the rating triggers with', false);
+    } else {
+      let after: { reviewCount: number; avgRating: number } | null = null;
+      try {
+        await prisma.$transaction(async (tx) => {
+          await tx.review.deleteMany({ where: { titleId: reviewed.id } });
+          after = await tx.title.findUnique({
+            where: { id: reviewed.id },
+            select: { reviewCount: true, avgRating: true },
+          });
+          throw new RollbackProbe();
+        });
+      } catch (err) {
+        if (!(err instanceof RollbackProbe)) throw err;
+      }
+      const probe = after as { reviewCount: number; avgRating: number } | null;
+      check(
+        'rating triggers reset a title to 0 reviews when its reviews are deleted',
+        probe?.reviewCount === 0 && probe.avgRating === 0,
+        `got ${JSON.stringify(probe)}`,
+      );
+    }
+
     // Views.
     const genres = await prisma.$queryRaw<
       { mediaType: string; name: string; title_count: number }[]

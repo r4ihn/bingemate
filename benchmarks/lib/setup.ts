@@ -1,7 +1,7 @@
 import { Prisma } from '@prisma/client';
 import type { Document } from 'mongodb';
 import type { Ctx } from './scenario.js';
-import { lockTitle, recomputeTitleRating } from '../../apps/api/src/modules/reviews/rating.js';
+import { lockTitle } from '../../apps/api/src/modules/reviews/rating.js';
 
 export const BATCH = 5000;
 export const collection = <T extends Document = Document & { _id: string }>(
@@ -38,7 +38,6 @@ export async function removeInserted(
       await lockTitle(tx, titleId);
       await tx.$executeRaw(Prisma.sql`DELETE FROM "Review" WHERE "titleId" = ${titleId}
         AND (left(id, 10) = 'bench-ins-' OR id = ANY(${trackedIds}::text[]))`);
-      await recomputeTitleRating(tx, titleId);
     });
   }
   await collection(ctx, 'reviewbodies').deleteMany({ _id: /^bench-ins-/ });

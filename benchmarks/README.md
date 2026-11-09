@@ -150,7 +150,7 @@ BENCH_DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_be
 
 `--drop-only` ignores scenario selection, drops all `bench_*` tables in the current
 PostgreSQL schema and Mongo collections, deletes `bench-ins-` review rows/bodies,
-and recomputes affected title ratings. It cannot be combined with `--keep-setup`.
+and the `review_rating_delete` trigger restores the affected title ratings. It cannot be combined with `--keep-setup`.
 `--list` and argument validation require neither credentials nor connections.
 All database modes validate both `BENCH_*` URLs before constructing clients and
 never fall back to the application's environment variables.

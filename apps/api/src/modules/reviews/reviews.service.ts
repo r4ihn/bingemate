@@ -8,7 +8,7 @@ import { HttpError } from '../../middleware/errorHandler.js';
 import { ReviewBody } from '../../mongo/models/reviewBody.model.js';
 import { Reply } from '../../mongo/models/reply.model.js';
 import { authorSelect, toAuthor } from '../../utils/author.js';
-import { lockTitle, recomputeTitleRating } from './rating.js';
+import { lockTitle } from './rating.js';
 import type { CreateReviewInput, UpdateReviewInput } from './reviews.schema.js';
 
 /**
@@ -19,8 +19,6 @@ import type { CreateReviewInput, UpdateReviewInput } from './reviews.schema.js';
 
 const failed = (what: string) =>
   new HttpError(502, `Could not ${what} the review. Nothing was changed, please try again.`);
-
-
 
 type ReviewRow = Prisma.ReviewGetPayload<{
   include: { user: { select: typeof authorSelect } };
@@ -106,7 +104,8 @@ export async function createReview(
     throw new HttpError(403, 'You cannot review a title you created');
   }
 
-  // 1. PostgreSQL: the header row and the new totals commit together.
+  // 1. PostgreSQL: the header row. The review_rating_* triggers update the title's totals in the same
+  //    transaction (migration 20261105120000_rating_triggers).
   const review = await prisma.$transaction(async (tx) => {
     await lockTitle(tx, titleId);
     const lockedTitle = await tx.title.findFirst({
@@ -126,7 +125,6 @@ export async function createReview(
       data: { userId: user.id, titleId, rating: input.rating },
       select: { id: true },
     });
-    await recomputeTitleRating(tx, titleId);
     return row;
   });
 
@@ -145,7 +143,6 @@ export async function createReview(
       .$transaction(async (tx) => {
         await lockTitle(tx, titleId);
         await tx.review.delete({ where: { id: review.id } });
-        await recomputeTitleRating(tx, titleId);
       })
       .catch((undoErr: unknown) => console.error('Could not undo the review header row:', undoErr));
     throw failed('save');
@@ -182,7 +179,6 @@ export async function updateReview(
     await prisma.$transaction(async (tx) => {
       await lockTitle(tx, review.titleId);
       await tx.review.update({ where: { id }, data: { rating: newRating } });
-      await recomputeTitleRating(tx, review.titleId);
     });
   }
 
@@ -191,11 +187,10 @@ export async function updateReview(
   const undoRating = async () =>
     prisma.$transaction(async (tx) => {
       await lockTitle(tx, review.titleId);
-      const { count } = await tx.review.updateMany({
+      await tx.review.updateMany({
         where: { id, rating: newRating },
         data: { rating: review.rating },
       });
-      if (count > 0) await recomputeTitleRating(tx, review.titleId);
     });
 
   if (input.body !== undefined) {
@@ -230,7 +225,6 @@ export async function deleteReview(user: AuthUser, id: string): Promise<void> {
   await prisma.$transaction(async (tx) => {
     await lockTitle(tx, review.titleId);
     await tx.review.delete({ where: { id } });
-    await recomputeTitleRating(tx, review.titleId);
   });
 
   // Leftovers in MongoDB are unreachable (nothing lists them), so a failure here is logged, not raised.
