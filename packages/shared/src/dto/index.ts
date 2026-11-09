@@ -160,3 +160,41 @@ export interface ChangePasswordRequest {
   currentPassword: string;
   newPassword: string;
 }
+
+/** A person in search results: GET /people?q= */
+export interface PersonSummaryDTO {
+  id: string;
+  name: string;
+  /** Approved titles they are credited on. */
+  titleCount: number;
+}
+
+/** A title on a person's page, with every role they had on it. */
+export interface PersonCreditDTO {
+  id: string;
+  name: string;
+  mediaType: MediaType;
+  releaseYear: number | null;
+  posterUrl?: string;
+  roles: PersonRole[];
+}
+
+/** GET /people/:id */
+export interface PersonDetailDTO {
+  id: string;
+  name: string;
+  credits: PersonCreditDTO[];
+}
+
+/** One link in a chain: the person, and the title shared with the previous person (null for the first). */
+export interface ConnectionStepDTO {
+  person: { id: string; name: string };
+  via: { id: string; name: string; mediaType: MediaType } | null;
+}
+
+/** GET /people/:id/connection/:otherId. `path` is null when they are not linked within `maxDepth`. */
+export interface ConnectionDTO {
+  degrees: number | null;
+  maxDepth: number;
+  path: ConnectionStepDTO[] | null;
+}

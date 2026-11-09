@@ -1,6 +1,7 @@
 import { TitleStatus } from '@bingemate/shared';
 import type { MediaType, Paginated, TitleDetailDTO, TitleSummary } from '@bingemate/shared';
 import { db, ownerId } from '../mocks/db.js';
+import { mockCredits, mockPeople } from '../mocks/people.js';
 import type { TitleDetail } from '../types/title.js';
 import { ApiError, apiFetch } from './client.js';
 import { detailToTitle, summaryToTitle } from './mappers.js';
@@ -34,7 +35,14 @@ export const titlesApi = {
     await delay();
     const title = db.titles.find((t) => t.id === id);
     if (!title) throw new ApiError(404, 'Title not found');
-    return clone({ ...title, createdById: ownerId(title) });
+    const people = mockCredits
+      .filter((c) => c.titleId === id)
+      .map((c) => ({
+        id: c.personId,
+        name: mockPeople.find((p) => p.id === c.personId)?.name ?? c.personId,
+        role: c.role,
+      }));
+    return clone({ ...title, createdById: ownerId(title), people });
   },
 
   /** Public search: APPROVED titles only, name contains `q`, optional media type, one page. */

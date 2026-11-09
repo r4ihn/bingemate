@@ -1,4 +1,4 @@
-import type { TitleSummary } from '@bingemate/shared';
+import type { TitlePersonDTO, TitleSummary } from '@bingemate/shared';
 
 /** UI-side title shape. `hue`/`year` exist only on mock data; real data will carry `posterUrl`. */
 export interface TitleDetail extends TitleSummary {
@@ -16,6 +16,8 @@ export interface TitleDetail extends TitleSummary {
   seasons?: string;
   publisher?: string;
   genres?: string[];
+  /** Cast and crew, one entry per (person, role). Links to /people/:id. */
+  people?: TitlePersonDTO[];
   year?: number;
   hue?: number;
 }
