@@ -122,7 +122,7 @@ Shape and spacing: pill radius `999px`; poster radius `8px`; panel radius `16px`
 
 - `position: fixed; top: 16px; left: 50%; transform: translateX(-50%)`, `z-index` above all content.
 - Same dock as the reference: logo chip, text links, icon buttons.
-- Our links (the reference's `Actors/Description/Title` are placeholders): `Menu`, `Browse`, `Trending`, `My Lists`.
+- Our links (the reference's `Actors/Description/Title` are placeholders): `Browse` for everyone, plus `My Lists` and `Profile` when signed in; on narrow screens they sit behind `Menu`. There is no Trending link: trending is the strip on Home.
 - Our icon buttons: `Save` (watchlist), `Search`, `Sign in` (becomes the user menu when logged in).
 - Role-based items appear after login, as in `MainLayout`: **Creator** for every member, **Admin** for admins. Signup includes **Username**; its hint is "3 to 30 characters: letters, digits, spaces, _ - and .". Validation messages and **Username already taken** appear under that field.
 - Page content needs top padding so it does not sit under the dock.

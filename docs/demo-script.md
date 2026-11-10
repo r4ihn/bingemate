@@ -1,6 +1,6 @@
 # Demo script (10 minutes, all five members speak)
 
-Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member has a timed segment. Rehearse it at least twice with a stopwatch: the member submission, admin and member reading click paths were run in a real browser on 3 Nov (`docs/manual-test-checklist.md`, 23 of 23 steps), but a scripted run is not a rehearsal: practise the timing and the handovers by hand.
+Total time is 9 minutes 30 seconds, leaving 30 seconds of slack. Every member has a timed segment. Rehearse it at least twice with a stopwatch: the member submission, admin and member reading click paths were run in a real browser on 3 Nov (`docs/manual-test-checklist.md`, 30 of 30 steps), but a scripted run is not a rehearsal: practise the timing and the handovers by hand.
 
 ## Before you record
 

@@ -92,7 +92,7 @@ Posters and trailers come from `data/processed` (fetched from TMDB ahead of time
 
 Visitors browse approved titles. Signup collects Email, Username and Password and signs in a `MEMBER`; every member can use **Creator** to submit titles. Admins never submit titles or write reviews or replies. A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap.
 
-Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. Registration conflicts return 409 `Email already in use` or `Username already taken`. See [the manual](docs/user-manual.md) for ownership and moderation rules.
+Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. Invisible characters (zero-width, soft hyphen, Hangul fillers) are refused. Letters must come from one of eleven supported alphabets (Latin, Cyrillic, Greek, Han, Hiragana, Katakana, Hangul, Arabic, Hebrew, Devanagari, Thai) and cannot be mixed, except Latin with any of Han, Hiragana and Katakana, or Latin with Han and Hangul. They are unique ignoring case. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, accents and separators (for example `a.d.m.i.n`), and also when written with common Cyrillic, Greek, small-capital or leetspeak lookalikes (for example `ѕуѕтем` or `Supp0rt`). Only whole names are matched, not substrings or tokens. A lookalike of another member's username is not detected. The full rules are in [docs/api.md](docs/api.md#username-rules). Registration conflicts return 409 `Email already in use` or `Username already taken`. See [the manual](docs/user-manual.md) for ownership and moderation rules.
 
 ### Trending refresh
 
@@ -107,6 +107,14 @@ To fill an empty collection manually, or refresh before a demo, run the CLI from
 
 ```bash
 npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
+```
+
+### Look at the databases
+
+```bash
+cd apps/api && npx prisma studio                                # PostgreSQL in the browser
+docker exec -it bingemate-postgres psql -U bingemate -d bingemate  # PostgreSQL shell
+docker exec -it bingemate-mongo mongosh bingemate                  # MongoDB shell
 ```
 
 ## Scripts

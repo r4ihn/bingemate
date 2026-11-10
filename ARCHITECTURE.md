@@ -96,7 +96,9 @@ bingemate/
 │       │   │   ├── creator/              # upload / edit / delete own titles, submission status, stats
 │       │   │   └── admin/                # users & roles, moderation
 │       │   ├── hooks/
+│       │   ├── mocks/                    # mock data used when VITE_USE_MOCKS is on (default in dev)
 │       │   ├── styles/
+│       │   ├── format.ts, image.ts, rating.ts, labels.ts  # display helpers
 │       │   ├── App.tsx                   # router
 │       │   └── main.tsx
 │       ├── index.html
@@ -110,6 +112,9 @@ bingemate/
 │       ├── src/
 │       │   ├── enums.ts                  # Role, MediaType, ListStatus, TitleStatus
 │       │   ├── dto/                      # request/response types
+│       │   ├── username.ts               # username normalisation + validation (API and web), pending cap
+│       │   ├── password.ts               # password rule
+│       │   ├── rating.ts                 # RATING_MIN / RATING_MAX
 │       │   └── index.ts
 │       ├── package.json
 │       └── tsconfig.json
@@ -141,10 +146,19 @@ bingemate/
 │   ├── architecture.svg
 │   ├── api.md                            # endpoint list + required role
 │   ├── user-manual.md
+│   ├── ui.md                             # UI reference and design decisions
+│   ├── manual-test-checklist.md          # real-browser click-through results
+│   ├── demo-script.md, report-outline.md
+│   ├── eraser-diagrams.md                # links to the ER, MongoDB and architecture diagrams
 │   ├── benchmarks/                       # explain.md, results.md
+│   ├── design/                           # preview.html (static look-and-feel preview)
+│   ├── screenshots/                      # images used by manual-test-checklist.md
+│   ├── superpowers/plans/                # dated implementation plans (historical)
 │   └── e2e/                              # Playwright click-through scripts
 │
-├── .github/workflows/ci.yml              # verify (lint, typecheck, test) + verify-real-db
+├── .github/workflows/
+│   ├── ci.yml                            # verify (lint, typecheck, test) + verify-real-db
+│   └── summary.yml                       # AI summary comment on new issues
 ├── docker-compose.yml                    # postgres + mongo (bound to localhost)
 ├── .gitignore
 ├── .prettierrc
@@ -172,7 +186,7 @@ The `admin` module serves the title approval queue (`/admin/titles`), the user l
 
 Visitors have no authenticated role; persisted roles are `ADMIN` and `MEMBER`, with `MEMBER` the signup default. All members can use the **Creator** page and own-title routes. Admins do not submit titles or write reviews or replies; a member cannot review their own title, but can reply under its reviews. Ownership controls editing and deletion: members delete only their own titles while no other user has reviewed or listed them. Edits and member image replacements on approved titles return them to `PENDING`; image removal alone does not.
 
-Signup requires email, username and password. Both API and web use `packages/shared/src/username.ts`: Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. They are unique ignoring case. Latin, Cyrillic and Greek letters cannot be mixed with one another; other scripts are unaffected. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, including when spaces, underscores, hyphens or periods separate their letters (for example `a.d.m.i.n`). This checks exact full or compact names, not substrings or tokens. Lookalikes within a single script, such as all-Cyrillic names, are not detected. The migration `20261103140000_members_and_usernames` merges the former non-admin roles, repairs case-insensitive collisions with suffixes such as ` (2)` (oldest `createdAt`, then `id`, wins), and creates `User_username_lower_key` on `lower("username")`. Username remains nullable for legacy rows, with the `user-xxxxxx` author fallback. The unique index enforces race-safe conflicts: 409 `Email already in use` or `Username already taken`.
+Signup requires email, username and password. Both API and web use `packages/shared/src/username.ts`: Usernames are NFKC-normalised, trimmed, and runs of whitespace become one space. They must be 3 to 30 characters after normalisation; use Unicode letters, digits, single spaces, `_`, `-` and `.`; and start and end with a letter or digit. Invisible characters (zero-width, soft hyphen, Hangul fillers) are refused. Letters must come from one of eleven supported alphabets (Latin, Cyrillic, Greek, Han, Hiragana, Katakana, Hangul, Arabic, Hebrew, Devanagari, Thai) and cannot be mixed, except Latin with any of Han, Hiragana and Katakana, or Latin with Han and Hangul. They are unique ignoring case. Reserved names (`admin`, `administrator`, `moderator`, `bingemate`, `support`, `system`) are refused ignoring case, accents and separators (for example `a.d.m.i.n`), and also when written with common Cyrillic, Greek, small-capital or leetspeak lookalikes (for example `ѕуѕтем` or `Supp0rt`). Only whole names are matched, not substrings or tokens. A lookalike of another member's username is not detected. The full rules are in [docs/api.md](docs/api.md#username-rules). The migration `20261103140000_members_and_usernames` merges the former non-admin roles, repairs case-insensitive collisions with suffixes such as ` (2)` (oldest `createdAt`, then `id`, wins), and creates `User_username_lower_key` on `lower("username")`. Username remains nullable for legacy rows, with the `user-xxxxxx` author fallback. The unique index enforces race-safe conflicts: 409 `Email already in use` or `Username already taken`.
 
 JWTs carry the username as well as id, email and role; verification maps legacy non-admin role values to `MEMBER` until those tokens expire (default two hours). A member may have at most 10 `PENDING` titles at once. Creating an eleventh returns HTTP 409: **You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.** Edits do not count against this cap. The count and insert share a transaction under `pg_advisory_xact_lock(hashtext(userId))`, preventing concurrent creations from exceeding the cap.
 
