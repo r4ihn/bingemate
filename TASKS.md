@@ -9,7 +9,7 @@ Owners: **RA** Raihan · **JW** Jason · **HS** Hu Shi Yao · **WH** Winthrop ·
 - `[~]` = built and tested on a branch or open PR, waiting to merge (see "Where the work is")
 - `[ ]` = not done
 
-Last checked on 9 Nov 2026. `main` ends at PR #31 (commit `3a7d794`). No pull requests are open.
+Last checked on 10 Nov 2026. `main` ends at PR #32 (commit `b42aa49`). No pull requests are open.
 
 ---
 
@@ -31,6 +31,7 @@ Everything is on `main`. Merged since the last update of this file:
 | #29 | 9 Nov  | People pages, cast and crew on title pages, and degrees of separation between people (recursive CTE)                                                             |
 | #30 | 9 Nov  | Dead and missing posters replaced from TMDB; the landing-page hero shows the poster                                                                              |
 | #31 | 9 Nov  | Title trailers from TMDB (migration `title_trailer`), playable from the hero                                                                                     |
+| #32 | 9 Nov  | Markdown docs synced with `main` at PR #31                                                                                                                       |
 
 Nine migrations are on `main`, the last being `20261105130000_title_trailer`.
 
@@ -53,7 +54,7 @@ Local clean-up: these branches are squash-merged and can be deleted: `feat/admin
 - [x] **Title images (WH, 29 Oct).** Optional. Stored in MongoDB (one document per title, keyed by the title id) and served by the API; `titles.posterUrl` points at it. JPEG, PNG or WebP only (SVG can carry scripts), 1 MB, checked by the file's bytes. The browser shrinks the image to 600 px wide before upload. The dataset has no images, so imported titles keep the colour placeholder. Merged in PR #11
 
 - [x] **D10 — Members (3 Nov 2026).** One `MEMBER` role for all non-admin accounts; visitors browse and admins moderate. Creator remains the page/link name.
-- [x] **D11 — Unique usernames (3 Nov 2026).** Required at signup; shared NFKC, character, script-mixing and reserved-name checks; unique index on `lower("username")`; legacy collisions suffixed. Migration `20261103140000_members_and_usernames`; tests: see the PR. Single-script lookalikes are not detected.
+- [x] **D11 — Unique usernames (3 Nov 2026).** Required at signup; shared NFKC, character, script-mixing and reserved-name checks; unique index on `lower("username")`; legacy collisions suffixed. Migration `20261103140000_members_and_usernames`; tests: see the PR. Reserved names are also refused when written with mapped Cyrillic, Greek, small-capital or leetspeak lookalikes; a lookalike of another member's username is not detected (`docs/api.md`, "Username rules").
 - [x] **D12 — Pending cap (3 Nov 2026).** At most 10 PENDING titles on creation per member, under an advisory transaction lock. Edits do not count against the cap; exact 409 message in §4. Tests: see the PR.
 
 ## 1. Project setup (Week 6)
@@ -67,7 +68,7 @@ Local clean-up: these branches are squash-merged and can be deleted: `feat/admin
 - [x] Dev seed uses a dataset subset; full load only for benchmarks _(JW)_. The cleaned dev set is 1,500 titles (500 movies, 500 books, 500 TV shows) with 13,490 reviews, loaded by `data/etl/load-all.ts`. Skip `prisma/seed.ts`: the load already holds the admin and member accounts. The full 950k set is for SJ's benchmarks only
 - [ ] Move the existing prototype code (Titles/Users CRUD, browse page) into the new structure _(JW, WH)_. Most of it has been rebuilt in `modules/titles` and the web app; check whether anything in the prototype is still needed, then close this
 - [x] `npm run dev` for the API exits with "Invalid environment variables": nothing loads `apps/api/.env` (Prisma reads it, the API does not). Load it in the `dev` script, e.g. `tsx watch --env-file=.env src/server.ts` (Node 20.6+), so everyone can start the API _(RA)_. Fixed in PR #8
-- [~] README: quick start (`npm run up`, PR #26), manual setup and the run-on-real-data steps are in `README.md`. Still to document: how to view the databases (`npx prisma studio` in `apps/api`, `docker exec -it bingemate-postgres psql -U bingemate -d bingemate`, `docker exec -it bingemate-mongo mongosh bingemate`) _(WH)_
+- [x] README: quick start (`npm run up`, PR #26), manual setup, the run-on-real-data steps and how to view the databases (Prisma Studio, `psql`, `mongosh`; "Look at the databases") are in `README.md` _(WH)_
 
 ## 2. Data & relational schema (JW, Week 6)
 
@@ -201,13 +202,13 @@ The list endpoints were merged in PR #10.
 
 - [ ] Unit tests for services; integration tests (Supertest) against test DBs
   - [x] Every new endpoint has Supertest tests with Prisma and MongoDB replaced by stubs (CI has no database), and each permission rule was checked by breaking it on purpose and watching a test fail. Each module was also run by hand against the real local databases
-  - [x] Real-database tests: `npm run test:real --workspace apps/api` runs 14 tests with no stubs against `bingemate_test` (views and their rounding, the trending and rank views, the two-store review lifecycle with a shared id, moderation with the `updatedAt` check, creator and admin delete cleanup, and a real concurrent delete-versus-list race). They pass locally, three runs in a row, and each was checked by breaking the code on purpose (removing the row lock fails the race test on every run). `.github/workflows/ci.yml` has a new `verify-real-db` job with `postgres:16-alpine` and `mongo:7` services; the existing job is unchanged and `npm test` stays stubbed. **It ran green on GitHub on 3 Nov 2026** (draft PR #21 into `main`: all six migrations applied to a fresh PostgreSQL service and the 14 tests passed) _(RA, ALL)_
+  - [x] Real-database tests: `npm run test:real --workspace apps/api` runs 39 tests in 9 files with no stubs (14 when this item was first done; PRs #23 to #31 added the members and usernames, rating trigger, people and trailer files) against `bingemate_test` (views and their rounding, the trending and rank views, the two-store review lifecycle with a shared id, moderation with the `updatedAt` check, creator and admin delete cleanup, and a real concurrent delete-versus-list race). They pass locally, three runs in a row, and each was checked by breaking the code on purpose (removing the row lock fails the race test on every run). `.github/workflows/ci.yml` has a new `verify-real-db` job with `postgres:16-alpine` and `mongo:7` services; the existing job is unchanged and `npm test` stays stubbed. **It ran green on GitHub on 3 Nov 2026** (draft PR #21 into `main`: all six migrations applied to a fresh PostgreSQL service and the 14 tests passed) _(RA, ALL)_
 - [ ] Each owner covers their own module; CI must pass before merge
 - [~] `prettier --check`: `seed.ts` and `pagination.ts` are formatted and so are the files added in #20; about ten older files on `main` still fail it. CI does not run prettier. Decide whether CI should check formatting, and if yes format those files first
 
 ## 11. Final deliverables (ALL, Week 13)
 
-- [x] Signup username and role merge documentation and browser-script additions: migration `20261103140000_members_and_usernames`; tests at this point: 690 API (stubbed), 543 web, 18 real-database; browser script 30 of 30 (`docs/manual-test-checklist.md`). New browser steps await a run.
+- [x] Signup username and role merge documentation and browser-script additions: migration `20261103140000_members_and_usernames`; tests at that point: 690 API (stubbed), 543 web, 18 real-database (on 10 Nov 2026: 755 API, 579 web, 39 real-database); browser script 30 of 30 (`docs/manual-test-checklist.md`). New browser steps await a run.
 - [ ] Final report: each member writes up their own component
 - [~] Updated ER diagram + architecture diagram. `docs/architecture.svg` is redrawn from the code (per-route middleware, the cross-store review write, the trending refresh, the rank view, tooling) and `ARCHITECTURE.md` matches. The Eraser ER and MongoDB diagrams are still stale (no `title_rank_in_type`, the two new `Title` indexes, the two new `ReviewBody` indexes, or the new review body shape). `docs/eraser-diagrams.md` holds anyone-can-edit Eraser links, so decide whether to keep it in the repo _(WH)_
 - [~] User manual (the project spec asks for one with the submission): drafted in `docs/user-manual.md`, checked against the source on 9 Nov (PR #31). The creator, admin and reader flows were walked through in a real browser (`docs/manual-test-checklist.md`); the setup commands were not run from a fresh clone. Each member should read their part _(ALL)_

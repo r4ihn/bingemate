@@ -178,7 +178,7 @@ Replacing or uploading an approved title's image as its owning member also sends
 
 Choose **Delete** on a submission or approved-title stats row. Read **Delete this title? This cannot be undone.** Choose **Confirm** to delete or **Cancel** to keep it. You can delete your own title only while no other user has reviewed or listed it. Otherwise the API refuses deletion and tells you to ask an admin. An admin can delete through the title DELETE API; the approval queue has no title-delete button.
 
-Choose **Stats** at `/creator/stats`. You see your approved titles with **Avg rating**, **Reviews** and **List adds**. Pending and rejected titles do not appear on this screen. Imported titles have no creator owner, so they do not populate the demo member's stats.
+Choose **Stats** at `/creator/stats`. You see every title you created, whatever its status, with **Avg rating**, **Reviews** and **List adds**. Pending and rejected titles appear too, usually with no reviews or list adds because they are not public. Imported titles have no creator owner, so they do not populate the demo member's stats.
 
 ### Admin
 

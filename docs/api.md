@@ -1,6 +1,6 @@
 # API endpoints
 
-Endpoints and the role each one needs, as on `main` at PR #31. Reviews, replies, lists, genres and the trending read are described in `TASKS.md` §5 to §7. The sections below cover the routes that need more detail.
+Endpoints and the role each one needs, as on `main` at PR #32. Reviews, replies, lists, genres and the trending read are described in `TASKS.md` §5 to §7. The sections below cover the routes that need more detail.
 
 ## Errors
 

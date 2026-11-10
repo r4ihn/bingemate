@@ -125,7 +125,7 @@ loader's job.
 | Output                                     | Rows            |
 | ------------------------------------------ | --------------- |
 | movies / tv_shows / books                  | 500 / 500 / 500 |
-| genres / title_genres                      | 53 / 2,903      |
+| genres / title_genres                      | 178 / 3,060     |
 | people / title_people                      | 12,758 / 15,798 |
 | users                                      | 5,478           |
 | reviews (Postgres) / review_bodies (Mongo) | 13,490 / 13,490 |
@@ -159,7 +159,7 @@ Remove orphan Mongo review bodies and replies whose PostgreSQL review is gone (f
 - `CHECK ("rating" BETWEEN 1 AND 5)` on `Review`.
 - Views: `title_rating_stats` (recomputed aggregates), `genre_filter_options` (genres on at least 5 approved
   titles, per media type), `trending_titles` (weighted rating, `m = 10`, titles with no reviews excluded), `creator_title_stats` (for `/creator/stats`).
-- The `detail` columns (runtime, tagline, publisher, price ...) are still not loaded anywhere.
+- The `detail` columns were not loaded at first; since migration `20261030120000_title_details` they go into `MovieDetails`, `TvDetails` and `BookDetails` (see "Media details" below).
 
 ## Logs
 
@@ -173,7 +173,7 @@ Every run writes to `../processed/logs/`:
 
 1. ~~`WRITER` role~~ added to the schema. ~~`Title.description`~~, ~~`User.username`~~ added.
 2. **Emails and passwords**: dataset users have placeholder emails and share the dev password. (RA)
-3. **Detail columns** (runtime, tagline, ratings, publisher, price, ...) are not stored. Put them in Mongo or drop them. (JW, HS)
+3. ~~**Detail columns** (runtime, tagline, ratings, publisher, price, ...) are not stored~~: stored in the PostgreSQL details tables since PR #17 (book `price` excepted; see "Media details"). (JW, HS)
 4. **Review form fields**: dropped (WH, 2026-11-02). A review is only a star rating and text, so the old `runtimeMinutes`, `chaptersRead`, `season`, `episodes` fields and the per-type discriminators are gone; imported review extras were also removed from the ETL and model on 2026-11-03. (HS)
 5. **Genre filter**: all genres are in the data; decide the view/query that limits the browse filter to common ones. (SJ)
 6. **Derived values**: list status `COMPLETED`, the 0 to 10 -> 1 to 5 rule, and the 155 zero scores mapped to 1 star

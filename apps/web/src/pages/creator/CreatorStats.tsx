@@ -13,7 +13,7 @@ export function CreatorStats() {
     <section>
       <h1 className="text-4xl font-semibold tracking-tight">Stats</h1>
       <p className="mt-2 text-muted">
-        How your approved titles are doing.{' '}
+        How your titles are doing.{' '}
         <Link to="/creator" className="underline">
           Back to submissions
         </Link>
@@ -28,7 +28,7 @@ export function CreatorStats() {
             <StateMessage
               kind="empty"
               title="No stats yet"
-              detail="Stats appear once one of your titles is approved."
+              detail="Stats appear once you submit a title."
             />
           ) : (
             <Table
