@@ -31,7 +31,7 @@ safe to repeat, so run it again after every `git pull`. It never replaces existi
 | `npm run up -- --demo`        | Use the small demo seed (3 titles, no posters) instead of the dataset |
 | `npm run up -- --no-dev`      | Prepare everything, don't start the servers                           |
 
-For real data instead of mocks, put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first.
+The website reads the real API by default. To work on the UI with built-in fake data instead, put `VITE_USE_MOCKS=true` in `apps/web/.env.local`.
 
 **Database ports are picked per machine.** `npm run up` uses 5432 for PostgreSQL and 27017 for MongoDB when they're
 free, and otherwise the next free port (5433, 5434, ...), for example when Postgres is also installed on your machine.
@@ -83,13 +83,13 @@ The cleaned full dataset is included in `data/processed/`. To use it instead of 
 
 ### Run the website on real data
 
-The website is always on http://localhost:5173 (the API is on :4000). **Mock data is the default in dev**, so a plain
-`npm run dev` shows fake titles and reviews. To use the real API:
+The website is always on http://localhost:5173 (the API is on :4000). It reads the real API by default, so start the
+API before the website:
 
 ```bash
 npm run db:up                                   # PostgreSQL + MongoDB
 cd apps/api && npm run dev                      # API on :4000
-cd apps/web && VITE_USE_MOCKS=false npm run dev # website on :5173, real data
+cd apps/web && npm run dev                      # website on :5173, real data
 ```
 
 With mocks off, every page uses the API: browsing, search, title pages (with cast and crew, posters and trailers), people pages and the "How are they connected?" finder, reviews, replies, My Lists, Profile (change username and password), Creator submissions and stats, image uploads, and all three admin screens (approval queue, Users and roles, Moderation).

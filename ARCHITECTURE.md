@@ -96,7 +96,7 @@ bingemate/
 │       │   │   ├── creator/              # upload / edit / delete own titles, submission status, stats
 │       │   │   └── admin/                # users & roles, moderation
 │       │   ├── hooks/
-│       │   ├── mocks/                    # mock data used when VITE_USE_MOCKS is on (default in dev)
+│       │   ├── mocks/                    # mock data: opt-in with VITE_USE_MOCKS=true; default only in tests
 │       │   ├── styles/
 │       │   ├── format.ts, image.ts, rating.ts, labels.ts  # display helpers
 │       │   ├── App.tsx                   # router

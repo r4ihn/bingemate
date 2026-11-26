@@ -7,6 +7,9 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
+    // The suite uses the mock data as its backend. Ignore a developer's .env.local mock and role
+    // settings so tests behave the same on every machine and in CI.
+    env: { VITE_USE_MOCKS: '', VITE_MOCK_ROLE: '' },
   },
   server: {
     port: 5173,

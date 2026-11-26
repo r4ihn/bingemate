@@ -1,14 +1,18 @@
 /**
- * Mocks default ON in dev and test builds and OFF in production builds, so fake data cannot ship by
- * accident. Set VITE_USE_MOCKS=true|false to override either way.
+ * The website reads the real API by default, in dev and in production builds. Mock data is opt-in:
+ * set VITE_USE_MOCKS=true to use it (for example to work on the UI without the API). The test suite
+ * defaults to mocks, which act as its in-memory backend. VITE_USE_MOCKS=false overrides that too.
  */
-export function resolveUseMock(flag: string | undefined, dev: boolean): boolean {
+export function resolveUseMock(flag: string | undefined, testRun: boolean): boolean {
   if (flag === 'true') return true;
   if (flag === 'false') return false;
-  return dev;
+  return testRun;
 }
 
-export const useMock = resolveUseMock(import.meta.env.VITE_USE_MOCKS, import.meta.env.DEV);
+export const useMock = resolveUseMock(
+  import.meta.env.VITE_USE_MOCKS,
+  import.meta.env.MODE === 'test',
+);
 
 const LATENCY_MS = import.meta.env.MODE === 'test' ? 0 : 200;
 

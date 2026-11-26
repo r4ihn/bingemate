@@ -1,5 +1,5 @@
 /* eslint-disable */
-// Real-browser check against the running dev stack (web :5173 with VITE_USE_MOCKS=false, API :4000).
+// Real-browser check against the running dev stack (web :5173 on real data, the default; API :4000).
 // Needs Playwright, which is not a project dependency: see docs/manual-test-checklist.md for the --no-save install.
 // Output (screenshots, results.json) goes to $E2E_OUT or the system temp folder, never into the repo.
 import { chromium } from 'playwright';
