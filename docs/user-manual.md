@@ -2,7 +2,7 @@
 
 ## 1. What BingeMate is
 
-You use BingeMate to browse movies, TV shows and books, read and write reviews, reply to reviews, and keep personal lists. Creators submit titles. Admins approve or reject them. The source contains a React website and an Express API. This manual describes the current source, including features that are still incomplete.
+You use BingeMate to browse movies, TV shows and books, read and write reviews, reply to reviews, and keep personal lists. Members submit titles. Admins approve or reject them. The source contains a React website and an Express API. This manual describes the current source, including features that are still incomplete.
 
 - PostgreSQL holds accounts, password hashes and roles.
 - PostgreSQL holds titles, approval status, genres, people, media details and trailer ids.
@@ -27,7 +27,20 @@ If 5432 or 27017 is taken (for example by a PostgreSQL installed on your machine
 
 ## 3. Set it up
 
-**The short way.** With Docker running, run `npm run up` from the repository root. It installs dependencies, creates `apps/api/.env` (with a random `JWT_SECRET`) and `apps/web/.env`, starts both databases, applies migrations, loads the dataset into an empty database, rebuilds trending, and starts the API and the website. Run it again after every `git pull`; it never replaces existing data unless you add `--reload-data`. The root README lists its other options. Put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first if you want real data.
+**The short way.** With Docker running, run `npm run up` from the repository root. It installs dependencies, creates `apps/api/.env` (with a random `JWT_SECRET`) and `apps/web/.env`, starts both databases, applies migrations, loads the dataset into an empty database, rebuilds trending, and starts the API and the website. Run it again after every `git pull`; it never replaces existing data unless you add `--reload-data`. Add `--demo` to load the small demo seed instead of the dataset. The root README lists its other options. Put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first if you want real data. That file is not committed, so every fresh clone needs it; without it the website shows placeholder titles such as _Ash and Ivory_ instead of your database.
+
+### Demo accounts
+
+Every account uses the password `Password123!`. Which accounts exist depends on the data you loaded:
+
+| Email                                                                       | Role   | Dataset (Option A, `npm run up`) | Demo seed (Option B, `npm run up -- --demo`) |
+| --------------------------------------------------------------------------- | ------ | -------------------------------- | -------------------------------------------- |
+| `admin@bingemate.dev`                                                       | ADMIN  | yes (`admin`)                    | yes (**BingeMate Admin**)                    |
+| `creator@bingemate.dev`                                                     | MEMBER | yes (`demo_creator`)             | yes (**Demo Maker**)                         |
+| `consumer@bingemate.dev`                                                    | MEMBER | **no**                           | yes (**Demo Viewer**)                        |
+| `user4@seed.bingemate.local` (`user3` to `user5478`; no `user1` or `user2`) | MEMBER | yes (e.g. `Steve Rhodes`)        | no                                           |
+
+There are only two roles, ADMIN and MEMBER. The "creator" and "consumer" in the email addresses are historical names; both are ordinary members. On 26 Nov 2026, against the loaded dataset, `admin@`, `creator@`, `user3`, `user4`, `user100`, `user2500` and `user5478` signed in; `consumer@`, `user1` and `user2` returned 401 `Invalid email or password`.
 
 **The long way.** Run these commands in order from the repository root:
 
@@ -55,7 +68,7 @@ npx tsx --env-file=apps/api/.env apps/api/src/jobs/refreshTrending.ts
 
 The loader reads `apps/api/.env`. It loads PostgreSQL headers and MongoDB bodies together. It refuses non-empty stores without `--reset`, and a new database is not empty (the migrate step seeded it), so the first load needs `--reset`. That flag wipes both stores and reloads them, so use it only when you intend to replace what is in your local databases. Do not reset just one store; their IDs must agree.
 
-You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every loaded user has password `Password123!`. There is **no `consumer@bingemate.dev`** after this option. Use an imported member such as `user4@seed.bingemate.local`, as listed in the root README. Imported titles are approved and have no creator owner.
+You get `admin@bingemate.dev`, `creator@bingemate.dev` and imported users. Every loaded user has password `Password123!`. There is **no `consumer@bingemate.dev`** after this option. Use an imported member such as `user4@seed.bingemate.local`. Imported members run from `user3@seed.bingemate.local` to `user5478@seed.bingemate.local`; there is no `user1` or `user2`. Imported titles are approved and have no creator owner.
 
 ### Option B: use the small demo seed
 
@@ -166,11 +179,13 @@ A member may have at most 10 `PENDING` titles at once. Creating an eleventh retu
 
 The title is saved before the optional image is uploaded. If creation succeeds but image upload fails, the message says the title was saved. Return to your submissions and edit that title to retry the image.
 
-| Stored status | Meaning for you                                                                    |
-| ------------- | ---------------------------------------------------------------------------------- |
-| PENDING       | Waiting for approval. Hidden from public Browse and title detail.                  |
-| APPROVED      | Publicly available. Members can review and list it.                                |
-| REJECTED      | Not public. Read the reason in Note, if the admin supplied one. Edit and resubmit. |
+| Stored status | Meaning for you                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------- |
+| PENDING       | Waiting for approval. Hidden from Browse, Search and the title page for everyone, you included. |
+| APPROVED      | Publicly available. Anyone can find it in Search; members can review and list it.               |
+| REJECTED      | Not public. Read the reason in Note, if the admin supplied one. Edit and resubmit.              |
+
+Only your own **Creator** page lists your pending and rejected titles. Another member who searches for one gets no result, and opening its address returns the same 404 as a missing title, so they cannot tell it exists. This was checked on 26 Nov 2026 with three members: none of them, including the owner, found a pending or rejected title through Search or by its ID, and all three found it once an admin approved it.
 
 Choose **Edit** on a submission and **Save changes** after editing. The type cannot change after creation. Saving an approved or rejected submission sends it back to `PENDING` and clears the rejection reason. For an approved title, confirm **Save and re-submit**. It stays hidden until an admin approves it again.
 
@@ -275,7 +290,9 @@ The seed refuses non-empty targets unless you request `--reset`, which deletes b
 | Tables or SQL views are missing                                                                          | Run `npm run prisma:migrate` and `npm run prisma:generate` against your local application database, then restart the API.                                                                                                                                   |
 | API reports invalid environment configuration                                                            | Copy the API env example, fill required values, and ensure `JWT_SECRET` has at least 16 characters. `TRENDING_REFRESH_MINUTES` must be an integer from 0 to 1440.                                                                                           |
 | You still see fake titles after importing                                                                | Restart the website with `VITE_USE_MOCKS=false`. Check `.env.local` for overrides and remove `VITE_MOCK_ROLE` when checking real accounts.                                                                                                                  |
-| `consumer@bingemate.dev` cannot log in after dataset loading                                             | Use `user4@seed.bingemate.local` with `Password123!`, or register an account. The dataset does not create that historical demo member account.                                                                                                              |
+| A fresh clone shows placeholder titles such as _Ash and Ivory_                                           | `apps/web/.env.local` is not committed, so page data uses mocks by default in development. Create it with `VITE_USE_MOCKS=false`, check that the API is running, and restart Vite.                                                                          |
+| The browser console shows `GET /api/auth/me 401 (Unauthorized)` on page load                             | Expected when nobody is signed in. The website asks the API who is signed in, and 401 means "nobody". It is not a token expiry. A 500 or 502 there instead means the API is not reachable.                                                                  |
+| `consumer@bingemate.dev`, `user1@` or `user2@seed.bingemate.local` cannot log in after dataset loading   | Use `user4@seed.bingemate.local` (any of `user3` to `user5478`) with `Password123!`, or register an account. The dataset does not create the historical `consumer@` account or `user1` and `user2`.                                                         |
 | Trending JSON is empty                                                                                   | Run the refresh CLI in section 5. The small seed has no reviews, so the trending SQL view has no candidates until approved titles receive reviews. Home's strip is separate and does not show this cache.                                                   |
 | Images do not show with an absolute `VITE_API_URL`                                                       | Use a reachable API base including `/api`, such as `http://localhost:4000/api`, and restart Vite. Root-relative poster URLs resolve against that API host. Check that the image exists; pending/rejected images are visible only to their owner and admins. |
 | HTTP 401 `Invalid email or password`                                                                     | Check your email, password and chosen data option. Both an unknown email and a wrong password produce this message.                                                                                                                                         |
