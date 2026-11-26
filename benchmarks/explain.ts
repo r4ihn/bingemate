@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
-import { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '../apps/api/src/generated/prisma/client.js';
+import { createPrismaClient } from '../apps/api/src/db/client.js';
 import mongoose from 'mongoose';
 import { assertBenchDatabase } from './lib/guard.js';
 
@@ -256,7 +257,7 @@ export async function main(
   if (!['mongodb:', 'mongodb+srv:'].includes(new URL(mongoUri).protocol))
     throw new Error('BENCH_MONGO_URI must use mongodb:// or mongodb+srv://');
 
-  const pg = new PrismaClient({ datasourceUrl: pgUrl });
+  const pg = createPrismaClient(pgUrl);
   let connection: mongoose.Connection | undefined;
   try {
     const pipelines = await loadPipelines(pg);

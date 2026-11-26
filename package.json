@@ -37,14 +37,14 @@
     "eslint": "^9.12.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.3.3",
-    "typescript": "^5.6.2",
+    "typescript": "^5.9.3",
     "wait-on": "^8.0.5"
   },
   "allowScripts": {
-    "@prisma/client@6.19.3": true,
-    "@prisma/engines@6.19.3": true,
+    "@prisma/client@7.10.1": true,
+    "@prisma/engines@7.10.1": true,
     "bcrypt@6.0.0": true,
-    "prisma@6.19.3": true,
+    "prisma@7.10.1": true,
     "esbuild@0.28.2": true
   }
 }

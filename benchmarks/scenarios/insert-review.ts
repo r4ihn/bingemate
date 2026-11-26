@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../apps/api/src/generated/prisma/client.js';
 import type { Scenario } from '../lib/scenario.js';
 import { collection, ensureReviewText, removeInserted } from '../lib/setup.js';
 import { lockTitle } from '../../apps/api/src/modules/reviews/rating.js';

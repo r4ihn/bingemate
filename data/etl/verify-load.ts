@@ -1,5 +1,6 @@
 import { RATING_MAX } from '@bingemate/shared/rating';
-import { PrismaClient, type Prisma } from '@prisma/client';
+import type { Prisma } from '../../apps/api/src/generated/prisma/client.js';
+import { createPrismaClient } from '../../apps/api/src/db/client.js';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
 import { loadIdMap, lookup } from './id-mapping.js';
@@ -21,7 +22,7 @@ class RollbackProbe extends Error {}
 export async function main(): Promise<void> {
   loadApiEnv();
   const log = new StepLog('verify-load');
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
   let failures = 0;
   const check = (name: string, ok: boolean, detail = ''): void => {
     if (ok) log.info(`PASS ${name}`);

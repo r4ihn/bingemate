@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { afterAll } from 'vitest';
-import type { MediaType, Role, TitleStatus, User } from '@prisma/client';
+import type { MediaType, Role, TitleStatus, User } from '../../src/generated/prisma/client.js';
 import { prisma } from '../../src/db/prisma.js';
 import { connectMongo, disconnectMongo } from '../../src/db/mongo.js';
 import { signToken } from '../../src/utils/jwt.js';

@@ -1,4 +1,4 @@
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../generated/prisma/client.js';
 
 /**
  * Takes a row lock on the title, so writers to one title take turns.

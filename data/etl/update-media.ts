@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs';
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../../apps/api/src/db/client.js';
 import { loadIdMap } from './id-mapping.js';
 import { assertLocalDatabases, loadApiEnv } from './lib/env.js';
 import { PROCESSED_DIR, readProcessed, runIfMain } from './lib/io.js';
@@ -29,7 +29,7 @@ export async function main(): Promise<void> {
   if (unknown) throw new Error(`Unsupported argument: ${unknown}. Only --apply is allowed.`);
   assertLocalDatabases();
   const apply = process.argv.includes('--apply');
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
 
   try {
     const ids = loadIdMap().titles;

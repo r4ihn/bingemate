@@ -1,13 +1,9 @@
 import { fileURLToPath } from 'node:url';
 import mongoose from 'mongoose';
-import type * as PrismaModule from '@prisma/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { prismaConstructor } = vi.hoisted(() => ({ prismaConstructor: vi.fn() }));
-vi.mock('@prisma/client', async (original) => ({
-  ...(await original<typeof PrismaModule>()),
-  PrismaClient: prismaConstructor,
-}));
+vi.mock('../../src/db/client.js', () => ({ createPrismaClient: prismaConstructor }));
 const load = (path: string) =>
   import(/* @vite-ignore */ fileURLToPath(new URL(path, import.meta.url)));
 const { summarize } = (await load('../../../../benchmarks/lib/stats.ts')) as {

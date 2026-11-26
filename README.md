@@ -54,7 +54,7 @@ cp apps/api/.env.example apps/api/.env
 cp apps/web/.env.example apps/web/.env.local   # optional
 
 # 4. Create the DB schema + generate the Prisma client
-#    (on a newly created database this also runs the seed in step 5 by itself)
+#    (Prisma 7 no longer seeds or generates on migrate, so run all three steps)
 npm run prisma:migrate
 npm run prisma:generate
 

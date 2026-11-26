@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { realpathSync } from 'node:fs';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../generated/prisma/client.js';
 import { prisma } from '../db/prisma.js';
 import { refreshTitleRanks } from '../modules/titles/ranking.service.js';
 import { recentReviewCounts } from '../modules/reviewStats/reviewStats.service.js';

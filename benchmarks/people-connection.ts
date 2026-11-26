@@ -9,7 +9,8 @@
  *   npx tsx --env-file=apps/api/.env benchmarks/people-connection.ts [--sample 40] [--max-depth 6]
  */
 import { writeFile, mkdir } from 'node:fs/promises';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '../apps/api/src/generated/prisma/client.js';
+import { createPrismaClient } from '../apps/api/src/db/client.js';
 import { connectionQuery } from '../apps/api/src/modules/people/people.service.js';
 import { describePlan } from './explain.js';
 
@@ -41,7 +42,7 @@ async function main(): Promise<void> {
   }
   const sample = arg('sample', 40);
   const maxDepth = arg('max-depth', 6);
-  const pg = new PrismaClient();
+  const pg = createPrismaClient();
   try {
     // The person with the most approved titles, then a deterministic sample of credited people.
     const [source] = await pg.$queryRaw<{ id: string; name: string }[]>`

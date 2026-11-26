@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
-import type { TitleStatus } from '@prisma/client';
+import type { TitleStatus } from '../../src/generated/prisma/client.js';
 import { createApp } from '../../src/app.js';
 import { prisma } from '../../src/db/prisma.js';
 import { createTitle, resetDatabases } from './helpers.js';

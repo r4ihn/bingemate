@@ -14,7 +14,7 @@ const prisma = vi.hoisted(() => ({
 }));
 vi.mock('../../src/db/prisma.js', () => ({ prisma }));
 
-const { Prisma } = await import('@prisma/client');
+const { Prisma } = await import('../../src/generated/prisma/client.js');
 const { createApp } = await import('../../src/app.js');
 const { signToken, verifyToken } = await import('../../src/utils/jwt.js');
 const app = createApp();
