@@ -79,7 +79,7 @@ npm install --no-save playwright@1.49.1
 npx playwright install chromium
 
 docker compose up -d
-# start the API (npm run dev:api) and the web app with VITE_USE_MOCKS=false (npm run dev:web)
+# start the API (npm run dev:api) and the web app (npm run dev:web; real data is the default)
 
 node docs/e2e/click-through.mjs     # signup, member and admin flows; deletes content, prints user cleanup SQL
 node docs/e2e/visual.mjs            # Home and Browse at 1280 px and 320 px

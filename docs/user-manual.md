@@ -27,7 +27,7 @@ If 5432 or 27017 is taken (for example by a PostgreSQL installed on your machine
 
 ## 3. Set it up
 
-**The short way.** With Docker running, run `npm run up` from the repository root. It installs dependencies, creates `apps/api/.env` (with a random `JWT_SECRET`) and `apps/web/.env`, starts both databases, applies migrations, loads the dataset into an empty database, rebuilds trending, and starts the API and the website. Run it again after every `git pull`; it never replaces existing data unless you add `--reload-data`. Add `--demo` to load the small demo seed instead of the dataset. The root README lists its other options. Put `VITE_USE_MOCKS=false` in `apps/web/.env.local` first if you want real data. That file is not committed, so every fresh clone needs it; without it the website shows placeholder titles such as _Ash and Ivory_ instead of your database.
+**The short way.** With Docker running, run `npm run up` from the repository root. It installs dependencies, creates `apps/api/.env` (with a random `JWT_SECRET`) and `apps/web/.env`, starts both databases, applies migrations, loads the dataset into an empty database, rebuilds trending, and starts the API and the website. Run it again after every `git pull`; it never replaces existing data unless you add `--reload-data`. Add `--demo` to load the small demo seed instead of the dataset. The root README lists its other options. The website reads your database through the API by default; no extra setting is needed.
 
 ### Demo accounts
 
@@ -99,14 +99,14 @@ npm run dev:api
 In another terminal at the repository root:
 
 ```sh
-VITE_USE_MOCKS=false npm run dev:web
+npm run dev:web
 ```
 
 Open `http://localhost:5173`. The API is at `http://localhost:4000/api`.
 
-**Mocks off means the real API.** In development, page data uses mocks by default. Keep `VITE_USE_MOCKS=false` for your real-data demonstration. Authentication calls the API independently of that page-data switch.
+**Real data is the default.** The website reads the API in development and in production builds. Mock data is opt-in: set `VITE_USE_MOCKS=true` to see built-in placeholder titles (such as _Ash and Ivory_) without the API, for example while working on the layout. Only the automated tests use mock data by default. Authentication always calls the API, whatever this switch says.
 
-For a persistent web setting, optionally run `cp apps/web/.env.example apps/web/.env.local`, then set `VITE_USE_MOCKS=false` there. Remove any `VITE_MOCK_ROLE` override when checking real sign-in. Restart Vite after changing its environment settings. Leave `VITE_API_URL` empty to use the development proxy to port 4000. If you use an absolute API base, include `/api`, for example `http://localhost:4000/api`.
+For a persistent web setting, optionally run `cp apps/web/.env.example apps/web/.env.local` and change it there. Remove any `VITE_MOCK_ROLE` override when checking real sign-in. Restart Vite after changing its environment settings. Leave `VITE_API_URL` empty to use the development proxy to port 4000. If you use an absolute API base, include `/api`, for example `http://localhost:4000/api`.
 
 ## 4. Using the site
 
@@ -289,8 +289,7 @@ The seed refuses non-empty targets unless you request `--reset`, which deletes b
 | API fails to connect, or PostgreSQL authentication fails                                                 | Check `DATABASE_URL` in `apps/api/.env` and any exported override. For the supplied Compose setup use `postgresql://bingemate:bingemate@localhost:5432/bingemate?schema=public`. Check `MONGO_URI` too, then restart the API.                               |
 | Tables or SQL views are missing                                                                          | Run `npm run prisma:migrate` and `npm run prisma:generate` against your local application database, then restart the API.                                                                                                                                   |
 | API reports invalid environment configuration                                                            | Copy the API env example, fill required values, and ensure `JWT_SECRET` has at least 16 characters. `TRENDING_REFRESH_MINUTES` must be an integer from 0 to 1440.                                                                                           |
-| You still see fake titles after importing                                                                | Restart the website with `VITE_USE_MOCKS=false`. Check `.env.local` for overrides and remove `VITE_MOCK_ROLE` when checking real accounts.                                                                                                                  |
-| A fresh clone shows placeholder titles such as _Ash and Ivory_                                           | `apps/web/.env.local` is not committed, so page data uses mocks by default in development. Create it with `VITE_USE_MOCKS=false`, check that the API is running, and restart Vite.                                                                          |
+| The website shows placeholder titles such as _Ash and Ivory_                                             | Mock data was switched on. Remove `VITE_USE_MOCKS=true` from `apps/web/.env.local`, `apps/web/.env` and your shell, then restart Vite. Remove `VITE_MOCK_ROLE` too when checking real accounts.                                                             |
 | The browser console shows `GET /api/auth/me 401 (Unauthorized)` on page load                             | Expected when nobody is signed in. The website asks the API who is signed in, and 401 means "nobody". It is not a token expiry. A 500 or 502 there instead means the API is not reachable.                                                                  |
 | `consumer@bingemate.dev`, `user1@` or `user2@seed.bingemate.local` cannot log in after dataset loading   | Use `user4@seed.bingemate.local` (any of `user3` to `user5478`) with `Password123!`, or register an account. The dataset does not create the historical `consumer@` account or `user1` and `user2`.                                                         |
 | Trending JSON is empty                                                                                   | Run the refresh CLI in section 5. The small seed has no reviews, so the trending SQL view has no candidates until approved titles receive reviews. Home's strip is separate and does not show this cache.                                                   |
