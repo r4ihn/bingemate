@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { createPrismaClient } from '../../apps/api/src/db/client.js';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../../apps/api/src/mongo/models/reviewBody.model.js';
 import { loadIdMap, lookup, type IdMap } from './id-mapping.js';
@@ -25,7 +25,7 @@ export function planBackfill(rows: Row[], ids: IdMap): { pgId: string; date: Dat
 export async function main(): Promise<void> {
   loadApiEnv();
   const log = new StepLog('backfill-undated-dates');
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
 
   try {
     // assertLocalDatabases normally permits --allow-remote; this repair must stay local.

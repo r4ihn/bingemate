@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../src/generated/prisma/client.js';
 import { HttpError } from '../../src/middleware/errorHandler.js';
 
 const { create } = vi.hoisted(() => ({ create: vi.fn() }));
@@ -33,17 +33,49 @@ describe('register unique constraint errors', () => {
     await expect(register()).rejects.toEqual(new HttpError(409, message));
   });
 
-  it.each([{ modelName: 'User', target: ['something_else'] }, undefined])(
-    'rethrows the original error for meta %j',
-    async (meta) => {
-      const error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+  // Prisma 7's pg adapter leaves meta.target unset and names the constraint under
+  // driverAdapterError (shape captured from a real PostgreSQL unique violation).
+  const adapterMeta = (constraint: Record<string, unknown>) => ({
+    modelName: 'User',
+    driverAdapterError: {
+      name: 'DriverAdapterError',
+      cause: {
+        originalCode: '23505',
+        kind: 'UniqueConstraintViolation',
+        constraint,
+        table: 'User',
+      },
+    },
+  });
+
+  it.each([
+    { constraint: { index: 'User_username_lower_key' }, message: 'Username already taken' },
+    { constraint: { index: 'User_email_key' }, message: 'Email already in use' },
+    { constraint: { fields: ['email'] }, message: 'Email already in use' },
+  ])('maps adapter constraint $constraint to $message', async ({ constraint, message }) => {
+    create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
         code: 'P2002',
         clientVersion: 'test',
-        ...(meta === undefined ? {} : { meta }),
-      });
-      create.mockRejectedValue(error);
+        meta: adapterMeta(constraint),
+      }),
+    );
 
-      await expect(register()).rejects.toBe(error);
-    },
-  );
+    await expect(register()).rejects.toEqual(new HttpError(409, message));
+  });
+
+  it.each([
+    { modelName: 'User', target: ['something_else'] },
+    adapterMeta({ index: 'something_else' }),
+    undefined,
+  ])('rethrows the original error for meta %j', async (meta) => {
+    const error = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+      code: 'P2002',
+      clientVersion: 'test',
+      ...(meta === undefined ? {} : { meta }),
+    });
+    create.mockRejectedValue(error);
+
+    await expect(register()).rejects.toBe(error);
+  });
 });

@@ -1,7 +1,8 @@
 import { execFileSync } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
-import { Prisma, PrismaClient } from '@prisma/client';
+import { Prisma } from '../apps/api/src/generated/prisma/client.js';
+import { createPrismaClient } from '../apps/api/src/db/client.js';
 import mongoose from 'mongoose';
 import { assertBenchDatabase } from './lib/guard.js';
 import type { Ctx, Scenario } from './lib/scenario.js';
@@ -186,7 +187,7 @@ export async function main(
   if (!parsed.searchParams.has('connection_limit'))
     parsed.searchParams.set('connection_limit', '10');
   const pool = parsed.searchParams.get('connection_limit')!;
-  const pg = new PrismaClient({ datasources: { db: { url: parsed.toString() } } });
+  const pg = createPrismaClient(parsed.toString());
   let mongo: mongoose.Connection | undefined;
   try {
     mongo = mongoose.createConnection(mongoUrl, { maxPoolSize: 10, autoIndex: false });

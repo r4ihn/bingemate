@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import type { AuthUser, CreatorTitleStatsDTO, TitleStatus } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 

@@ -12,6 +12,8 @@ export default [
       '**/node_modules/**',
       '**/*.config.js',
       'apps/api/prisma/migrations/**',
+      'apps/api/src/generated/**',
+      'apps/api/dist-vercel/**',
     ],
   },
   js.configs.recommended,

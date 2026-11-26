@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../src/generated/prisma/client.js';
 
 // Minimal env so config/env.ts validation passes when app is imported.
 process.env.DATABASE_URL ??= 'postgresql://u:p@localhost:5432/db?schema=public';

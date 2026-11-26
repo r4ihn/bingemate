@@ -1,5 +1,6 @@
 import { existsSync } from 'node:fs';
-import { PrismaClient, type Prisma } from '@prisma/client';
+import type { Prisma } from '../../apps/api/src/generated/prisma/client.js';
+import { createPrismaClient } from '../../apps/api/src/db/client.js';
 import bcrypt from 'bcrypt';
 import { emptyIdMap, lookup, newId, saveIdMap } from './id-mapping.js';
 import { toInt } from './lib/clean.js';
@@ -44,7 +45,7 @@ async function insertAll<T>(
 export async function main(): Promise<void> {
   loadApiEnv();
   const log = new StepLog('load-postgres');
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
   const reset = process.argv.includes('--reset');
 
   try {

@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import type { ProfileDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';
@@ -44,18 +44,18 @@ export async function updateUsername(userId: string, username: string): Promise<
   if (current.username === username) return toProfile(current);
   const taken = await prisma.user.findFirst({
     where: {
-    id: { not: userId },
-    username: {
-      equals: username,
-      mode: 'insensitive',
+      id: { not: userId },
+      username: {
+        equals: username,
+        mode: 'insensitive',
+      },
     },
-  },
-  select: { id: true },
-});
+    select: { id: true },
+  });
 
-if (taken) {
-  throw new HttpError(409, 'Username already taken');
-}
+  if (taken) {
+    throw new HttpError(409, 'Username already taken');
+  }
 
   try {
     const updated = await prisma.user.update({

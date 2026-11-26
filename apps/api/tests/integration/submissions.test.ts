@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../src/generated/prisma/client.js';
 
 // Minimal env so config/env.ts validation passes when app is imported.
 process.env.DATABASE_URL ??= 'postgresql://u:p@localhost:5432/db?schema=public';
@@ -10,7 +10,14 @@ process.env.JWT_SECRET ??= 'test-secret-at-least-16-chars';
 // No databases: check the query arguments and return the selected title fields.
 const calls: string[] = [];
 const prisma = {
-  title: { count: vi.fn(), create: vi.fn(), findUnique: vi.fn(), findMany: vi.fn(), update: vi.fn(), delete: vi.fn() },
+  title: {
+    count: vi.fn(),
+    create: vi.fn(),
+    findUnique: vi.fn(),
+    findMany: vi.fn(),
+    update: vi.fn(),
+    delete: vi.fn(),
+  },
   review: { findMany: vi.fn(), count: vi.fn() },
   listEntry: { count: vi.fn() },
   $queryRaw: vi.fn(),
@@ -123,7 +130,7 @@ describe('GET /api/creator/titles', () => {
   });
 
   it.each(['', '?createdById=other'])(
-    'lists only the signed-in member\'s titles, newest first (query: %s)',
+    "lists only the signed-in member's titles, newest first (query: %s)",
     async (query) => {
       const res = await request(app).get(`/api/creator/titles${query}`).set(as());
 
@@ -172,15 +179,17 @@ describe('GET /api/creator/titles', () => {
     const res = await request(app).get('/api/creator/titles').set(as());
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual(rows.map(({ posterUrl: _posterUrl, ...submission }) => ({
-      ...submission, updatedAt: submission.updatedAt.toISOString(),
-    })));
+    expect(res.body).toEqual(
+      rows.map(({ posterUrl: _posterUrl, ...submission }) => ({
+        ...submission,
+        updatedAt: submission.updatedAt.toISOString(),
+      })),
+    );
   });
 });
 
 describe('DELETE /api/titles/:id', () => {
-  const del = (cookie = as(), id = 't1') =>
-    request(app).delete(`/api/titles/${id}`).set(cookie);
+  const del = (cookie = as(), id = 't1') => request(app).delete(`/api/titles/${id}`).set(cookie);
 
   const expectNoDelete = () => {
     expect(prisma.$transaction).not.toHaveBeenCalled();
@@ -249,8 +258,14 @@ describe('DELETE /api/titles/:id', () => {
     expect(res.status).toBe(204);
     expect(prisma.$transaction).toHaveBeenCalledTimes(1);
     expect(calls).toEqual([
-      'lock', 'review-count', 'list-count', 'review-ids', 'pg-delete',
-      'mongo-bodies', 'mongo-replies', 'mongo-poster',
+      'lock',
+      'review-count',
+      'list-count',
+      'review-ids',
+      'pg-delete',
+      'mongo-bodies',
+      'mongo-replies',
+      'mongo-poster',
     ]);
     const [sql, titleId] = prisma.$queryRaw.mock.calls[0] ?? [];
     expect((sql as string[]).join('?')).toBe('SELECT "id" FROM "Title" WHERE "id" = ? FOR UPDATE');
@@ -275,11 +290,12 @@ describe('DELETE /api/titles/:id', () => {
   it('lets the owner delete when the only list entry is their own', async () => {
     prisma.review.findMany.mockResolvedValue([]);
     const entries = [{ titleId: 't1', userId: 'c1' }];
-    prisma.listEntry.count.mockImplementation(async ({ where }: {
-      where: { titleId: string; userId?: { not: string } };
-    }) => entries.filter((entry) =>
-      entry.titleId === where.titleId && entry.userId !== where.userId?.not,
-    ).length);
+    prisma.listEntry.count.mockImplementation(
+      async ({ where }: { where: { titleId: string; userId?: { not: string } } }) =>
+        entries.filter(
+          (entry) => entry.titleId === where.titleId && entry.userId !== where.userId?.not,
+        ).length,
+    );
 
     const res = await del();
 
@@ -308,9 +324,8 @@ describe('DELETE /api/titles/:id', () => {
         'Other users have reviewed or listed this title, so it cannot be deleted by its creator. Ask an admin to remove it.',
       );
       expect(prisma[relation].count).toHaveBeenCalledWith({
-        where: relation === 'listEntry'
-          ? { titleId: 't1', userId: { not: 'c1' } }
-          : { titleId: 't1' },
+        where:
+          relation === 'listEntry' ? { titleId: 't1', userId: { not: 'c1' } } : { titleId: 't1' },
       });
       expect(prisma.title.delete).not.toHaveBeenCalled();
       expect(prisma.$transaction).toHaveBeenCalledTimes(1);
@@ -321,14 +336,17 @@ describe('DELETE /api/titles/:id', () => {
     },
   );
 
-  it.each(['someone-else', null])('lets an admin delete a title owned by %s', async (createdById) => {
-    prisma.title.findUnique.mockResolvedValue({ createdById });
+  it.each(['someone-else', null])(
+    'lets an admin delete a title owned by %s',
+    async (createdById) => {
+      prisma.title.findUnique.mockResolvedValue({ createdById });
 
-    const res = await del(as('a1', 'ADMIN'));
+      const res = await del(as('a1', 'ADMIN'));
 
-    expect(res.status).toBe(204);
-    expect(prisma.title.delete).toHaveBeenCalledTimes(1);
-  });
+      expect(res.status).toBe(204);
+      expect(prisma.title.delete).toHaveBeenCalledTimes(1);
+    },
+  );
 
   it('reads review ids first and removes MongoDB leftovers after the PostgreSQL delete', async () => {
     prisma.review.count.mockResolvedValue(2);
@@ -350,7 +368,12 @@ describe('DELETE /api/titles/:id', () => {
     expect(mongo.replyDeleteMany).toHaveBeenCalledWith({ reviewId: { $in: ['r1', 'r2'] } });
     expect(mongo.posterDeleteOne).toHaveBeenCalledWith({ _id: 't1' });
     expect(calls).toEqual([
-      'lock', 'review-ids', 'pg-delete', 'mongo-bodies', 'mongo-replies', 'mongo-poster',
+      'lock',
+      'review-ids',
+      'pg-delete',
+      'mongo-bodies',
+      'mongo-replies',
+      'mongo-poster',
     ]);
   });
 
@@ -504,7 +527,11 @@ describe('PATCH /api/titles/:id', () => {
       status: 'PENDING',
       rejectionReason: null,
     });
-    expect(res.body).toMatchObject({ name: 'Dune Messiah', status: 'PENDING', rejectionReason: null });
+    expect(res.body).toMatchObject({
+      name: 'Dune Messiah',
+      status: 'PENDING',
+      rejectionReason: null,
+    });
   });
 
   it('editing a PENDING title keeps it PENDING and changes only what was sent', async () => {
@@ -518,7 +545,10 @@ describe('PATCH /api/titles/:id', () => {
       rejectionReason: null,
     });
     expect(res.body).toMatchObject({
-      name: 'Dune', description: 'More sand.', status: 'PENDING', rejectionReason: null,
+      name: 'Dune',
+      description: 'More sand.',
+      status: 'PENDING',
+      rejectionReason: null,
     });
   });
 
@@ -565,9 +595,7 @@ describe('POST /api/titles', () => {
       .send(body as object);
 
   it('needs a signed-in user', async () => {
-    const res = await request(app)
-      .post('/api/titles')
-      .send({ name: 'Dune', mediaType: 'MOVIE' });
+    const res = await request(app).post('/api/titles').send({ name: 'Dune', mediaType: 'MOVIE' });
 
     expect(res.status).toBe(401);
     expect(res.body.error).toBeTypeOf('string');
@@ -583,10 +611,21 @@ describe('POST /api/titles', () => {
   });
 
   it('allows the tenth pending submission and locks before counting', async () => {
-    prisma.title.count.mockImplementation(async () => { calls.push('pending-count'); return 9; });
+    prisma.title.count.mockImplementation(async () => {
+      calls.push('pending-count');
+      return 9;
+    });
     prisma.title.create.mockImplementationOnce(async ({ data }) => {
       calls.push('submission-create');
-      return { id: 't10', avgRating: 0, reviewCount: 0, posterUrl: null, rejectionReason: null, updatedAt, ...data };
+      return {
+        id: 't10',
+        avgRating: 0,
+        reviewCount: 0,
+        posterUrl: null,
+        rejectionReason: null,
+        updatedAt,
+        ...data,
+      };
     });
     const res = await post({ name: 'Tenth', mediaType: 'MOVIE' });
     expect(res.status).toBe(201);
@@ -595,14 +634,19 @@ describe('POST /api/titles', () => {
     const [sql, userId] = prisma.$executeRaw.mock.calls[0] ?? [];
     expect((sql as string[]).join('?')).toBe('SELECT pg_advisory_xact_lock(hashtext(?))');
     expect(userId).toBe('c1');
-    expect(prisma.title.count).toHaveBeenCalledWith({ where: { createdById: 'c1', status: 'PENDING' } });
+    expect(prisma.title.count).toHaveBeenCalledWith({
+      where: { createdById: 'c1', status: 'PENDING' },
+    });
   });
 
-  it.each([10, 11])('refuses a submission with %s pending titles', async pending => {
+  it.each([10, 11])('refuses a submission with %s pending titles', async (pending) => {
     prisma.title.count.mockResolvedValue(pending);
     const res = await post({ name: 'Eleventh', mediaType: 'MOVIE' });
     expect(res.status).toBe(409);
-    expect(res.body).toEqual({ error: 'You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.' });
+    expect(res.body).toEqual({
+      error:
+        'You already have 10 titles waiting for approval. Wait for an admin to decide on some of them.',
+    });
     expect(prisma.$transaction).toHaveBeenCalledOnce();
     expect(prisma.$executeRaw).toHaveBeenCalledOnce();
     expect(prisma.title.create).not.toHaveBeenCalled();
@@ -649,18 +693,24 @@ describe('POST /api/titles', () => {
     });
   });
 
-  it.each(['   ', undefined])('stores an empty or omitted description as none (%s)', async (description) => {
-    const res = await post({ name: 'Dune', mediaType: 'MOVIE', description });
+  it.each(['   ', undefined])(
+    'stores an empty or omitted description as none (%s)',
+    async (description) => {
+      const res = await post({ name: 'Dune', mediaType: 'MOVIE', description });
 
-    expect(res.status).toBe(201);
-    expect(prisma.title.create.mock.calls[0]?.[0].data.description).toBeNull();
-    expect(res.body.description).toBeNull();
-  });
+      expect(res.status).toBe(201);
+      expect(prisma.title.create.mock.calls[0]?.[0].data.description).toBeNull();
+      expect(res.body.description).toBeNull();
+    },
+  );
 
   it.each([
     ['a whitespace-only name', { name: '   ', mediaType: 'MOVIE' }],
     ['a name of 201 characters', { name: 'x'.repeat(201), mediaType: 'MOVIE' }],
-    ['a description of 5001 characters', { name: 'Dune', mediaType: 'MOVIE', description: 'x'.repeat(5001) }],
+    [
+      'a description of 5001 characters',
+      { name: 'Dune', mediaType: 'MOVIE', description: 'x'.repeat(5001) },
+    ],
     ['an unknown media type', { name: 'Dune', mediaType: 'PODCAST' }],
     ['a supplied status', { name: 'Dune', mediaType: 'MOVIE', status: 'APPROVED' }],
     ['a supplied owner', { name: 'Dune', mediaType: 'MOVIE', createdById: 'x' }],

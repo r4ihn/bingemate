@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '../apps/api/src/generated/prisma/client.js';
+import { createPrismaClient } from '../apps/api/src/db/client.js';
 import mongoose from 'mongoose';
 import { ReviewBody } from '../apps/api/src/mongo/models/reviewBody.model.js';
 import { Reply } from '../apps/api/src/mongo/models/reply.model.js';
@@ -380,7 +381,7 @@ export async function main(
   if (o.dryRun) return;
   // Check the source before opening clients or resetting data; read exactly once.
   const texts = o.verifyOnly ? [] : loadBodies();
-  const pg = new PrismaClient({ datasourceUrl: pgUrl });
+  const pg = createPrismaClient(pgUrl);
   let connection: mongoose.Connection | undefined;
   try {
     connection = mongoose.createConnection(mongoUri, { autoIndex: false, autoCreate: false });

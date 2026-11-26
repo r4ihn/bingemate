@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import type { GenreOptionDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import type { GenresQuery } from './genres.schema.js';
@@ -17,7 +17,8 @@ interface GenreRow {
 export async function listGenreOptions({ type }: GenresQuery): Promise<GenreOptionDTO[]> {
   const where = type ? Prisma.sql`WHERE "mediaType" = ${type}::"MediaType"` : Prisma.empty;
   const rows = await prisma.$queryRaw<GenreRow[]>(
-    type ? Prisma.sql`SELECT "genre_id", "name", "title_count" FROM "genre_filter_options" ${where}`
+    type
+      ? Prisma.sql`SELECT "genre_id", "name", "title_count" FROM "genre_filter_options" ${where}`
       : Prisma.sql`SELECT g."id" AS "genre_id", g."name", COUNT(*)::int AS "title_count"
           FROM "Genre" g
           JOIN "TitleGenre" tg ON tg."genreId" = g."id"

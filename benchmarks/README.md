@@ -21,7 +21,7 @@ running (PostgreSQL and MongoDB on localhost ports 5432 and 27017):
 
 ```sh
 docker exec bingemate-postgres createdb -U bingemate bingemate_bench
-DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public' npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public' npm exec --workspace apps/api -- prisma migrate deploy
 BENCH_DATABASE_URL='postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public' BENCH_MONGO_URI='mongodb://localhost:27017/bingemate_bench' npx tsx benchmarks/seed-bench.ts --titles 950000 --reviews 1000000 --users 100000 --replies 300000
 ```
 

@@ -1,7 +1,8 @@
 import { realpathSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { PrismaClient } from '@prisma/client';
-import type { User } from '@prisma/client';
+import type { PrismaClient } from '../src/generated/prisma/client.js';
+import { createPrismaClient } from '../src/db/client.js';
+import type { User } from '../src/generated/prisma/client.js';
 import bcrypt from 'bcrypt';
 
 export async function seed(
@@ -76,7 +77,7 @@ export async function seed(
 }
 
 async function main(): Promise<void> {
-  const prisma = new PrismaClient();
+  const prisma = createPrismaClient();
   try {
     const { admin, creator, consumer } = await seed(prisma);
     console.log('Seeded users:', {

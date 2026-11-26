@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { prismaConstructor } = vi.hoisted(() => ({ prismaConstructor: vi.fn() }));
-vi.mock('@prisma/client', () => ({ PrismaClient: prismaConstructor }));
+vi.mock('../../src/db/client.js', () => ({ createPrismaClient: prismaConstructor }));
 const file = fileURLToPath(new URL('../../../../benchmarks/explain.ts', import.meta.url));
 const { main, describePlan, describeMongoExplain, postgresQueries } = (await import(
   /* @vite-ignore */ file
@@ -208,9 +208,7 @@ describe('benchmark explain offline preflight', () => {
       return { $disconnect: disconnect };
     });
     await expect(main(['--label', 'before'], env)).rejects.toThrow('Unexpected connection');
-    expect(prismaConstructor).toHaveBeenCalledExactlyOnceWith({
-      datasourceUrl: env.BENCH_DATABASE_URL,
-    });
+    expect(prismaConstructor).toHaveBeenCalledExactlyOnceWith(env.BENCH_DATABASE_URL);
     expect(mongoose.createConnection).toHaveBeenCalledExactlyOnceWith(env.BENCH_MONGO_URI, {
       autoIndex: false,
       autoCreate: false,

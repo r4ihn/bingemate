@@ -1,5 +1,5 @@
 import { toSkipTake } from '../../utils/pagination.js';
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import type { AuthUser, ListItemDTO, ListStatus, Paginated } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
 import { HttpError } from '../../middleware/errorHandler.js';

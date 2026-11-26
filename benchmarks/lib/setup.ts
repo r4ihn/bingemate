@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../apps/api/src/generated/prisma/client.js';
 import type { Document } from 'mongodb';
 import type { Ctx } from './scenario.js';
 import { lockTitle } from '../../apps/api/src/modules/reviews/rating.js';

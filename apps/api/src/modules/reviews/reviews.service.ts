@@ -1,6 +1,6 @@
 import { assertCanWrite } from '../../utils/assertCanWrite.js';
 import { toSkipTake } from '../../utils/pagination.js';
-import type { Prisma } from '@prisma/client';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { Role } from '@bingemate/shared';
 import type { AuthUser, Paginated, ReviewDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';

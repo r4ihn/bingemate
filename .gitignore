@@ -18,7 +18,8 @@ out/
 !.env.example
 
 # Prisma
-# (keep schema + migrations; ignore generated client only if it's checked into node_modules)
+# Keep schema + migrations. The client is generated into the source tree (Prisma 7+); `npm run prisma:generate` rebuilds it.
+apps/api/src/generated/
 
 # Logs
 logs/
@@ -51,3 +52,7 @@ Thumbs.db
 # AI help
 .kiro/
 .claude/
+
+# Vercel
+.vercel/
+apps/api/dist-vercel/

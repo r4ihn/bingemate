@@ -11,7 +11,11 @@ const envSchema = z.object({
   WEB_ORIGIN: z.string().url().default('http://localhost:5173'),
 });
 
-const parsed = envSchema.safeParse(process.env);
+// The Vercel MongoDB Atlas integration names its connection string MONGODB_URI.
+const parsed = envSchema.safeParse({
+  ...process.env,
+  MONGO_URI: process.env.MONGO_URI ?? process.env.MONGODB_URI,
+});
 
 if (!parsed.success) {
   console.error('❌ Invalid environment variables:', parsed.error.flatten().fieldErrors);

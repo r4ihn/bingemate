@@ -23,7 +23,7 @@ const db = vi.hoisted(() => ({
 }));
 
 vi.mock('../../src/db/prisma.js', async () => {
-  const { Prisma } = await import('@prisma/client');
+  const { Prisma } = await import('../../src/generated/prisma/client.js');
   return {
     prisma: {
       user: {

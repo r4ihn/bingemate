@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../apps/api/src/generated/prisma/client.js';
 import type { Document } from 'mongodb';
 import type { Scenario } from '../lib/scenario.js';
 import { BATCH, collection, tableExists } from '../lib/setup.js';

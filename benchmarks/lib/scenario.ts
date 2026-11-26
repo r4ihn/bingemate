@@ -1,4 +1,4 @@
-import type { PrismaClient } from '@prisma/client';
+import type { PrismaClient } from '../../apps/api/src/generated/prisma/client.js';
 import type mongoose from 'mongoose';
 
 export type Ctx = {

@@ -63,7 +63,7 @@ The first attempt used partial indexes `WHERE status = 'APPROVED'`, since every 
 
 ```
 docker exec bingemate-postgres createdb -U bingemate bingemate_bench
-DATABASE_URL="postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public" npx prisma migrate deploy --schema apps/api/prisma/schema.prisma
+DATABASE_URL="postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public" npm exec --workspace apps/api -- prisma migrate deploy
 export BENCH_DATABASE_URL="postgresql://bingemate:bingemate@localhost:5432/bingemate_bench?schema=public" BENCH_MONGO_URI="mongodb://localhost:27017/bingemate_bench"
 npx tsx benchmarks/seed-bench.ts --reset
 npx tsx benchmarks/explain.ts --label mine

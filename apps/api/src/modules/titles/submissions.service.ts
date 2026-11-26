@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../generated/prisma/client.js';
 import { MAX_PENDING_SUBMISSIONS, Role } from '@bingemate/shared';
 import type { AuthUser, SubmissionDTO } from '@bingemate/shared';
 import { prisma } from '../../db/prisma.js';
@@ -45,7 +45,10 @@ export async function createSubmission(
     await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${user.id}))`;
     const pending = await tx.title.count({ where: { createdById: user.id, status: 'PENDING' } });
     if (pending >= MAX_PENDING_SUBMISSIONS) {
-      throw new HttpError(409, `You already have ${MAX_PENDING_SUBMISSIONS} titles waiting for approval. Wait for an admin to decide on some of them.`);
+      throw new HttpError(
+        409,
+        `You already have ${MAX_PENDING_SUBMISSIONS} titles waiting for approval. Wait for an admin to decide on some of them.`,
+      );
     }
     return tx.title.create({
       data: {
@@ -101,10 +104,7 @@ export async function deleteTitle(user: AuthUser, id: string): Promise<void> {
     select: { createdById: true },
   });
   if (!title) throw new HttpError(404, 'Title not found');
-  if (
-    user.role !== Role.ADMIN &&
-    (user.role !== Role.MEMBER || title.createdById !== user.id)
-  ) {
+  if (user.role !== Role.ADMIN && (user.role !== Role.MEMBER || title.createdById !== user.id)) {
     throw new HttpError(403, 'You can only delete your own submission');
   }
 

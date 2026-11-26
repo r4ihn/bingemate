@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import { Prisma } from '../../apps/api/src/generated/prisma/client.js';
 import type { Scenario } from '../lib/scenario.js';
 import { BATCH, collection, collectionExists } from '../lib/setup.js';
 

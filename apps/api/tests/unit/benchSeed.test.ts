@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { prismaConstructor } = vi.hoisted(() => ({ prismaConstructor: vi.fn() }));
-vi.mock('@prisma/client', () => ({ PrismaClient: prismaConstructor }));
+vi.mock('../../src/db/client.js', () => ({ createPrismaClient: prismaConstructor }));
 
 const file = fileURLToPath(new URL('../../../../benchmarks/seed-bench.ts', import.meta.url));
 const { main } = (await import(/* @vite-ignore */ file)) as {
