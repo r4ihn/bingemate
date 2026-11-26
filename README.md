@@ -70,12 +70,12 @@ npm run dev:web      # http://localhost:5173
 
 Demo accounts. Every account uses the password `Password123!`. Which accounts exist depends on the data you loaded. `npm run up` loads the full dataset; `npm run up -- --demo` or `npm run seed` loads the small demo seed instead.
 
-| Email                                                           | Role   | Full dataset (username)   | Demo seed (username)      |
-| --------------------------------------------------------------- | ------ | ------------------------- | ------------------------- |
-| `admin@bingemate.dev`                                           | ADMIN  | yes (`admin`)             | yes (**BingeMate Admin**) |
-| `creator@bingemate.dev`                                         | MEMBER | yes (`demo_creator`)      | yes (**Demo Maker**)      |
-| `consumer@bingemate.dev`                                        | MEMBER | **no**                    | yes (**Demo Viewer**)     |
-| `user4@seed.bingemate.local` (any `userN@seed.bingemate.local`) | MEMBER | yes (e.g. `Steve Rhodes`) | no                        |
+| Email                                                                       | Role   | Full dataset (username)   | Demo seed (username)      |
+| --------------------------------------------------------------------------- | ------ | ------------------------- | ------------------------- |
+| `admin@bingemate.dev`                                                       | ADMIN  | yes (`admin`)             | yes (**BingeMate Admin**) |
+| `creator@bingemate.dev`                                                     | MEMBER | yes (`demo_creator`)      | yes (**Demo Maker**)      |
+| `consumer@bingemate.dev`                                                    | MEMBER | **no**                    | yes (**Demo Viewer**)     |
+| `user4@seed.bingemate.local` (`user3` to `user5478`; no `user1` or `user2`) | MEMBER | yes (e.g. `Steve Rhodes`) | no                        |
 
 There are only two roles, ADMIN and MEMBER. The "creator" and "consumer" in the email addresses are historical names; both are ordinary members.
 
